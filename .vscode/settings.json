@@ -1,0 +1,21 @@
+{
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.analysis.typeCheckingMode": "strict", // options: "off", "basic", "strict"
+    "window.zoomLevel": 1,
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnSave": true,
+    // "editor.codeActionsOnSave": {
+    //     "source.organizeImports": true,
+    //     // "source.organizeImports.reorder-python-imports": true
+    // },
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "black",
+    "workbench.colorCustolizations": {
+        "titleBar.activeBackground": "#a75600"
+    },
+}
