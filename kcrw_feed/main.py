@@ -6,18 +6,22 @@ from datetime import datetime
 import argparse  # For command-line arguments
 import re
 import io
+from typing import List, Dict, Optional
+from urllib.parse import urlparse
 
-# import scraper
-# import generate_feed
+from kcrw_feed import sitemap
+# from kcrw_feed import scraper
+# from kcrw_feed import generate_feed
 
-def scrape_show(show_url, episode_count=6) -> list:
+
+def scrape_show(show_url: str, episode_count: int = 6) -> Optional[List[Dict]]:
     """Scrapes KCRW show data and returns a list of episode dictionaries."""
 
     try:
         # response = requests.get(show_url)
         # response.raise_for_status()  # Raise an exception for bad status codes
         # soup = BeautifulSoup(response.content, "html.parser")
-        with open("./tests/henry-rollins/henry-rollins", "r") as f:
+        with open("./tests/henry-rollins/henry-rollins", "r", encoding="utf-8") as f:
             soup = BeautifulSoup(f, "html.parser")
         # print(soup.prettify())
 
@@ -27,7 +31,9 @@ def scrape_show(show_url, episode_count=6) -> list:
             print("Could not find show headline.")
             return None
 
-        latest_episode = int(show_headline.text.replace("KCRW Broadcast ", "")) # leave episode number
+        latest_episode = int(
+            show_headline.text.replace("KCRW Broadcast ", "")
+        )  # leave episode number
         # print(latest_episode)
 
         episodes = []
@@ -36,14 +42,20 @@ def scrape_show(show_url, episode_count=6) -> list:
         for i in range(episode_count):
             episode_number = latest_episode - i
             # Example: "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822/player.json"
-            episode_url = f"https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-{episode_number}/player.json"  # f-string formatting
+            episode_url = f"https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-{
+                episode_number}/player.json"  # f-string formatting
             print(episode_number, ":", episode_url)
 
             try:
                 # episode_response = requests.get(episode_url)
                 # episode_response.raise_for_status()
                 # episode_data = episode_response.json()
-                with open(f"tests/henry-rollins/kcrw-broadcast-{episode_number}_player.json", "r") as f:
+                with open(
+                    f"./tests/henry-rollins/kcrw-broadcast-{
+                        episode_number}_player.json",
+                    "r",
+                    encoding="utf-8"
+                ) as f:
                     episode_data = json.load(f)
                 # print(episode_data)
 
@@ -65,15 +77,17 @@ def scrape_show(show_url, episode_count=6) -> list:
         return None
 
 
-
 def generate_feed(show_data, feed_filename="kcrw_feed.rss"):
     """Generates an RSS feed from the scraped show data."""
     if show_data is None:
         return
 
-    print([ sd.get("airdate") for sd in show_data])
-    show_data.sort(key=lambda e: datetime.strptime(e["airdate"], "%Y-%m-%dT%H:%M:%S%z"), reverse=True) # Sort by airdate
-    print([ sd.get("airdate") for sd in show_data])
+    print([sd.get("airdate") for sd in show_data])
+    show_data.sort(
+        key=lambda e: datetime.strptime(e["airdate"], "%Y-%m-%dT%H:%M:%S%z"),
+        reverse=True,
+    )  # Sort by airdate
+    print([sd.get("airdate") for sd in show_data])
 
     feed = feedgenerator.Rss201rev2Feed(
         title="Henry Rollins - KCRW",
@@ -85,12 +99,17 @@ def generate_feed(show_data, feed_filename="kcrw_feed.rss"):
     )
 
     for episode in show_data:
+        media_url = urlparse(episode["media"][0]["url"])  # Enclosure URL
+        media_url = media_url._replace(query=None)  # strip query parameters
+        # print(media_url.geturl())
         feed.add_item(
             title=episode["title"],
             description=episode["description"],
-            link=episode["media"][0]["url"],  # Enclosure URL
+            link=media_url.geturl(),
             guid=episode["uuid"],
-            pubdate=datetime.strptime(episode["airdate"], "%Y-%m-%dT%H:%M:%S%z"),  # Parse airdate
+            pubdate=datetime.strptime(
+                episode["airdate"], "%Y-%m-%dT%H:%M:%S%z"
+            ),  # Parse airdate
             itunes_image=episode["image"],
             itunes_duration=episode["duration"],
         )
@@ -100,20 +119,35 @@ def generate_feed(show_data, feed_filename="kcrw_feed.rss"):
     # print(feed_string.getvalue())
     # rss = BeautifulSoup(feed_string, "html.parser")
     # print(rss.prettify())
-    with open(feed_filename, 'w') as fp:
-        feed.write(fp, 'utf-8')
+    with open(feed_filename, "w") as fp:
+        feed.write(fp, "utf-8")
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate KCRW RSS feed.")
+    parser = argparse.ArgumentParser(description="Generate KCRW feed.")
     parser.add_argument("show_url", help="URL of the KCRW show page.")
-    parser.add_argument("-n", "--episodes", type=int, default=6, help="Number of episodes to include (default: 6).")
-    parser.add_argument("-o", "--output", default="kcrw_feed.rss", help="Output RSS filename (default: kcrw_feed.rss).")
+    parser.add_argument(
+        "-n",
+        "--episodes",
+        type=int,
+        default=6,
+        help="Number of episodes to include (default: 6).",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="kcrw_feed.rss",
+        help="Output RSS filename (default: kcrw_feed.rss).",
+    )
 
     args = parser.parse_args()
 
     show_url = args.show_url
     episode_count = args.episodes
     output_filename = args.output
+
+    # root_sitemap = "./research/sitemap.xml"  # .gz
+    # sitemaps = sitemap.process_sitemap_index(root_sitemap)
 
     episodes = scrape_show(show_url, episode_count)
 
