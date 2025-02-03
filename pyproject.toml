@@ -1,7 +1,7 @@
 [project]
 name = "kcrw-feed"
 version = "0.1.0"
-description = ""
+description = "This project generates RSS/Atom feeds for KCRW music shows"
 license = { text = "GPL-3.0-only" }
 authors = [
     {name = "Marc Alvidrez",email = "cram@greenavenger.com"}
@@ -13,7 +13,10 @@ dependencies = [
     "pytest-cov (>=6.0.0,<7.0.0)",
     "requests (>=2.32.3,<3.0.0)",
     "beautifulsoup4 (>=4.12.3,<5.0.0)",
-    "feedgenerator (>=2.1.0,<3.0.0)"
+    "feedgenerator (>=2.1.0,<3.0.0)",
+    "black (>=25.1.0,<26.0.0)",
+    "pylint (>=3.3.4,<4.0.0)",
+    "isort (>=6.0.0,<7.0.0)"
 ]
 
 [tool.poetry.scripts]
