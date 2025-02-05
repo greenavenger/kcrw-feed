@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 import sys
 import pprint
 
-from models import DJ, Show, Episode
+from kcrw_feed import models
 # from kcrw_feed import sitemap
 # from kcrw_feed import scraper
 # from kcrw_feed import generate_feed
@@ -150,10 +150,10 @@ def main():
     output_filename = args.output
 
     # model
-    dj = DJ(name="Dan Wilcox")
+    dj = models.DJ(name="Dan Wilcox")
 
     # Create a show instance.
-    show = Show(
+    show = models.Show(
         title="Weekly Music Show",
         url="http://kcrw.com/shows/dan-wilcox",
         description="A weekly round-up of music."
@@ -161,8 +161,7 @@ def main():
     dj.add_show(show)
 
     # Create an episode.
-    from datetime import datetime
-    episode = Episode(
+    episode = models.Episode(
         title="Episode 1",
         pub_date=datetime.now(),
         audio_url="http://kcrw.com/audio/episode1.mp3",
