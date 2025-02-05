@@ -8,8 +8,11 @@ import re
 import io
 from typing import List, Dict, Optional
 from urllib.parse import urlparse
+import sys
+import pprint
 
-from kcrw_feed import sitemap
+from models import DJ, Show, Episode
+# from kcrw_feed import sitemap
 # from kcrw_feed import scraper
 # from kcrw_feed import generate_feed
 
@@ -146,7 +149,31 @@ def main():
     episode_count = args.episodes
     output_filename = args.output
 
-    # root_sitemap = "./research/sitemap.xml"  # .gz
+    # model
+    dj = DJ(name="Dan Wilcox")
+
+    # Create a show instance.
+    show = Show(
+        title="Weekly Music Show",
+        url="http://kcrw.com/shows/dan-wilcox",
+        description="A weekly round-up of music."
+    )
+    dj.add_show(show)
+
+    # Create an episode.
+    from datetime import datetime
+    episode = Episode(
+        title="Episode 1",
+        pub_date=datetime.now(),
+        audio_url="http://kcrw.com/audio/episode1.mp3",
+        description="Kickoff episode."
+    )
+    show.add_episode(episode)
+
+    # Output current state (for debugging)
+    pprint.pprint(dj)
+
+    # root_sitemap = "./research/sitemap.xml.gz"
     # sitemaps = sitemap.process_sitemap_index(root_sitemap)
 
     episodes = scrape_show(show_url, episode_count)
