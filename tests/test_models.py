@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
-from kcrw_feed.models import DJ, Show, Episode
+from kcrw_feed.models import Host, Show, Episode
 
 
 def test_dj_add_show():
-    """Test DJ method"""
-    # Create a DJ instance
-    dj = DJ(name="Test DJ")
+    """Test Host method"""
+    # Create a Host instance
+    dj = Host(name="Test DJ")
 
-    # Create a Show instance and add it to the DJ
+    # Create a Show instance and add it to the host
     show = Show(title="Test Show", url="http://example.com/show")
     dj.add_show(show)
 

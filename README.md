@@ -37,7 +37,7 @@ I'm working of this project as much to learn as I am to build the thing, so lear
 ```mermaid
 classDiagram
     %% Data Model Classes
-    class DJ {
+    class Host {
         - string name
         - List~Show~ shows
         + add_show(show: Show)
@@ -65,7 +65,7 @@ classDiagram
     
     %% Processing Classes
     class SitemapProcessor {
-        + parse_sitemaps(sitemap_urls: List~string~) : List~DJ~
+        + parse_sitemaps(sitemap_urls: List~string~) : List~Host~
     }
     
     class ShowScraper {
@@ -99,7 +99,7 @@ classDiagram
     }
     
     %% Relationships
-    DJ "1" --> "0..*" Show : contains
+    Host "1" --> "0..*" Show : contains
     Show "1" --> "0..*" Episode : contains
     KCRWFeedBuilder --> SitemapProcessor : uses
     KCRWFeedBuilder --> ShowScraper : uses
@@ -129,7 +129,7 @@ sequenceDiagram
     
     %% Process the KCRW sitemap(s)
     Builder->>Sitemap: parse_sitemaps(urls)
-    Sitemap-->>Builder: List of DJs/Shows
+    Sitemap-->>Builder: List of Hosts/Shows
     
     %% Update shows that need updating
     loop For each Show needing update
@@ -164,9 +164,9 @@ sequenceDiagram
 │   ├── __init__.py
 │   ├── main.py             # Entry point / CLI that orchestrates everything.
 │   │
-│   ├── models              # Data models: DJ, Show, Episode.
+│   ├── models              # Data models: Host, Show, Episode.
 │   │   ├── __init__.py
-│   │   ├── dj.py
+│   │   ├── host.py
 │   │   ├── show.py
 │   │   └── episode.py
 │   │

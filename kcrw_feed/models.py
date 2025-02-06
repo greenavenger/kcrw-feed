@@ -7,12 +7,12 @@ from datetime import datetime
 
 
 @dataclass
-class DJ:
+class Host:
     name: str
     shows: List[Show] = field(default_factory=list)
 
     def add_show(self, show: Show) -> None:
-        """Add a show to this DJ's list of shows."""
+        """Add a show to this host's list of shows."""
         self.shows.append(show)
 
     def get_active_shows(self) -> List[Show]:

@@ -150,7 +150,7 @@ def main():
     output_filename = args.output
 
     # model
-    dj = models.DJ(name="Dan Wilcox")
+    dj = models.Host(name="Dan Wilcox")
 
     # Create a show instance.
     show = models.Show(
