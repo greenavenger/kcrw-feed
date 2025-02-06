@@ -1,4 +1,4 @@
-"""Module to hold basic data classes"""
+"""Module to hold core dataclass objects"""
 
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -9,6 +9,12 @@ from datetime import datetime
 @dataclass
 class Host:
     name: str
+    uuid: Optional[str] = None
+    title: Optional[str] = None  # job title
+    url: Optional[str] = None  # host page
+    image_url: Optional[str] = None
+    twitter: Optional[str] = None
+    description: Optional[str] = None
     shows: List[Show] = field(default_factory=list)
 
     def add_show(self, show: Show) -> None:
@@ -27,6 +33,7 @@ class Host:
 class Show:
     title: str
     url: str
+    uuid: Optional[str] = None
     description: Optional[str] = None
     episodes: List[Episode] = field(default_factory=list)
     last_updated: Optional[datetime] = None
@@ -58,4 +65,5 @@ class Episode:
     title: str
     pub_date: datetime
     audio_url: str
+    uuid: Optional[str] = None
     description: Optional[str] = None

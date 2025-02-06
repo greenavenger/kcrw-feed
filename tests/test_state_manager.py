@@ -1,0 +1,228 @@
+"""Module to test state_manager.py"""
+
+import io
+import json
+from datetime import datetime
+import pytest
+
+from kcrw_feed.state_manager import Json
+from kcrw_feed.models import Host, Show, Episode
+
+
+def test_default_serializer_datetime():
+    js = Json()
+    dt = datetime(2025, 1, 1, 12, 30)
+    result = js.default_serializer(dt)
+    assert result == dt.isoformat()
+
+
+def test_default_serializer_invalid():
+    js = Json()
+    with pytest.raises(TypeError):
+        js.default_serializer(123)  # An int should raise TypeError
+
+
+def test_parse_datetime():
+    js = Json()
+    dt_str = "2025-01-01T12:30:00"
+    dt = js._parse_datetime(dt_str)
+    expected = datetime(2025, 1, 1, 12, 30)
+    assert dt == expected
+
+
+def test_episode_from_dict():
+    js = Json()
+    dt_str = "2025-01-01T12:30:00"
+    data = {
+        "title": "Episode 1",
+        "pub_date": dt_str,
+        "audio_url": "http://example.com/episode1.mp3",
+        "description": "Test episode"
+    }
+    episode = js.episode_from_dict(data)
+    assert isinstance(episode, Episode)
+    assert episode.title == "Episode 1"
+    assert episode.audio_url == "http://example.com/episode1.mp3"
+    assert episode.description == "Test episode"
+    assert episode.pub_date == datetime.fromisoformat(dt_str)
+
+
+def test_show_from_dict():
+    js = Json()
+    dt_str = "2025-01-02T13:45:00"
+    show_data = {
+        "title": "Show 1",
+        "url": "http://example.com/show1",
+        "description": "Test show",
+        "last_updated": dt_str,
+        "metadata": {"genre": "rock"},
+        "episodes": [
+            {
+                "title": "Episode A",
+                "pub_date": "2025-01-01T12:30:00",
+                "audio_url": "http://example.com/episodeA.mp3",
+                "description": "Episode A desc"
+            }
+        ]
+    }
+    show = js.show_from_dict(show_data)
+    assert isinstance(show, Show)
+    assert show.title == "Show 1"
+    assert show.url == "http://example.com/show1"
+    assert show.description == "Test show"
+    assert show.metadata == {"genre": "rock"}
+    assert show.last_updated == datetime.fromisoformat(dt_str)
+    assert len(show.episodes) == 1
+    ep = show.episodes[0]
+    assert ep.title == "Episode A"
+
+
+def test_host_from_dict():
+    js = Json()
+    host_data = {
+        "name": "Host 1",
+        "shows": [
+            {
+                "title": "Show 1",
+                "url": "http://example.com/show1",
+                "description": "Test show",
+                "last_updated": "2025-01-02T13:45:00",
+                "metadata": {"genre": "rock"},
+                "episodes": [
+                    {
+                        "title": "Episode A",
+                        "pub_date": "2025-01-01T12:30:00",
+                        "audio_url": "http://example.com/episodeA.mp3",
+                        "description": "Episode A desc"
+                    }
+                ]
+            }
+        ]
+    }
+    host = js.host_from_dict(host_data)
+    assert isinstance(host, Host)
+    assert host.name == "Host 1"
+    assert len(host.shows) == 1
+    show = host.shows[0]
+    assert show.title == "Show 1"
+    assert len(show.episodes) == 1
+
+
+def test_save_and_load_state(tmp_path):
+    # Create a Host instance with one Show and one Episode
+    dt1 = datetime(2025, 1, 1, 12, 30)
+    dt2 = datetime(2025, 1, 2, 13, 45)
+    episode = Episode(
+        title="Episode A",
+        pub_date=dt1,
+        audio_url="http://example.com/episodeA.mp3",
+        description="Episode A desc"
+    )
+    show = Show(
+        title="Show 1",
+        url="http://example.com/show1",
+        description="Test show",
+        episodes=[episode],
+        last_updated=dt2,
+        metadata={"genre": "rock"}
+    )
+    host = Host(
+        name="Host 1",
+        shows=[show]
+    )
+
+
+@pytest.fixture
+# Hermetic: Test file ops without actually touching local disk
+def fake_fs(monkeypatch):
+    """
+    A simple fake file system using a dictionary.
+    Files written to 'open' in write mode will be stored in the dictionary.
+    Reads will return a StringIO initialized with the stored contents.
+    """
+    files = {}
+
+    def fake_open(filename, mode='r', *args, **kwargs):
+        # For writing: create a StringIO and store its contents when closed.
+        if 'w' in mode:
+            file_obj = io.StringIO()
+
+            # Override close to store the file content
+            orig_close = file_obj.close
+
+            def fake_close():
+                files[filename] = file_obj.getvalue()
+                orig_close()
+            file_obj.close = fake_close
+            return file_obj
+
+        # For reading: return a StringIO containing the file's content (or empty string if not found).
+        elif 'r' in mode:
+            content = files.get(filename, '')
+            return io.StringIO(content)
+
+        else:
+            raise ValueError(f"Unsupported file mode: {mode}")
+
+    monkeypatch.setattr("builtins.open", fake_open)
+    return files
+
+
+def test_save_and_load_state_in_memory(fake_fs):
+    # Create test data: a Host with one Show and one Episode
+    dt1 = datetime(2025, 1, 1, 12, 30)
+    dt2 = datetime(2025, 1, 2, 13, 45)
+    episode = Episode(
+        title="Episode A",
+        pub_date=dt1,
+        audio_url="http://example.com/episodeA.mp3",
+        description="Episode A desc"
+    )
+    show = Show(
+        title="Show 1",
+        url="http://example.com/show1",
+        description="Test show",
+        episodes=[episode],
+        last_updated=dt2,
+        metadata={"genre": "rock"}
+    )
+    host = Host(
+        name="Host 1",
+        shows=[show]
+    )
+
+    # Use a fake filename; it doesn't matter what string we choose.
+    fake_filename = "fake_state.json"
+    js = Json(filename=fake_filename)
+
+    # Save state (this will write to our fake_fs dictionary)
+    js.save_state(host)
+    # Optionally, inspect fake_fs to see the file content.
+    saved_content = fake_fs[fake_filename]
+    # For example, check that the saved content is valid JSON.
+    data = json.loads(saved_content)
+    assert data["name"] == "Host 1"
+    assert len(data["shows"]) == 1
+
+    # Load state (this will read from fake_fs)
+    loaded_host = js.load_state()
+    assert loaded_host.name == host.name
+    # Check that the show details match.
+    assert len(loaded_host.shows) == len(host.shows)
+    loaded_show = loaded_host.shows[0]
+    original_show = host.shows[0]
+    assert loaded_show.title == original_show.title
+    assert loaded_show.url == original_show.url
+    assert loaded_show.description == original_show.description
+    assert loaded_show.metadata == original_show.metadata
+    # Compare datetime fields by their ISO strings.
+    assert loaded_show.last_updated.isoformat(
+    ) == original_show.last_updated.isoformat()
+    # Verify episode data.
+    assert len(loaded_show.episodes) == 1
+    loaded_episode = loaded_show.episodes[0]
+    original_episode = original_show.episodes[0]
+    assert loaded_episode.title == original_episode.title
+    assert loaded_episode.audio_url == original_episode.audio_url
+    assert loaded_episode.description == original_episode.description
+    assert loaded_episode.pub_date.isoformat() == original_episode.pub_date.isoformat()

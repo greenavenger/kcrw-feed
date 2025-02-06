@@ -11,7 +11,8 @@ from urllib.parse import urlparse
 import sys
 import pprint
 
-from kcrw_feed import models
+from kcrw_feed.models import Host, Show, Episode
+from kcrw_feed import state_manager
 # from kcrw_feed import sitemap
 # from kcrw_feed import scraper
 # from kcrw_feed import generate_feed
@@ -149,25 +150,51 @@ def main():
     episode_count = args.episodes
     output_filename = args.output
 
+    state = state_manager.Json()
+
     # model
-    dj = models.Host(name="Dan Wilcox")
+    dj = Host(name="Dan Wilcox")
+    # state.save_state(dj)
+    # del dj
+    # dj = state.load_state()
+    # pprint.pprint(dj)
 
     # Create a show instance.
-    show = models.Show(
+    show = Show(
         title="Weekly Music Show",
         url="http://kcrw.com/shows/dan-wilcox",
         description="A weekly round-up of music."
     )
     dj.add_show(show)
+    # pprint.pprint(dj)
+
+    state.save_state(dj)
+    del show, dj
+    dj = state.load_state()
+    show = dj.get_active_shows()[0]  # first show
+    # pprint.pprint(dj)
 
     # Create an episode.
-    episode = models.Episode(
+    episode = Episode(
         title="Episode 1",
         pub_date=datetime.now(),
         audio_url="http://kcrw.com/audio/episode1.mp3",
         description="Kickoff episode."
     )
     show.add_episode(episode)
+    # Create another episode.
+    episode = Episode(
+        title="Episode 2",
+        pub_date=datetime.now(),
+        audio_url="http://kcrw.com/audio/episode2.mp3",
+        description="Sophomore episode."
+    )
+    show.add_episode(episode)
+    # pprint.pprint(dj)
+
+    state.save_state(dj)
+    del dj
+    dj = state.load_state()
 
     # Output current state (for debugging)
     pprint.pprint(dj)

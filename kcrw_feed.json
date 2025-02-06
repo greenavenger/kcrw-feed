@@ -1,0 +1,33 @@
+{
+  "name": "Dan Wilcox",
+  "uuid": null,
+  "title": null,
+  "url": null,
+  "image_url": null,
+  "twitter": null,
+  "description": null,
+  "shows": [
+    {
+      "title": "Weekly Music Show",
+      "url": "http://kcrw.com/shows/dan-wilcox",
+      "uuid": null,
+      "description": "A weekly round-up of music.",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "pub_date": "2025-02-06T12:32:36.792449",
+          "audio_url": "http://kcrw.com/audio/episode1.mp3",
+          "description": "Kickoff episode."
+        },
+        {
+          "title": "Episode 2",
+          "pub_date": "2025-02-06T12:32:36.792455",
+          "audio_url": "http://kcrw.com/audio/episode2.mp3",
+          "description": "Sophomore episode."
+        }
+      ],
+      "last_updated": null,
+      "metadata": {}
+    }
+  ]
+}
