@@ -1,35 +1,40 @@
+"""Module to hold tests for core dataclass objects"""
+
 from datetime import datetime, timedelta
 from kcrw_feed.models import Host, Show, Episode
 
 
-def test_dj_add_show():
-    """Test Host method"""
+def test_show_add_host():
+    """Test that a host can be added to a show."""
     # Create a Host instance
-    dj = Host(name="Test DJ")
+    host = Host(name="Test Host")
 
-    # Create a Show instance and add it to the host
+    # Create a Show instance and add the host
     show = Show(title="Test Show", url="http://example.com/show")
-    dj.add_show(show)
+    show.add_host(host)
 
-    # Verify that the show is added correctly.
-    assert len(dj.shows) == 1
-    assert dj.shows[0].title == "Test Show"
-    # The get_active_shows() method currently returns all shows.
-    assert dj.get_active_shows() == dj.shows
+    # Verify that the host is added correctly.
+    assert len(show.hosts) == 1
+    assert show.hosts[0].name == "Test Host"
 
 
 def test_show_update_info():
-    """Test Show method"""
+    """Test the update_info method of the Show."""
     # Create a Show instance with an initial description and empty metadata.
-    show = Show(title="Test Show", url="http://example.com/show",
-                description="Old description", metadata={})
+    show = Show(
+        title="Test Show",
+        url="http://example.com/show",
+        description="Old description",
+        metadata={}
+    )
 
-    # Prepare new data for updating
-    new_data = {"description": "New description",
-                "metadata": {"genre": "rock"}}
+    # Prepare new data for updating.
+    new_data = {
+        "description": "New description",
+        "metadata": {"genre": "rock"}
+    }
 
-    # Capture the time before updating
-    # before_update = datetime.now()
+    # Update the show info.
     show.update_info(new_data)
 
     # Verify that the description and metadata are updated.
@@ -42,7 +47,7 @@ def test_show_update_info():
 
 
 def test_show_add_episode():
-    """Test Show method"""
+    """Test that an episode can be added to a show."""
     # Create a Show instance.
     show = Show(title="Test Show", url="http://example.com/show")
 
@@ -58,13 +63,13 @@ def test_show_add_episode():
     # Add the episode to the show.
     show.add_episode(episode)
 
-    # Verify the episode is added.
+    # Verify the episode is added correctly.
     assert len(show.episodes) == 1
     assert show.episodes[0].title == "Episode 1"
 
 
 def test_show_needs_update():
-    """Test Show method"""
+    """Test the needs_update method of the Show."""
     # Create a Show with no last_updated, so it should need an update.
     show = Show(title="Test Show", url="http://example.com/show")
     assert show.needs_update() is True
@@ -77,8 +82,7 @@ def test_show_needs_update():
 
 
 def test_episode_creation():
-    """Test Episode method"""
-    # Create an Episode and verify its attributes.
+    """Test that an Episode is created correctly."""
     pub_date = datetime(2023, 1, 1, 12, 0, 0)
     episode = Episode(
         title="Episode 1",

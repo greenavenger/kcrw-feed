@@ -30,6 +30,16 @@ def test_parse_datetime():
     assert dt == expected
 
 
+def test_host_from_dict():
+    js = Json()
+    host_data = {
+        "name": "Host 1",
+    }
+    host = js.host_from_dict(host_data)
+    assert isinstance(host, Host)
+    assert host.name == "Host 1"
+
+
 def test_episode_from_dict():
     js = Json()
     dt_str = "2025-01-01T12:30:00"
@@ -56,6 +66,11 @@ def test_show_from_dict():
         "description": "Test show",
         "last_updated": dt_str,
         "metadata": {"genre": "rock"},
+        "hosts": [
+            {
+                "name": "Host 1"
+            }
+        ],
         "episodes": [
             {
                 "title": "Episode A",
@@ -72,64 +87,12 @@ def test_show_from_dict():
     assert show.description == "Test show"
     assert show.metadata == {"genre": "rock"}
     assert show.last_updated == datetime.fromisoformat(dt_str)
+    assert len(show.hosts) == 1
+    ho = show.hosts[0]
+    assert ho.name == "Host 1"
     assert len(show.episodes) == 1
     ep = show.episodes[0]
     assert ep.title == "Episode A"
-
-
-def test_host_from_dict():
-    js = Json()
-    host_data = {
-        "name": "Host 1",
-        "shows": [
-            {
-                "title": "Show 1",
-                "url": "http://example.com/show1",
-                "description": "Test show",
-                "last_updated": "2025-01-02T13:45:00",
-                "metadata": {"genre": "rock"},
-                "episodes": [
-                    {
-                        "title": "Episode A",
-                        "pub_date": "2025-01-01T12:30:00",
-                        "audio_url": "http://example.com/episodeA.mp3",
-                        "description": "Episode A desc"
-                    }
-                ]
-            }
-        ]
-    }
-    host = js.host_from_dict(host_data)
-    assert isinstance(host, Host)
-    assert host.name == "Host 1"
-    assert len(host.shows) == 1
-    show = host.shows[0]
-    assert show.title == "Show 1"
-    assert len(show.episodes) == 1
-
-
-def test_save_and_load_state(tmp_path):
-    # Create a Host instance with one Show and one Episode
-    dt1 = datetime(2025, 1, 1, 12, 30)
-    dt2 = datetime(2025, 1, 2, 13, 45)
-    episode = Episode(
-        title="Episode A",
-        pub_date=dt1,
-        audio_url="http://example.com/episodeA.mp3",
-        description="Episode A desc"
-    )
-    show = Show(
-        title="Show 1",
-        url="http://example.com/show1",
-        description="Test show",
-        episodes=[episode],
-        last_updated=dt2,
-        metadata={"genre": "rock"}
-    )
-    host = Host(
-        name="Host 1",
-        shows=[show]
-    )
 
 
 @pytest.fixture
@@ -172,6 +135,9 @@ def test_save_and_load_state_in_memory(fake_fs):
     # Create test data: a Host with one Show and one Episode
     dt1 = datetime(2025, 1, 1, 12, 30)
     dt2 = datetime(2025, 1, 2, 13, 45)
+    host = Host(
+        name="Host 1"
+    )
     episode = Episode(
         title="Episode A",
         pub_date=dt1,
@@ -182,13 +148,10 @@ def test_save_and_load_state_in_memory(fake_fs):
         title="Show 1",
         url="http://example.com/show1",
         description="Test show",
+        hosts=[host],
         episodes=[episode],
         last_updated=dt2,
         metadata={"genre": "rock"}
-    )
-    host = Host(
-        name="Host 1",
-        shows=[show]
     )
 
     # Use a fake filename; it doesn't matter what string we choose.
@@ -196,32 +159,31 @@ def test_save_and_load_state_in_memory(fake_fs):
     js = Json(filename=fake_filename)
 
     # Save state (this will write to our fake_fs dictionary)
-    js.save_state(host)
+    js.save_state(show)
     # Optionally, inspect fake_fs to see the file content.
     saved_content = fake_fs[fake_filename]
     # For example, check that the saved content is valid JSON.
     data = json.loads(saved_content)
-    assert data["name"] == "Host 1"
-    assert len(data["shows"]) == 1
-
+    assert data["title"] == "Show 1"
+    assert len(data["hosts"]) == 1
+    assert len(data["episodes"]) == 1
     # Load state (this will read from fake_fs)
-    loaded_host = js.load_state()
-    assert loaded_host.name == host.name
+    loaded_show = js.load_state()
     # Check that the show details match.
-    assert len(loaded_host.shows) == len(host.shows)
-    loaded_show = loaded_host.shows[0]
-    original_show = host.shows[0]
-    assert loaded_show.title == original_show.title
-    assert loaded_show.url == original_show.url
-    assert loaded_show.description == original_show.description
-    assert loaded_show.metadata == original_show.metadata
+    assert len(loaded_show.hosts) == len(show.hosts)
+    assert loaded_show.title == show.title
+    assert loaded_show.url == show.url
+    assert loaded_show.description == show.description
+    assert loaded_show.metadata == show.metadata
     # Compare datetime fields by their ISO strings.
     assert loaded_show.last_updated.isoformat(
-    ) == original_show.last_updated.isoformat()
+    ) == show.last_updated.isoformat()
+    # Check that the host details match.
+    assert loaded_show.title == show.title
     # Verify episode data.
     assert len(loaded_show.episodes) == 1
     loaded_episode = loaded_show.episodes[0]
-    original_episode = original_show.episodes[0]
+    original_episode = show.episodes[0]
     assert loaded_episode.title == original_episode.title
     assert loaded_episode.audio_url == original_episode.audio_url
     assert loaded_episode.description == original_episode.description

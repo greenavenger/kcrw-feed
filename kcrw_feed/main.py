@@ -13,7 +13,8 @@ import pprint
 
 from kcrw_feed.models import Host, Show, Episode
 from kcrw_feed import state_manager
-# from kcrw_feed import sitemap
+from kcrw_feed import sitemap
+from kcrw_feed import utils
 # from kcrw_feed import scraper
 # from kcrw_feed import generate_feed
 
@@ -153,26 +154,24 @@ def main():
     state = state_manager.Json()
 
     # model
-    dj = Host(name="Dan Wilcox")
-    # state.save_state(dj)
-    # del dj
-    # dj = state.load_state()
-    # pprint.pprint(dj)
-
     # Create a show instance.
     show = Show(
         title="Weekly Music Show",
         url="http://kcrw.com/shows/dan-wilcox",
         description="A weekly round-up of music."
     )
-    dj.add_show(show)
-    # pprint.pprint(dj)
+    # state.save_state(show)
+    # del show
+    # show = state.load_state()
+    # pprint.pprint(show)
 
-    state.save_state(dj)
-    del show, dj
-    dj = state.load_state()
-    show = dj.get_active_shows()[0]  # first show
-    # pprint.pprint(dj)
+    dj = Host(name="Dan Wilcox")
+    show.add_host(dj)
+    # state.save_state(show)
+    # del show, dj
+    # show = state.load_state()
+    # dj = show.hosts[0]  # first show
+    # pprint.pprint(show)
 
     # Create an episode.
     episode = Episode(
@@ -190,17 +189,14 @@ def main():
         description="Sophomore episode."
     )
     show.add_episode(episode)
-    # pprint.pprint(dj)
+    # pprint.pprint(show)
 
-    state.save_state(dj)
-    del dj
-    dj = state.load_state()
+    state.save_state(show)
+    del show
+    show = state.load_state()
 
     # Output current state (for debugging)
-    pprint.pprint(dj)
-
-    # root_sitemap = "./research/sitemap.xml.gz"
-    # sitemaps = sitemap.process_sitemap_index(root_sitemap)
+    pprint.pprint(show)
 
     episodes = scrape_show(show_url, episode_count)
 
@@ -209,6 +205,20 @@ def main():
         print(f"RSS feed generated successfully: {output_filename}")
     else:
         print("Failed to scrape show data.")
+
+    # url = "https://www.kcrw.com/music/shows/henry-rollins"
+    # show_data = sitemap.extract_show_data(url)
+    # pprint.pprint(show_data)
+
+    id = utils.extract_uuid('/#5883da63a527de85856a5c05e27331b8')
+    print(id)
+    print(id.hex)
+
+    # root_sitemap = "./research/sitemap.xml.gz"
+    # sitemaps = sitemap.process_sitemap_index_bs4(root_sitemap)
+    # sitemaps = sitemap.process_sitemap_index_xmltodict(root_sitemap)
+    # shows_sitemap = "./research/sitemap-1.xml.gz"
+    # sitemaps = sitemap.process_sitemap_shows_bs4(shows_sitemap)
 
 
 if __name__ == "__main__":
