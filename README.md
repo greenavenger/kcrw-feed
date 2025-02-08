@@ -163,12 +163,7 @@ sequenceDiagram
 ├── kcrw_feed
 │   ├── __init__.py
 │   ├── main.py             # Entry point / CLI that orchestrates everything.
-│   │
-│   ├── models              # Data models: Host, Show, Episode.
-│   │   ├── __init__.py
-│   │   ├── host.py
-│   │   ├── show.py
-│   │   └── episode.py
+│   ├── models.py           # Data models: Host, Show, Episode.
 │   │
 │   ├── processors          # Scraping/processing logic.
 │   │   ├── __init__.py
@@ -181,15 +176,23 @@ sequenceDiagram
 │   │   ├── rss_feed_generator.py
 │   │   └── atom_feed_generator.py
 │   │
-│   └── state               # State persistence functionality.
-│       ├── __init__.py
-│       └── state_manager.py
+│   └── state_manager.py    # State persistence functionality.
 │
-├── feeds                   # (Optional) Directory for generated feed files.
+├── feeds                   # Directory for generated feed files.
 │   └── ...                 # RSS/Atom XML output goes here.
 │
 └── tests
     ├── __init__.py
-    ├── test_example.py
+    ├── test_models.py
     └── ...                # Additional tests, possibly mirroring the package structure.
 ```
+
+---
+
+# License
+This project is licensed under the GPL-3.0 License.
+
+# Contact
+If you have any questions or suggestions, please open an issue on the GitHub repository. You can also reach me by [email](mailto:cram%40greenavenger.com).
+
+Happy listening!
