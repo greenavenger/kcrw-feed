@@ -22,7 +22,7 @@ from kcrw_feed import show_gatherer
 # from kcrw_feed import generate_feed
 
 pprint.pprint(CONFIG)
-print(CONFIG.get("sitemap_files"))
+print(CONFIG.get("extra_sitemaps"))
 
 
 def main():
@@ -45,7 +45,7 @@ def main():
     args = parser.parse_args()
 
     show_index = show_gatherer.ShowIndex(CONFIG.get(
-        "source_url"), sitemap_files=CONFIG.get("sitemap_files"))
+        "source_url"), extra_sitemaps=CONFIG.get("extra_sitemaps"))
     if args.command == "gather":
         gather_source = args.gather_source or CONFIG.get("gather_source")
         urls = show_index.gather_shows(

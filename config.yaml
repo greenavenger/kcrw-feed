@@ -4,8 +4,8 @@
 # source_url: "https://www.kcrw.com/"
 source_url: "./tests/data/"
 
-# Sitemap files
-sitemap_files:
+# Extra sitemap files
+extra_sitemaps:
 - "sitemap.xml.gz"    # https://www.kcrw.com/sitemap.xml.gz
 - "sitemap-1.xml.gz"  # https://www.kcrw.com/sitemap-shows/music/sitemap-1.xml.gz
 - "sitemap-2.xml.gz"  # https://www.kcrw.com/sitemap-shows/music/sitemap-2.xml.gz
