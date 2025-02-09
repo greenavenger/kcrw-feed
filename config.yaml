@@ -1,0 +1,17 @@
+# KCRW feed generator config.yaml
+
+# The root URL of the KCRW website
+# source_url: "https://www.kcrw.com/"
+source_url: "./tests/data/"
+
+# Sitemap files
+sitemap_files:
+- "sitemap.xml.gz"    # https://www.kcrw.com/sitemap.xml.gz
+- "sitemap-1.xml.gz"  # https://www.kcrw.com/sitemap-shows/music/sitemap-1.xml.gz
+- "sitemap-2.xml.gz"  # https://www.kcrw.com/sitemap-shows/music/sitemap-2.xml.gz
+
+# The default HTTP timeout in seconds for requests
+http_timeout: 10
+
+# The source for gathering shows (e.g., 'sitemap' or 'feed')
+gather_source: "sitemap"

@@ -1,6 +1,8 @@
 """Utility functions"""
 
+import fsspec
 import re
+from typing import Optional
 import uuid
 
 
@@ -30,3 +32,27 @@ def extract_uuid(text: str) -> uuid.UUID | None:
         except ValueError:
             return None
     return None
+
+
+def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
+    """
+    Retrieve a file as bytes. If the location starts with 'https' it is fetched over
+    HTTPS; otherwise it is opened from the local file system. Automatic decompression
+    is applied if the file extension suggests compression.
+
+    Parameters:
+        path (str): A URL or local path for the sitemap.
+        timeout (int): Timeout for HTTPS requests (if applicable).
+
+    Returns:
+        Optional[bytes]: The sitemap content, or None if an error occurs.
+    """
+    try:
+        # fsspec.open() supports local files, HTTP, and more. Using
+        # compression="infer" will automatically decompress if the file ends in .gz.
+        with fsspec.open(path, "rb", timeout=timeout, compression="infer") as f:
+            sitemap = f.read()
+        return sitemap
+    except Exception as e:
+        print(f"Error: Could not read sitemap from {path}: {e}")
+        return None

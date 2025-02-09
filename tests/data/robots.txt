@@ -1,0 +1,47 @@
+User-agent: *
+Allow: /images/default-share-image/
+Disallow: /*sendto_form$
+Disallow: /*folder_factories$
+Disallow: /*-assets/
+Disallow: /*_assets/
+Disallow: /resources/*
+Disallow: /*_resources/
+Disallow: /images/
+Disallow: /site_images/
+Disallow: /album-images/
+Disallow: /about/about-images/
+Disallow: /verifications/
+Disallow: /sponsored
+Disallow: /*player.json$
+Disallow: /*section.json$
+Disallow: /*episodes.json$
+Disallow: /*segments.json$
+Disallow: /*search.json$
+Disallow: /*channel-info.json$
+Disallow: /*uuid.json$
+Disallow: /*now_playing.json$
+Disallow: /*now_playing_uuid.json$
+Disallow: /*blog-posts.json$
+Disallow: /*player.xml$
+Disallow: /*section.xml$
+Disallow: /*episodes.xml$
+Disallow: /*getLiveShowOrProgram
+Disallow: /*getProgram
+Disallow: /*getProgramDetail
+Disallow: /*getShow
+Disallow: /*getRelated
+Disallow: /*getDailyShow
+Disallow: /*getSection
+Disallow: /*getSongList
+Disallow: /*getLiveChannelInfo
+Disallow: /*login
+Disallow: /*login_form
+Allow: /sponsored/*
+
+User-agent: Twitterbot
+Allow: /images/
+
+User-agent: facebookexternalhit
+Allow: /images/
+
+Sitemap: https://www.kcrw.com/sitemap.xml.gz
