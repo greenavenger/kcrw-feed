@@ -188,6 +188,33 @@ sequenceDiagram
 ```
 
 ---
+# Rough Stats
+
+- Show count: 67
+- Episode count: ~18k
+
+## Top few
+
+| # Episodes | Show |
+| ---------: | ---- |
+| 4743 | todays-top-tune |
+| 4590 | morning-becomes-eclectic |
+| 1000 | travis-holcombe |
+| 828 | henry-rollins |
+| 665 | album-preview |
+| 503 | metropolis |
+| 494 | tom-schnabels-rhythm-planet |
+| 443 | raul-campos |
+| 416 | nic-harcourt |
+| 391 | guest-dj-project |
+| 332 | chris-douridas |
+| 308 | garth-trinidad |
+| 233 | jason-kramer |
+| 226 | ro-wyldeflower-contreras |
+| 199 | leroy-downs |
+| 199 | dan-wilcox |
+
+---
 
 # License
 This project is licensed under the GPL-3.0 License.
