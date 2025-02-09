@@ -1,5 +1,6 @@
 """Module to gather the list of shows"""
 
+import pprint
 import re
 from typing import List
 import urllib.robotparser as urobot
@@ -38,8 +39,10 @@ class ShowIndex:
             all_show_urls = []
             for sitemap in sitemap_urls:
                 urls = self.read_sitemap(sitemap)
-                # Only include URLs that match the music-related patterns.
-                urls = [url for url in urls if MUSIC_FILTER_RE.search(url)]
+                # Only include URLs that have a 'loc' and match the music-related
+                # patterns.
+                urls = [url for url in urls if url.get(
+                    "loc") and MUSIC_FILTER_RE.search(url["loc"])]
                 all_show_urls.extend(urls)
             return all_show_urls
         elif source == "feed":
@@ -83,7 +86,8 @@ class ShowIndex:
             return []
         sitemap_text = sitemap_bytes.decode("utf-8")
         parsed = xmltodict.parse(sitemap_text)
-        return self._extract_locs(parsed)
+        # return self._extract_locs(parsed)
+        return self._extract_entries(parsed)
 
     def _extract_locs(self, data) -> List[str]:
         """Recursively extract all values associated with the key 'loc'.
@@ -104,6 +108,39 @@ class ShowIndex:
             for item in data:
                 locs.extend(self._extract_locs(item))
         return locs
+
+    def _extract_entries(self, data) -> List[dict]:
+        """Recursively traverse a dictionary or list parsed by xmltodict and
+        collect all sitemap entries. Each entry is a dict with at least a
+        "loc" key, and optionally "lastmod", "changefreq", and "priority".
+
+        Parameters:
+            data: The parsed XML (a dict or list) from xmltodict.
+
+        Returns:
+            List[dict]: A list of sitemap entry dictionaries."""
+        entries = []
+        if isinstance(data, dict):
+            # Check if this dict appears to represent a sitemap entry:
+            # We use case-insensitive matching for keys.
+            lower_keys = {k.lower(): k for k in data.keys()}
+            if "loc" in lower_keys:
+                entry = {"loc": data[lower_keys["loc"]]}
+                if "lastmod" in lower_keys:
+                    entry["lastmod"] = data[lower_keys["lastmod"]]
+                if "changefreq" in lower_keys:
+                    entry["changefreq"] = data[lower_keys["changefreq"]]
+                if "priority" in lower_keys:
+                    entry["priority"] = data[lower_keys["priority"]]
+                entries.append(entry)
+            else:
+                # Otherwise, traverse all values.
+                for value in data.values():
+                    entries.extend(self._extract_entries(value))
+        elif isinstance(data, list):
+            for item in data:
+                entries.extend(self._extract_entries(item))
+        return entries
 
     def parse_feeds(self, feed_path: str) -> List[str]:
         """Placeholder for gathering shows from RSS/Atom feeds.
