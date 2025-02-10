@@ -15,7 +15,7 @@ import pprint
 from kcrw_feed.config import CONFIG
 # from kcrw_feed.models import Host, Show, Episode
 # from kcrw_feed import state_manager
-from kcrw_feed import show_gatherer
+from kcrw_feed import show_index
 # from kcrw_feed import sitemap
 # from kcrw_feed import utils
 # from kcrw_feed import scraper
@@ -44,16 +44,15 @@ def main():
 
     args = parser.parse_args()
 
-    show_index = show_gatherer.ShowIndex(CONFIG.get(
+    index = show_index.ShowIndex(CONFIG.get(
         "source_url"), extra_sitemaps=CONFIG.get("extra_sitemaps"))
     if args.command == "gather":
         gather_source = args.gather_source or CONFIG.get("gather_source")
-        urls = show_index.gather_shows(
-            source=gather_source)
+        urls = index.process_sitemap(gather_source)
         print("Gathered URLs:")
         pprint.pprint(urls)
     elif args.command == "update":
-        urls = show_index.gather_shows(source="sitemap")
+        urls = index.gather_shows(source="sitemap")
         # If --shows is specified, filter the URLs.
         if args.shows:
             urls = [url for url in urls if url in args.shows]

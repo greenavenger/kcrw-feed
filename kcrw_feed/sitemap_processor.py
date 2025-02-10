@@ -17,7 +17,7 @@ MUSIC_FILTER_RE = re.compile(
 ROBOTS_FILE = "robots.txt"
 
 
-class ShowIndex:
+class SitemapProcessor:
     def __init__(self, source_url: str, extra_sitemaps: List[str] = None) -> None:
         """Parameters:
             source_url (str): The base URL (or local base path) for the site.

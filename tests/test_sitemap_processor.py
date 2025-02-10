@@ -1,7 +1,7 @@
 import pytest
 import io
 from typing import Optional
-from kcrw_feed.show_gatherer import ShowIndex
+from kcrw_feed.sitemap_processor import SitemapProcessor
 from kcrw_feed import utils
 
 
@@ -58,8 +58,8 @@ def test_find_sitemaps():
     both the discovered sitemaps and any extra sitemaps provided.
     """
     # Instantiate ShowIndex with a fake base URL and an extra sitemap.
-    index = ShowIndex("https://www.testsite.com/",
-                      extra_sitemaps=["extra-sitemap.xml"])
+    index = SitemapProcessor("https://www.testsite.com/",
+                             extra_sitemaps=["extra-sitemap.xml"])
     sitemap_urls = index.find_sitemaps()
     # Expected: sitemap1.xml, sitemap2.xml (from robots.txt) and extra-sitemap.xml.
     expected = {
@@ -108,7 +108,7 @@ def test_find_sitemaps():
 
 def test_extract_entries_simple():
     """Test _extract_entries() on a simple dict with only 'loc'."""
-    index = ShowIndex("https://www.testsite.com/")
+    index = SitemapProcessor("https://www.testsite.com/")
     data = {"loc": "https://www.testsite.com/music/shows/showX"}
     entries = index._extract_entries(data)
     expected = [{"loc": "https://www.testsite.com/music/shows/showX"}]
@@ -117,7 +117,7 @@ def test_extract_entries_simple():
 
 def test_extract_entries_with_optional_fields():
     """Test _extract_entries() when optional fields are present with mixed key case."""
-    index = ShowIndex("https://www.testsite.com/")
+    index = SitemapProcessor("https://www.testsite.com/")
     data = {
         "LoC": "https://www.testsite.com/music/shows/showY",
         "LASTMOD": "2025-02-01T00:00:00",
@@ -136,7 +136,7 @@ def test_extract_entries_with_optional_fields():
 
 def test_extract_entries_nested():
     """Test _extract_entries() on nested data structures."""
-    index = ShowIndex("https://www.testsite.com/")
+    index = SitemapProcessor("https://www.testsite.com/")
     data = {
         "urlset": {
             "url": [
