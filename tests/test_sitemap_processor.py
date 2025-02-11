@@ -1,5 +1,5 @@
 import pytest
-import io
+from datetime import datetime
 from typing import Optional
 from kcrw_feed.sitemap_processor import SitemapProcessor
 from kcrw_feed import utils
@@ -157,3 +157,85 @@ def test_extract_entries_nested():
         "https://www.testsite.com/music/shows/showA": {"loc": "https://www.testsite.com/music/shows/showA"}
     }
     assert processor._sitemap_entries == expected
+
+
+def test_get_all_entries():
+    """
+    Test that get_all_entries() returns all stored sitemap entries.
+    """
+    processor = SitemapProcessor("https://www.testsite.com/")
+    # Preload fake entries into the internal dict.
+    processor._sitemap_entries = {
+        "https://www.testsite.com/music/shows/show1": {
+            "loc": "https://www.testsite.com/music/shows/show1",
+            "lastmod": "2025-01-01T00:00:00"
+        },
+        "https://www.testsite.com/music/shows/show2": {
+            "loc": "https://www.testsite.com/music/shows/show2",
+            "lastmod": "2025-02-01T00:00:00"
+        }
+    }
+    entries = processor.get_all_entries()
+    expected = [
+        {"loc": "https://www.testsite.com/music/shows/show1",
+            "lastmod": "2025-01-01T00:00:00"},
+        {"loc": "https://www.testsite.com/music/shows/show2",
+            "lastmod": "2025-02-01T00:00:00"}
+    ]
+    # Convert each entry to a frozenset of items for unordered comparison.
+    assert {frozenset(entry.items()) for entry in entries} == {
+        frozenset(entry.items()) for entry in expected}
+
+
+def test_get_entries_after():
+    """
+    Test that get_entries_after() returns only entries with a lastmod date after a given threshold.
+    """
+    processor = SitemapProcessor("https://www.testsite.com/")
+    processor._sitemap_entries = {
+        "https://www.testsite.com/music/shows/show1": {
+            "loc": "https://www.testsite.com/music/shows/show1",
+            "lastmod": "2025-01-01T00:00:00"
+        },
+        "https://www.testsite.com/music/shows/show2": {
+            "loc": "https://www.testsite.com/music/shows/show2",
+            "lastmod": "2025-02-01T00:00:00"
+        },
+        "https://www.testsite.com/music/shows/show3": {
+            "loc": "https://www.testsite.com/music/shows/show3",
+            "lastmod": "2025-03-01T00:00:00"
+        }
+    }
+    threshold = datetime.fromisoformat("2025-01-15T00:00:00")
+    entries = processor.get_entries_after(threshold)
+    result_locs = {entry["loc"] for entry in entries}
+    expected_locs = {"https://www.testsite.com/music/shows/show2",
+                     "https://www.testsite.com/music/shows/show3"}
+    assert result_locs == expected_locs
+
+
+def test_get_entries_between():
+    """
+    Test that get_entries_between() returns only entries with a lastmod date between start and end.
+    """
+    processor = SitemapProcessor("https://www.testsite.com/")
+    processor._sitemap_entries = {
+        "https://www.testsite.com/music/shows/show1": {
+            "loc": "https://www.testsite.com/music/shows/show1",
+            "lastmod": "2025-01-01T00:00:00"
+        },
+        "https://www.testsite.com/music/shows/show2": {
+            "loc": "https://www.testsite.com/music/shows/show2",
+            "lastmod": "2025-02-01T00:00:00"
+        },
+        "https://www.testsite.com/music/shows/show3": {
+            "loc": "https://www.testsite.com/music/shows/show3",
+            "lastmod": "2025-03-01T00:00:00"
+        }
+    }
+    start = datetime.fromisoformat("2025-01-15T00:00:00")
+    end = datetime.fromisoformat("2025-02-15T00:00:00")
+    entries = processor.get_entries_between(start, end)
+    result_locs = {entry["loc"] for entry in entries}
+    expected_locs = {"https://www.testsite.com/music/shows/show2"}
+    assert result_locs == expected_locs
