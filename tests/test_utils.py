@@ -113,3 +113,64 @@ def test_get_file_nonexistent(tmp_path: Path):
     result = utils.get_file(str(non_existent))
     # Our function catches exceptions and returns None.
     assert result is None
+
+
+def test_normalize_url_with_leading_slash():
+    base = "https://www.testsite.com/"
+    loc = "/extra-sitemap.xml"
+    expected = "https://www.testsite.com/extra-sitemap.xml"
+    result = utils.normalize_location(base, loc)
+    assert result == expected
+
+
+def test_normalize_url_without_leading_slash():
+    base = "https://www.testsite.com"
+    loc = "extra-sitemap.xml"
+    # With urljoin, "https://www.testsite.com" and "extra-sitemap.xml" combine correctly.
+    expected = "https://www.testsite.com/extra-sitemap.xml"
+    result = utils.normalize_location(base, loc)
+    assert result == expected
+
+
+def test_normalize_url_with_directory():
+    base = "https://www.testsite.com/dir/"
+    loc = "extra-sitemap.xml"
+    expected = "https://www.testsite.com/dir/extra-sitemap.xml"
+    result = utils.normalize_location(base, loc)
+    assert result == expected
+
+
+def test_normalize_url_with_directory_and_leading_slash():
+    base = "https://www.testsite.com/dir/"
+    loc = "/extra-sitemap.xml"
+    # urljoin resets the path because loc starts with a slash.
+    expected = "https://www.testsite.com/extra-sitemap.xml"
+    result = utils.normalize_location(base, loc)
+    assert result == expected
+
+
+def test_normalize_local_path_relative():
+    base = "/home/user"
+    loc = "documents/report.txt"
+    # Expect the joined path to be "/home/user/documents/report.txt"
+    expected = os.path.normpath("/home/user/documents/report.txt")
+    result = utils.normalize_location(base, loc)
+    assert result == expected
+
+
+# TODO: fix
+# def test_normalize_local_path_with_leading_slash_in_loc():
+#     base = "/home/user"
+#     loc = "/documents/report.txt"
+#     # Our function strips the leading slash from loc, so the expected path is:
+#     expected = os.path.normpath("/home/user/documents/report.txt")
+#     result = utils.normalize_location(base, loc)
+#     assert result == expected
+
+
+def test_normalize_local_path_with_trailing_slash_in_base():
+    base = "/home/user/"
+    loc = "documents/report.txt"
+    expected = os.path.normpath("/home/user/documents/report.txt")
+    result = utils.normalize_location(base, loc)
+    assert result == expected

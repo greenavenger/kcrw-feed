@@ -25,6 +25,7 @@ class SitemapProcessor:
         """
         self.source_url = source_url
         self.extra_sitemaps = extra_sitemaps or []
+        self._sitemap_entries = {}
 
     def gather_shows(self, source: str = "sitemap") -> List[str]:
         """Gather show URLs based on the chosen source.
@@ -36,15 +37,9 @@ class SitemapProcessor:
             List[str]: A list of show URLs."""
         if source == "sitemap":
             sitemap_urls = self.find_sitemaps()
-            all_show_urls = []
             for sitemap in sitemap_urls:
-                urls = self.read_sitemap(sitemap)
-                # Only include URLs that have a 'loc' and match the music-related
-                # patterns.
-                urls = [url for url in urls if url.get(
-                    "loc") and MUSIC_FILTER_RE.search(url["loc"])]
-                all_show_urls.extend(urls)
-            return all_show_urls
+                self.read_sitemap(sitemap)
+            return sorted(list(self._sitemap_entries.keys()))
         elif source == "feed":
             # Placeholder for future feed-based gathering.
             return self.parse_feeds("path/to/feeds")
@@ -57,7 +52,8 @@ class SitemapProcessor:
         Returns:
             List[str]: A list of sitemap URLs."""
         # Construct the robots.txt location.
-        robots_path = self.source_url + ROBOTS_FILE
+        robots_path = utils.normalize_location(self.source_url, ROBOTS_FILE)
+        pprint.pprint(robots_path)
         robots_bytes = utils.get_file(robots_path)
         if not robots_bytes:
             raise FileNotFoundError(f"robots.txt not found at {robots_path}")
@@ -66,7 +62,8 @@ class SitemapProcessor:
         rp.parse(robots_txt.splitlines())
         sitemap_urls = rp.site_maps() or []
         # Append any extra sitemaps provided.
-        sitemap_urls += [self.source_url + s for s in self.extra_sitemaps]
+        sitemap_urls += [utils.normalize_location(self.source_url, s)
+                         for s in self.extra_sitemaps]
         # Filter to only include sitemap URLs.
         sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
         # Remove duplicates.
@@ -86,8 +83,7 @@ class SitemapProcessor:
             return []
         sitemap_text = sitemap_bytes.decode("utf-8")
         parsed = xmltodict.parse(sitemap_text)
-        # return self._extract_locs(parsed)
-        return self._extract_entries(parsed)
+        self._extract_entries(parsed)
 
     def _extract_locs(self, data) -> List[str]:
         """Recursively extract all values associated with the key 'loc'.
@@ -119,7 +115,6 @@ class SitemapProcessor:
 
         Returns:
             List[dict]: A list of sitemap entry dictionaries."""
-        entries = []
         if isinstance(data, dict):
             # Check if this dict appears to represent a sitemap entry:
             # We use case-insensitive matching for keys.
@@ -132,15 +127,16 @@ class SitemapProcessor:
                     entry["changefreq"] = data[lower_keys["changefreq"]]
                 if "priority" in lower_keys:
                     entry["priority"] = data[lower_keys["priority"]]
-                entries.append(entry)
+                # Add only entries that match the music filter
+                if MUSIC_FILTER_RE.search(entry["loc"]):
+                    self._sitemap_entries[entry["loc"]] = entry
             else:
                 # Otherwise, traverse all values.
                 for value in data.values():
-                    entries.extend(self._extract_entries(value))
+                    self._extract_entries(value)
         elif isinstance(data, list):
             for item in data:
-                entries.extend(self._extract_entries(item))
-        return entries
+                self._extract_entries(item)
 
     def parse_feeds(self, feed_path: str) -> List[str]:
         """Placeholder for gathering shows from RSS/Atom feeds.
