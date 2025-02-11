@@ -158,14 +158,13 @@ def test_normalize_local_path_relative():
     assert result == expected
 
 
-# TODO: fix
-# def test_normalize_local_path_with_leading_slash_in_loc():
-#     base = "/home/user"
-#     loc = "/documents/report.txt"
-#     # Our function strips the leading slash from loc, so the expected path is:
-#     expected = os.path.normpath("/home/user/documents/report.txt")
-#     result = utils.normalize_location(base, loc)
-#     assert result == expected
+def test_normalize_local_path_with_leading_slash_in_loc():
+    base = "/home/user"
+    loc = "/documents/report.txt"
+    # Our function strips the leading slash from loc, so the expected path is:
+    expected = os.path.normpath("/home/user/documents/report.txt")
+    result = utils.normalize_location(base, loc)
+    assert result == expected
 
 
 def test_normalize_local_path_with_trailing_slash_in_base():

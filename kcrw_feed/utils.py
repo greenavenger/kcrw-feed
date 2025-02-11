@@ -72,4 +72,6 @@ def normalize_location(base: str, loc: str) -> str:
     if base.startswith("http://") or base.startswith("https://"):
         return urljoin(base, loc)
     else:
-        return os.path.normpath(os.path.join(base, loc))
+        # Force loc to be treated as relative by stripping leading slashes.
+        rel = loc.lstrip(os.sep)
+        return os.path.normpath(os.path.join(base, rel))
