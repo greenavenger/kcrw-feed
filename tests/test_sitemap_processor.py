@@ -82,9 +82,9 @@ def test_read_sitemap():
     processor.read_sitemap("https://www.testsite.com/sitemap1.xml")
     # Our fake sitemap1.xml has two <url> entries, but only the one matching
     # /music/shows/ should be stored.
-    assert "https://www.testsite.com/music/shows/show1" in processor._sitemap_entries
+    assert "https://www.testsite.com/music/shows/show1" in processor._sitemap_entities
     # The non-music URL should not be present.
-    assert "https://www.testsite.com/other/url" not in processor._sitemap_entries
+    assert "https://www.testsite.com/other/url" not in processor._sitemap_entities
 
 
 def test_gather_shows():
@@ -95,7 +95,7 @@ def test_gather_shows():
     processor = SitemapProcessor("https://www.testsite.com/",
                                  extra_sitemaps=["/extra-sitemap.xml"])
     # When gather_shows is called, it processes all sitemaps and stores entries in self.urls.
-    urls = processor.gather_shows(source="sitemap")
+    urls = processor.gather_entries(source="sitemap")
     expected = {
         "https://www.testsite.com/music/shows/show1",
         "https://www.testsite.com/music/shows/show2",
@@ -110,11 +110,11 @@ def test_extract_entries_simple():
     """Test _extract_entries() on a simple dict with only 'loc'."""
     processor = SitemapProcessor("https://www.testsite.com/")
     data = {"loc": "https://www.testsite.com/music/shows/showX"}
-    processor._sitemap_entries = {}  # Reset internal dictionary.
+    processor._sitemap_entities = {}  # Reset internal dictionary.
     processor._extract_entries(data)
     expected = {"https://www.testsite.com/music/shows/showX":
                 {"loc": "https://www.testsite.com/music/shows/showX"}}
-    assert processor._sitemap_entries == expected
+    assert processor._sitemap_entities == expected
 
 
 def test_extract_entries_with_optional_fields():
@@ -126,7 +126,7 @@ def test_extract_entries_with_optional_fields():
         "ChangeFreq": "weekly",
         "Priority": "0.5"
     }
-    processor._sitemap_entries = {}
+    processor._sitemap_entities = {}
     processor._extract_entries(data)
     expected = {
         "https://www.testsite.com/music/shows/showY": {
@@ -136,7 +136,7 @@ def test_extract_entries_with_optional_fields():
             "priority": "0.5"
         }
     }
-    assert processor._sitemap_entries == expected
+    assert processor._sitemap_entities == expected
 
 
 def test_extract_entries_nested():
@@ -150,13 +150,13 @@ def test_extract_entries_nested():
             ]
         }
     }
-    processor._sitemap_entries = {}
+    processor._sitemap_entities = {}
     processor._extract_entries(data)
     # Only the music show should be stored.
     expected = {
         "https://www.testsite.com/music/shows/showA": {"loc": "https://www.testsite.com/music/shows/showA"}
     }
-    assert processor._sitemap_entries == expected
+    assert processor._sitemap_entities == expected
 
 
 def test_get_all_entries():
@@ -165,7 +165,7 @@ def test_get_all_entries():
     """
     processor = SitemapProcessor("https://www.testsite.com/")
     # Preload fake entries into the internal dict.
-    processor._sitemap_entries = {
+    processor._sitemap_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"
@@ -192,7 +192,7 @@ def test_get_entries_after():
     Test that get_entries_after() returns only entries with a lastmod date after a given threshold.
     """
     processor = SitemapProcessor("https://www.testsite.com/")
-    processor._sitemap_entries = {
+    processor._sitemap_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"
@@ -219,7 +219,7 @@ def test_get_entries_between():
     Test that get_entries_between() returns only entries with a lastmod date between start and end.
     """
     processor = SitemapProcessor("https://www.testsite.com/")
-    processor._sitemap_entries = {
+    processor._sitemap_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"

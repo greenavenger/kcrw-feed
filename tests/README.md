@@ -9,8 +9,12 @@ wget -S 'https://www.kcrw.com/sitemap-shows/music/sitemap-2.xml.gz'
 
 ## Show pages
 ```shell
-wget -S 'https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-november-28-2020'
 wget -S 'https://www.kcrw.com/music/shows/henry-rollins'
+```
+
+## Episode pages
+```shell
+wget -S 'https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-november-28-2020'
 ```
 
 ## Media JSON

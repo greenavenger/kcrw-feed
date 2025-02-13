@@ -13,8 +13,10 @@ class Host:
     title: Optional[str] = None  # job title
     url: Optional[str] = None      # host page
     image_url: Optional[str] = None
-    twitter: Optional[str] = None
+    socials: List[Episode] = field(default_factory=list)
     description: Optional[str] = None
+    type: Optional[str] = None
+    metadata: Dict = field(default_factory=dict)
 
 
 @dataclass
@@ -25,6 +27,7 @@ class Show:
     description: Optional[str] = None
     hosts: List[Host] = field(default_factory=list)
     episodes: List[Episode] = field(default_factory=list)
+    type: Optional[str] = None
     last_updated: Optional[datetime] = None
     metadata: Dict = field(default_factory=dict)
 
@@ -56,7 +59,10 @@ class Show:
 @dataclass
 class Episode:
     title: str
-    pub_date: datetime
+    airdate: datetime
+    url: str
     audio_url: str
     uuid: Optional[str] = None
     description: Optional[str] = None
+    type: Optional[str] = None
+    metadata: Dict = field(default_factory=dict)

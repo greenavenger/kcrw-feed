@@ -27,14 +27,16 @@ print(CONFIG.get("extra_sitemaps"))
 
 def main():
 
-    parser = argparse.ArgumentParser(description="KCRW Feed Updater")
+    parser = argparse.ArgumentParser(description="KCRW Feed Generator")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     gather_parser = subparsers.add_parser("gather", help="Gather show URLs")
     gather_parser.add_argument(
-        "--gather_source", default="sitemap", choices=["sitemap", "feed"])
+        "--source", default="sitemap", choices=["sitemap", "feed"])
 
     update_parser = subparsers.add_parser("update", help="Update show data")
+    update_parser.add_argument(
+        "--source", default="sitemap", choices=["sitemap", "feed"])
     update_parser.add_argument(
         "--delay", type=float, default=5.0, help="Delay between requests")
     update_parser.add_argument(
@@ -44,24 +46,28 @@ def main():
 
     args = parser.parse_args()
 
-    index = show_index.ShowIndex(CONFIG.get(
-        "source_url"), extra_sitemaps=CONFIG.get("extra_sitemaps"))
+    collection = show_index.ShowIndex(
+        CONFIG["source_url"], extra_sitemaps=CONFIG["extra_sitemaps"])
     if args.command == "gather":
-        gather_source = args.gather_source or CONFIG.get("gather_source")
-        urls = index.process_sitemap(gather_source)
+        urls = collection.process_sitemap(args.source or CONFIG["source"])
         print("Gathered URLs:")
-        pprint.pprint(urls)
+        pprint.pprint(urls)  # [:10])
     elif args.command == "update":
-        urls = index.gather_shows(source="sitemap")
-        # If --shows is specified, filter the URLs.
-        if args.shows:
-            urls = [url for url in urls if url in args.shows]
-        pass
-        # updated_shows = scrape_shows(urls, delay=args.delay, only=args.shows)
-        # # Save the state or pass it to the next phase.
-        # # For now, print a summary.
-        # for s in updated_shows:
-        #     print(s.title, s.last_updated)
+        # urls = collection.process_sitemap(args.source or CONFIG["source"])
+        # # If --shows is specified, filter the URLs.
+        # urls = [url.replace("https://www.kcrw.com",
+        #                     "https://www.example.com") for url in urls]
+        # pprint.pprint(urls[:10])
+        # if args.shows:
+        #     urls = [url for url in urls if url in args.shows]
+        # pprint.pprint(urls[:10])
+        updated_shows = collection.update(
+            source=(args.source or CONFIG["source"]), selected_urls=args.shows)
+        # Save the state or pass it to the next phase.
+        # For now, print a summary.
+        for s in updated_shows:
+            # print(s.title, s.last_updated)
+            pprint.pprint(s)
     elif args.command == "save":
         # Call your state persistence functions.
         pass

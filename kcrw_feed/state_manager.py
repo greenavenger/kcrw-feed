@@ -35,7 +35,7 @@ class Json:
     def episode_from_dict(self, data: dict) -> Episode:
         return Episode(
             title=data["title"],
-            pub_date=self._parse_datetime(
+            airdate=self._parse_datetime(
                 data["pub_date"]) if data.get("pub_date") else None,
             audio_url=data["audio_url"],
             uuid=data.get("uuid"),

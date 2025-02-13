@@ -1,12 +1,12 @@
-"""Module to gather the list of shows"""
+"""Module to gather the urls of shows and episodes"""
 
 from datetime import datetime
+# import io
 import pprint
 import re
 from typing import List
 import urllib.robotparser as urobot
 import xmltodict
-import io
 
 from kcrw_feed import utils
 
@@ -26,27 +26,9 @@ class SitemapProcessor:
         """
         self.source_url = source_url
         self.extra_sitemaps = extra_sitemaps or []
-        self._sitemap_entries = {}
+        self._sitemap_entities = {}
 
-    def gather_shows(self, source: str = "sitemap") -> List[str]:
-        """Gather show URLs based on the chosen source.
-
-        Parameters:
-            source (str): Which source to use: "sitemap" (default) or "feed".
-
-        Returns:
-            List[str]: A list of show URLs."""
-        if source == "sitemap":
-            sitemap_urls = self.find_sitemaps()
-            for sitemap in sitemap_urls:
-                self.read_sitemap(sitemap)
-            return sorted(list(self._sitemap_entries.keys()))
-        elif source == "feed":
-            # Placeholder for future feed-based gathering.
-            return self.parse_feeds("path/to/feeds")
-        else:
-            raise ValueError("Unknown source type")
-
+    # Accessor Methods
     def get_all_entries(self) -> List[dict]:
         """
         Return all sitemap entry dictionaries.
@@ -54,7 +36,7 @@ class SitemapProcessor:
         Returns:
             List[dict]: A list of all entries stored in the processor.
         """
-        return list(self._sitemap_entries.values())
+        return list(self._sitemap_entities.values())
 
     def get_entries_after(self, dt: datetime) -> List[dict]:
         """
@@ -67,7 +49,7 @@ class SitemapProcessor:
             List[dict]: A list of entries updated after dt.
         """
         results = []
-        for entry in self._sitemap_entries.values():
+        for entry in self._sitemap_entities.values():
             lastmod_str = entry.get("lastmod")
             if lastmod_str:
                 try:
@@ -91,7 +73,7 @@ class SitemapProcessor:
             List[dict]: A list of entries with lastmod between start and end.
         """
         results = []
-        for entry in self._sitemap_entries.values():
+        for entry in self._sitemap_entities.values():
             lastmod_str = entry.get("lastmod")
             if lastmod_str:
                 try:
@@ -101,6 +83,26 @@ class SitemapProcessor:
                 except ValueError:
                     continue
         return results
+
+    # Populate Methods
+    def gather_entries(self, source: str = "sitemap") -> List[str]:
+        """Gather show URLs based on the chosen source.
+
+        Parameters:
+            source (str): Which source to use: "sitemap" (default) or "feed".
+
+        Returns:
+            List[str]: A list of show URLs."""
+        if source == "sitemap":
+            sitemap_urls = self.find_sitemaps()
+            for sitemap in sitemap_urls:
+                self.read_sitemap(sitemap)
+            return sorted(list(self._sitemap_entities.keys()))
+        elif source == "feed":
+            # Placeholder for future feed-based gathering.
+            return self.parse_feeds("path/to/feeds")
+        else:
+            raise ValueError("Unknown source type")
 
     def find_sitemaps(self) -> List[str]:
         """Reads the robots.txt file and extracts sitemap URLs.
@@ -185,7 +187,7 @@ class SitemapProcessor:
                     entry["priority"] = data[lower_keys["priority"]]
                 # Add only entries that match the music filter
                 if MUSIC_FILTER_RE.search(entry["loc"]):
-                    self._sitemap_entries[entry["loc"]] = entry
+                    self._sitemap_entities[entry["loc"]] = entry
             else:
                 # Otherwise, traverse all values.
                 for value in data.values():

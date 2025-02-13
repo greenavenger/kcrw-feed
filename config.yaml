@@ -13,5 +13,5 @@ extra_sitemaps:
 # The default HTTP timeout in seconds for requests
 http_timeout: 10
 
-# The source for gathering shows (e.g., 'sitemap' or 'feed')
-gather_source: "sitemap"
+# The source for  shows (e.g., 'sitemap' or 'feed')
+source: "sitemap"

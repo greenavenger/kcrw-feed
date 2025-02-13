@@ -55,7 +55,7 @@ def test_show_add_episode():
     pub_date = datetime(2023, 1, 1, 12, 0, 0)
     episode = Episode(
         title="Episode 1",
-        pub_date=pub_date,
+        airdate=pub_date,
         audio_url="http://example.com/episode1.mp3",
         description="Episode description"
     )
@@ -86,11 +86,11 @@ def test_episode_creation():
     pub_date = datetime(2023, 1, 1, 12, 0, 0)
     episode = Episode(
         title="Episode 1",
-        pub_date=pub_date,
+        airdate=pub_date,
         audio_url="http://example.com/episode1.mp3",
         description="Test episode"
     )
     assert episode.title == "Episode 1"
-    assert episode.pub_date == pub_date
+    assert episode.airdate == pub_date
     assert episode.audio_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"

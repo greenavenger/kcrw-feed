@@ -14,7 +14,7 @@ class FakeSitemapProcessor:
         self.source_url = source_url
         self.extra_sitemaps = extra_sitemaps
 
-    def gather_shows(self, source: str) -> List[str]:
+    def gather_entries(self, source: str) -> List[str]:
         # Return a fixed list of URLs. Note: One URL does not match the music show regex.
         return [
             "https://www.testsite.com/music/shows/show1",
@@ -60,9 +60,10 @@ def fake_show_index():
     si = ShowIndex("https://www.testsite.com/",
                    extra_sitemaps=["extra-sitemap.xml"])
     # Replace the real processor with our fake one.
-    si.processor = FakeSitemapProcessor(si.source_url, si.extra_sitemaps)
+    si.sitemap_processor = FakeSitemapProcessor(
+        si.source_url, si.extra_sitemaps)
     # Uncomment and assign our fake scraper.
-    si.scraper = FakeShowScraper()
+    si.show_processor = FakeShowScraper()
     # Initialize the repository dictionary.
     si.shows = {}
     return si
@@ -85,7 +86,7 @@ def test_update(fake_show_index):
     dictionary with only music show URLs.
     """
     fake_show_index.update()
-    # The fake processor returns 4 URLs, but filtering (using MUSIC_FILTER_RE in gather_shows)
+    # The fake processor returns 4 URLs, but filtering (using MUSIC_FILTER_RE in gather_entities)
     # should keep only the ones containing "/music/shows/".
     shows = fake_show_index.get_shows()
     # Expect 3 shows.
@@ -117,7 +118,7 @@ def test_get_episodes(fake_show_index):
     show1 = fake_show_index.get_show_by_uuid("uuid-show1")
     ep = Episode(
         title="Episode 1",
-        pub_date=datetime(2025, 1, 2),
+        airdate=datetime(2025, 1, 2),
         audio_url="https://www.testsite.com/audio/1.mp3",
         uuid="ep1",
         description="Episode 1 description"
@@ -135,7 +136,7 @@ def test_get_episode_by_uuid(fake_show_index):
     show2 = fake_show_index.get_show_by_uuid("uuid-show2")
     ep = Episode(
         title="Episode X",
-        pub_date=datetime(2025, 1, 3),
+        airdate=datetime(2025, 1, 3),
         audio_url="https://www.testsite.com/audio/x.mp3",
         uuid="ep-x",
         description="Test episode X"

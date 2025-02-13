@@ -54,7 +54,7 @@ def test_episode_from_dict():
     assert episode.title == "Episode 1"
     assert episode.audio_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"
-    assert episode.pub_date == datetime.fromisoformat(dt_str)
+    assert episode.airdate == datetime.fromisoformat(dt_str)
 
 
 def test_show_from_dict():
@@ -140,7 +140,7 @@ def test_save_and_load_state_in_memory(fake_fs):
     )
     episode = Episode(
         title="Episode A",
-        pub_date=dt1,
+        airdate=dt1,
         audio_url="http://example.com/episodeA.mp3",
         description="Episode A desc"
     )
@@ -187,4 +187,4 @@ def test_save_and_load_state_in_memory(fake_fs):
     assert loaded_episode.title == original_episode.title
     assert loaded_episode.audio_url == original_episode.audio_url
     assert loaded_episode.description == original_episode.description
-    assert loaded_episode.pub_date.isoformat() == original_episode.pub_date.isoformat()
+    assert loaded_episode.airdate.isoformat() == original_episode.airdate.isoformat()

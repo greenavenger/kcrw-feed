@@ -8,11 +8,11 @@ from typing import List, Optional
 import urllib.robotparser as urobot
 import xmltodict
 
-from kcrw_feed.models import Show, Episode  # and Host if needed
+from kcrw_feed.models import Show, Episode
 # Handles raw sitemap parsing
 from kcrw_feed.sitemap_processor import SitemapProcessor
 # Handles enrichment (scraping) of Show details
-# from kcrw_feed.show_scraper import ShowScraper
+from kcrw_feed.show_processor import ShowProcessor
 from kcrw_feed import utils
 
 
@@ -25,17 +25,20 @@ class ShowIndex:
         self.source_url = source_url
         self.extra_sitemaps = extra_sitemaps or []
         # Instantiate the helper components.
-        self.processor = SitemapProcessor(source_url, extra_sitemaps)
-        # ShowScraper()  # You can pass configuration if needed.
-        self.scraper = None
+        self.sitemap_processor = SitemapProcessor(source_url, extra_sitemaps)
+        self.show_processor = ShowProcessor()
+        # This will hold a dict keyed by URL with sitemap metadata (e.g. lastmod).
+        # TODO: Maybe remove this, as it could just be wasted memory.
+        self._sitemap_urls = List[str]
         # This will hold fully enriched Show objects.
         self.shows: List[Show] = {}
 
     def process_sitemap(self, source: str = "sitemap") -> List[str]:
         """Use SitemapProcessor to get a list of raw show URLs."""
-        return self.processor.gather_shows(source)
+        self._sitemap_urls = self.sitemap_processor.gather_entries(source)
+        return self._sitemap_urls
 
-    def update(self, update_after: Optional[datetime] = None, selected_urls: Optional[List[str]] = None) -> None:
+    def update(self, source: str = "sitemap", update_after: Optional[datetime] = None, selected_urls: Optional[List[str]] = None) -> None:
         """Update the repository with enriched Show objects.
 
         Parameters:
@@ -43,26 +46,29 @@ class ShowIndex:
             selected_urls (List[str], optional): If provided, only update shows whose URL is in this list.
         """
         raw_urls = self.process_sitemap("sitemap")
+        # TODO: remove after testing
+        raw_urls = [url.replace("https://www.kcrw.com",
+                                "https://www.example.com") for url in raw_urls]
         # Optionally filter raw_urls based on selected_urls.
         if selected_urls:
             raw_urls = [url for url in raw_urls if url in selected_urls]
 
-        updated_shows = {}
+        updated_shows = []
         for url in raw_urls:
-            # Optionally, check update_after against metadata (omitted for brevity).
+            # TODO: Optionally, check update_after against metadata.
             # This returns a fully enriched Show object.
-            show = self.scraper.scrape_show(url)
+            show = self.show_processor.fetch(url)
             # Make sure the show has a unique identifier.
             if not show.uuid:
                 # If no UUID is provided, you might use the URL as a fallback key.
                 key = show.url
             else:
                 key = show.uuid
-            updated_shows[key] = show
-        self.shows = updated_shows
+            self.shows[key] = show
+            updated_shows.append(show)
+        return updated_shows
 
-    # Lookup Methods
-
+    # Accessor Methods
     def get_shows(self) -> List[Show]:
         """Return a list of all Show objects."""
         return list(self.shows.values())
