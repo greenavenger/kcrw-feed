@@ -38,7 +38,8 @@ class ShowIndex:
         self._sitemap_urls = self.sitemap_processor.gather_entries(source)
         return self._sitemap_urls
 
-    def update(self, source: str = "sitemap", update_after: Optional[datetime] = None, selected_urls: Optional[List[str]] = None) -> None:
+    def update(self, source: str = "sitemap", update_after: Optional[datetime] = None,
+               selected_urls: Optional[List[str]] = None) -> int:
         """Update the repository with enriched Show objects.
 
         Parameters:
@@ -50,6 +51,7 @@ class ShowIndex:
         raw_urls = [url.replace("https://www.kcrw.com",
                                 "https://www.example.com") for url in raw_urls]
         # Optionally filter raw_urls based on selected_urls.
+        selected_urls = [url.rstrip("/") for url in selected_urls]  # normalize
         if selected_urls:
             raw_urls = [url for url in raw_urls if url in selected_urls]
 
@@ -66,7 +68,7 @@ class ShowIndex:
                 key = show.uuid
             self.shows[key] = show
             updated_shows.append(show)
-        return updated_shows
+        return len(updated_shows)
 
     # Accessor Methods
     def get_shows(self) -> List[Show]:

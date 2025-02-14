@@ -49,8 +49,10 @@ class ShowProcessor:
             # return self._fetch_show(url)
             assert False, f"No show identifier found! {url}"
         elif len(after) == 1:
+            print("Fetching show: ", url)
             return self._fetch_show(url)
         else:
+            print("Fetching episode: ", url)
             return self._fetch_episode(url)
         # return self._fetch_show(url)
 
@@ -64,13 +66,13 @@ class ShowProcessor:
         # pprint.pprint(data)
 
         show_data = None
-        # Look for an object that indicates it's a radio series (or similar).
+        # Look for an object that indicates it's a radio series.
         for item in data.get("microdata", []):
             if isinstance(item, dict) and item.get("type") == "http://schema.org/RadioSeries":
                 show_data = item
                 break
-        print("show_data:")
-        pprint.pprint(show_data)
+        # print("show_data:")
+        # pprint.pprint(show_data)
 
         episode_data = None
         # Look for an object that indicates it's an episode (or similar).
@@ -113,8 +115,83 @@ class ShowProcessor:
                 last_updated=datetime.now(),
                 metadata={}
             )
-        # pprint.pprint(show)
+        pprint.pprint(show)
         return show
+
+    def _parse_episodes(self, episode_data: dict) -> List[Episode]:
+        """Parse episode data extracted from structured data."""
+        # print("episode_data:")
+        # pprint.pprint(episode_data)
+        episodes = []
+        if episode_data:
+            episodes_list = episode_data.get(
+                "properties", {}).get("itemListElement", [])
+            for item in episodes_list:
+                if isinstance(item, dict) and item.get("type") == "http://schema.org/ListItem":
+                    url = item.get("properties", {}).get("url")
+                    uuid = utils.extract_uuid(item.get("id"))
+                    if not url and not uuid:
+                        print("Failed to extract episode URL!")
+                        continue
+                    elif url and uuid:
+                        episode = self._fetch_episode(url, uuid)
+                    else:
+                        episode = self._fetch_episode(url)
+                    episodes.append(episode)
+        return self._dedup_by_uuid(episodes)
+
+    def _fetch_episode(self, url: str, uuid: Optional[str] = "") -> Episode:
+        """Fetch the player for the Episode and extract details."""
+        if uuid and uuid in self._model_cache:
+            # Episode has been fetched, so return cached object
+            return self._model_cache.get(uuid)
+
+        # TODO: remove after testing
+        # "./tests/data/henry-rollins/kcrw-broadcast-825_player.json")
+        local_file = "./tests/data/henry-rollins/" + \
+            url.split("/")[-1] + "_player.json"
+        print("local_file:", local_file)
+        episode_bytes = utils.get_file(local_file)
+        if episode_bytes is not None:
+            try:
+                episode_str = episode_bytes.decode("utf-8")
+                episode_data = json.loads(episode_str)
+                # TODO: Do we want to use case-insensitive matching for keys?
+                # # We use case-insensitive matching for keys.
+                # pre_size = len(episode_data)
+                # episode_data = {k.lower(): v for k, v in episode_data.items()}
+                # assert len(episode_data) == pre_size, "Duplicate keys found"
+            except json.JSONDecodeError as e:
+                print("Error decoding JSON:", e)
+        else:
+            print("Failed to retrieve file")
+        # pprint.pprint(episode_data)
+
+        if episode_data:
+            episode = Episode(
+                title=episode_data.get("title", ""),  # case sensitive!
+                airdate=self._parse_date(episode_data.get("airdate")),
+                url=episode_data.get("url"),  # episode url
+                media_url=utils.strip_query_params(
+                    episode_data.get("media", "")[0].get("url")),
+                uuid=utils.extract_uuid(episode_data.get("uuid")),
+                show_uuid=utils.extract_uuid(episode_data.get("show_uuid")),
+                # Store host(s) UUID here to avoid duplicate Host objects.
+                hosts=[utils.extract_uuid(item.get("uuid"))
+                       for item in episode_data.get("hosts", [])],
+                description=episode_data.get("html_description"),
+                songlist=episode_data.get("songlist"),
+                image=episode_data.get("image"),
+                # should this be schemas.org compliant?
+                type=episode_data.get("content_type"),
+                duration=episode_data.get("duration"),
+                ending=self._parse_date(episode_data.get("ending")),
+                last_updated=self._parse_date(episode_data.get("modified")),
+                # metadata=episode_data
+            )
+            self._model_cache[episode.uuid] = episode
+        pprint.pprint(episode)
+        return episode
 
     def _parse_host(self, show_data: dict) -> Optional[List[Host]]:
         """Try to parse a host object from structured data."""
@@ -140,130 +217,6 @@ class ShowProcessor:
         # pprint.pprint(host)
         return host
 
-    def _parse_episodes(self, episode_data: dict) -> List[Episode]:
-        """Parse episode data extracted from structured data."""
-        episodes = []
-        if episode_data:
-            episodes_list = episode_data.get(
-                "properties", {}).get("itemListElement", [])
-            for item in episodes_list:
-                if isinstance(item, dict) and item.get("@type") == "ListItem":
-                    episode = self._parse_episode(item.get("item"))
-                    episodes.append(episode)
-        return episodes
-
-    def _fetch_episode(self, url: str, uuid: Optional[str] = "") -> Episode:
-        """Fetch the player for the Episode and extract details."""
-        if uuid and uuid in self._model_cache:
-            # Episode has been fetched, so return cached object
-            return self._model_cache.get(uuid)
-
-        # TODO: remove after testing
-        episode_bytes = utils.get_file(
-            "./tests/data/henry-rollins/kcrw-broadcast-825_player.json")
-        if episode_bytes is not None:
-            try:
-                episode_str = episode_bytes.decode("utf-8")
-                episode_data = json.loads(episode_str)
-                # TODO: Do we want to use case-insensitive matching for keys?
-                # # We use case-insensitive matching for keys.
-                # pre_size = len(episode_data)
-                # episode_data = {k.lower(): v for k, v in episode_data.items()}
-                # assert len(episode_data) == pre_size, "Duplicate keys found"
-            except json.JSONDecodeError as e:
-                print("Error decoding JSON:", e)
-        else:
-            print("Failed to retrieve file")
-        pprint.pprint(episode_data)
-
-        if episode_data:
-            episode = Episode(
-                title=episode_data.get("title", ""),  # case sensitive!
-                airdate=self._parse_date(episode_data.get("airdate")),
-                url=episode_data.get("url"),  # episode url
-                media_url=utils.strip_query_params(
-                    episode_data.get("media", "")[0].get("url")),
-                uuid=episode_data.get("uuid"),
-                show_uuid=episode_data.get("show_uuid"),
-                # TODO: add hosts []!
-                description=episode_data.get("html_description"),
-                songlist=episode_data.get("songlist"),
-                image=episode_data.get("image"),
-                # should this be schemas.org compliant?
-                type=episode_data.get("content_type"),
-                duration=episode_data.get("duration"),
-                ending=self._parse_date(episode_data.get("ending")),
-                last_updated=self._parse_date(episode_data.get("modified")),
-                # metadata=episode_data
-            )
-            self._model_cache[episode.uuid] = episode
-        pprint.pprint(episode)
-        return episode
-
-    # def _parse_episode(self, episode_data: dict) -> Episode:
-    #     uuid = utils.extract_uuid(episode_data.get("id"))
-    #     if uuid and uuid in self._model_cache:
-    #         # Episode has been enriched, so return cached object
-    #         episode = self._model_cache.get(uuid)
-    #     else:
-    #         episode_props = episode_data.get("properties", {})
-    #         episode = Episode(
-    #             title=episode_props.get("name", ""),
-    #             airdate=self._parse_date(episode_props.get("datePublished")),
-    #             url=episode_props.get("url"),
-    #             media_url="",  # episode_props.get("contentUrl"),
-    #             uuid=uuid,
-    #             description=episode_props.get("description"),
-    #             type=episode_props.get("additionalType"),
-    #             metadata=episode_data
-    #         )
-    #         self._model_cache[uuid] = episode
-    #     episode = Episode()
-    #     return episode
-
-    def _fetch_media(self, url: str) -> Episode:
-        """
-        Fetch an Episode page and extract basic details.
-        """
-        # TODO: remove after testing
-        # ./tests/data/henry-rollins/kcrw-broadcast-821_player.json
-        html = utils.get_file("./tests/data/henry-rollins/henry-rollins")
-        # html = utils.get_file(url)
-        data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
-        episode_data = None
-        # Look for an object with type "AudioObject" (or a similar type).
-        for item in data.get("microdata", []):
-            if isinstance(item, dict) and item.get("@type") == "AudioObject":
-                episode_data = item
-                break
-        if episode_data:
-            episode = Episode(
-                title=episode_data.get("name", url.split("/")[-1]),
-                media_url=episode_data.get("contentUrl", url),
-                uuid=episode_data.get("identifier"),
-                description=episode_data.get("description"),
-                airdate=self._parse_date(episode_data.get("datePublished"))
-                or datetime.now()
-            )
-        else:
-            # Fallback: use BeautifulSoup to extract title.
-            soup = BeautifulSoup(html, "html.parser")
-            title_tag = soup.find("title")
-            title = title_tag.text.strip() if title_tag else url.split("/")[-1]
-            episode = Episode(
-                title=title,
-                media_url=url,  # Fallback
-                airdate=datetime.now(),
-                description=""
-            )
-        return episode
-
-    # def _get_html(self, url: str) -> str:
-    #     """Helper method to fetch HTML content for a given URL."""
-    #     response = requests.get(url, timeout=self.timeout)
-    #     response.raise_for_status()
-    #     return response.text
-
     def _parse_date(self, date_str: str) -> Optional[datetime]:
         """Try to parse a date string into a datetime object."""
         if date_str:
@@ -272,3 +225,16 @@ class ShowProcessor:
             except ValueError:
                 return None
         return None
+
+    def _dedup_by_uuid(self, episodes: List[Episode]) -> List[Episode]:
+        """Deduplicate a list of episodes based on UUID."""
+        seen = {}
+        deduped = []
+        for ep in episodes:
+            if ep.uuid is None:
+                # Decide how to handle episodes without a UUID; here we add them as unique.
+                deduped.append(ep)
+            elif ep.uuid not in seen:
+                seen[ep.uuid] = True
+                deduped.append(ep)
+        return deduped

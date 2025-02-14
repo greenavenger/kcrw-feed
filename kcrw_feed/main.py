@@ -1,25 +1,8 @@
-# import requests
-# from bs4 import BeautifulSoup
-# import feedgenerator
-# import json
-# from datetime import datetime
 import argparse
-# import re
-# import io
-# from typing import List, Dict, Optional
-# from urllib.parse import urlparse
-# import urllib.robotparser as urobot
-# import sys
 import pprint
 
 from kcrw_feed.config import CONFIG
-# from kcrw_feed.models import Host, Show, Episode
-# from kcrw_feed import state_manager
 from kcrw_feed import show_index
-# from kcrw_feed import sitemap
-# from kcrw_feed import utils
-# from kcrw_feed import scraper
-# from kcrw_feed import generate_feed
 
 pprint.pprint(CONFIG)
 print(CONFIG.get("extra_sitemaps"))
@@ -65,9 +48,10 @@ def main():
             source=(args.source or CONFIG["source"]), selected_urls=args.shows)
         # Save the state or pass it to the next phase.
         # For now, print a summary.
-        for s in updated_shows:
-            # print(s.title, s.last_updated)
-            pprint.pprint(s)
+        # for s in updated_shows:
+        #     # print(s.title, s.last_updated)
+        #     pprint.pprint(s)
+        print(f"Updated {updated_shows} shows")
     elif args.command == "save":
         # Call your state persistence functions.
         pass

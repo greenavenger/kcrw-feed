@@ -92,3 +92,76 @@ def test_fetch_invalid_structure_falls_back_to_show(processor):
     assert isinstance(result, Show)
     # Since our fake HTML for shows is used, it will have the same microdata.
     assert result.title == "Test Radio Show"
+
+
+def test_deduplication_with_duplicates():
+    dt = datetime.now()
+    ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
+                  media_url="media1", uuid="uuid1")
+    # Duplicate uuid; should be ignored in favor of the first occurrence.
+    ep2 = Episode(title="Episode 2", airdate=dt, url="url2",
+                  media_url="media2", uuid="uuid1")
+    ep3 = Episode(title="Episode 3", airdate=dt, url="url3",
+                  media_url="media3", uuid="uuid2")
+    episodes = [ep1, ep2, ep3]
+
+    deduped = dedup_by_uuid(episodes)
+    assert len(deduped) == 2
+    # Verify that the first instance of uuid "uuid1" is preserved
+    assert deduped[0] == ep1
+    # And that the episode with uuid "uuid2" is present.
+    assert deduped[1] == ep3
+
+
+def test_no_duplicates():
+    dt = datetime.now()
+    ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
+                  media_url="media1", uuid="uuid1")
+    ep2 = Episode(title="Episode 2", airdate=dt, url="url2",
+                  media_url="media2", uuid="uuid2")
+    episodes = [ep1, ep2]
+
+    deduped = dedup_by_uuid(episodes)
+    # Both episodes have unique UUIDs so both should be present.
+    assert len(deduped) == 2
+
+
+def test_none_uuid():
+    dt = datetime.now()
+    # Episodes with no uuid should always be included.
+    ep1 = Episode(title="Episode 1", airdate=dt,
+                  url="url1", media_url="media1", uuid=None)
+    ep2 = Episode(title="Episode 2", airdate=dt,
+                  url="url2", media_url="media2", uuid=None)
+    episodes = [ep1, ep2]
+
+    deduped = dedup_by_uuid(episodes)
+    assert len(deduped) == 2
+
+
+def test_mix_of_none_and_duplicates():
+    dt = datetime.now()
+    ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
+                  media_url="media1", uuid="uuid1")
+    ep2 = Episode(title="Episode 2", airdate=dt,
+                  url="url2", media_url="media2", uuid=None)
+    # Duplicate of uuid "uuid1" should be dropped.
+    ep3 = Episode(title="Episode 3", airdate=dt, url="url3",
+                  media_url="media3", uuid="uuid1")
+    ep4 = Episode(title="Episode 4", airdate=dt, url="url4",
+                  media_url="media4", uuid="uuid2")
+    ep5 = Episode(title="Episode 5", airdate=dt,
+                  url="url5", media_url="media5", uuid=None)
+    episodes = [ep1, ep2, ep3, ep4, ep5]
+
+    deduped = dedup_by_uuid(episodes)
+    # Expecting:
+    # ep1 (first instance of uuid "uuid1"),
+    # ep2 (uuid is None, treated as unique),
+    # ep4 (unique uuid "uuid2"),
+    # ep5 (another None, also included)
+    assert len(deduped) == 4
+    assert deduped[0] == ep1
+    assert deduped[1] == ep2
+    assert deduped[2] == ep4
+    assert deduped[3] == ep5
