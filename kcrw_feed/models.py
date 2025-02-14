@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 
@@ -16,7 +16,7 @@ class Host:
     socials: List[Episode] = field(default_factory=list)
     description: Optional[str] = None
     type: Optional[str] = None
-    metadata: Dict = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -29,9 +29,9 @@ class Show:
     episodes: List[Episode] = field(default_factory=list)
     type: Optional[str] = None
     last_updated: Optional[datetime] = None
-    metadata: Dict = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def update_info(self, new_data: dict) -> None:
+    def update_info(self, new_data: Dict[str, Any]) -> None:
         """
         Update the show's information based on new data.
         Expected keys might include 'description', 'metadata', etc.
@@ -72,4 +72,4 @@ class Episode:
     duration: Optional[float] = None
     ending: Optional[datetime] = None
     last_updated: Optional[datetime] = None
-    metadata: Dict = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)

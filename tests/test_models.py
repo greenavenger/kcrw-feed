@@ -1,5 +1,7 @@
 """Module to hold tests for core dataclass objects"""
 
+from typing import Any, Dict
+
 from datetime import datetime, timedelta
 from kcrw_feed.models import Host, Show, Episode
 
@@ -29,7 +31,7 @@ def test_show_update_info():
     )
 
     # Prepare new data for updating.
-    new_data = {
+    new_data: Dict[str, Any] = {
         "description": "New description",
         "metadata": {"genre": "rock"}
     }
@@ -52,10 +54,11 @@ def test_show_add_episode():
     show = Show(title="Test Show", url="http://example.com/show")
 
     # Create an Episode instance.
-    pub_date = datetime(2023, 1, 1, 12, 0, 0)
+    airdate = datetime(2023, 1, 1, 12, 0, 0)
     episode = Episode(
         title="Episode 1",
-        airdate=pub_date,
+        airdate=airdate,
+        url="http://example.com/episode1",
         media_url="http://example.com/episode1.mp3",
         description="Episode description"
     )
@@ -83,14 +86,15 @@ def test_show_needs_update():
 
 def test_episode_creation():
     """Test that an Episode is created correctly."""
-    pub_date = datetime(2023, 1, 1, 12, 0, 0)
+    airdate = datetime(2023, 1, 1, 12, 0, 0)
     episode = Episode(
         title="Episode 1",
-        airdate=pub_date,
+        airdate=airdate,
+        url="http://example.com/episode1",
         media_url="http://example.com/episode1.mp3",
         description="Test episode"
     )
     assert episode.title == "Episode 1"
-    assert episode.airdate == pub_date
+    assert episode.airdate == airdate
     assert episode.media_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"
