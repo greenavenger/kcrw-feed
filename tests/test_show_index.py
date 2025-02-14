@@ -119,7 +119,7 @@ def test_get_episodes(fake_show_index):
     ep = Episode(
         title="Episode 1",
         airdate=datetime(2025, 1, 2),
-        audio_url="https://www.testsite.com/audio/1.mp3",
+        media_url="https://www.testsite.com/audio/1.mp3",
         uuid="ep1",
         description="Episode 1 description"
     )
@@ -137,7 +137,7 @@ def test_get_episode_by_uuid(fake_show_index):
     ep = Episode(
         title="Episode X",
         airdate=datetime(2025, 1, 3),
-        audio_url="https://www.testsite.com/audio/x.mp3",
+        media_url="https://www.testsite.com/audio/x.mp3",
         uuid="ep-x",
         description="Test episode X"
     )

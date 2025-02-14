@@ -173,3 +173,36 @@ def test_normalize_local_path_with_trailing_slash_in_base():
     expected = os.path.normpath("/home/user/documents/report.txt")
     result = utils.normalize_location(base, loc)
     assert result == expected
+
+
+def test_basic_url_with_query():
+    url = "https://example.com/path?foo=bar&baz=qux"
+    expected = "https://example.com/path"
+    assert utils.strip_query_params(url) == expected
+
+
+def test_url_without_query():
+    url = "https://example.com/path"
+    assert utils.strip_query_params(url) == url
+
+
+def test_url_with_fragment():
+    url = "https://example.com/path?foo=bar#section1"
+    # The fragment should remain intact
+    expected = "https://example.com/path#section1"
+    assert utils.strip_query_params(url) == expected
+
+
+def test_url_with_only_query():
+    url = "https://example.com/?foo=bar"
+    expected = "https://example.com/"
+    assert utils.strip_query_params(url) == expected
+
+
+def test_complex_url():
+    url = ("https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/"
+           "KCRW-henry_rollins-kcrw_broadcast_825-250125.mp3?awCollectionId=henry-rollins&"
+           "aw_0_1st.ri=kcrw&awEpisodeId=kcrw-broadcast-825")
+    expected = ("https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/"
+                "KCRW-henry_rollins-kcrw_broadcast_825-250125.mp3")
+    assert utils.strip_query_params(url) == expected

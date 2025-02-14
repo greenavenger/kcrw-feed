@@ -51,7 +51,7 @@ class ShowProcessor:
         elif len(after) == 1:
             return self._fetch_show(url)
         else:
-            return self._fetch_episodes(url)
+            return self._fetch_episode(url)
         # return self._fetch_show(url)
 
     def _fetch_show(self, url: str) -> Show:
@@ -152,24 +152,12 @@ class ShowProcessor:
                     episodes.append(episode)
         return episodes
 
-    def _fetch_episode(self, url: str) -> List[Episode]:
-        # """Fetch a Episode page and extract details."""
-        # # TODO: remove after testing
-        # html = utils.get_file("./tests/data/henry-rollins/kcrw-broadcast-825")
-        # # html = utils.get_file(url)
-        # # Try to extract structured data using extruct (e.g., microdata).
-        # data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
-        # # pprint.pprint(data)
-
-        # episode_data = None
-        # # Look for an object that is a NewsArticle.
-        # for item in data.get("microdata", []):
-        #     if isinstance(item, dict) and item.get("type") == "http://schema.org/NewsArticle":
-        #         episode_data = item
-        #         break
-        # print("episode_data:")
-        # pprint.pprint(episode_data)
+    def _fetch_episode(self, url: str, uuid: Optional[str] = "") -> Episode:
         """Fetch the player for the Episode and extract details."""
+        if uuid and uuid in self._model_cache:
+            # Episode has been fetched, so return cached object
+            return self._model_cache.get(uuid)
+
         # TODO: remove after testing
         episode_bytes = utils.get_file(
             "./tests/data/henry-rollins/kcrw-broadcast-825_player.json")
@@ -177,33 +165,61 @@ class ShowProcessor:
             try:
                 episode_str = episode_bytes.decode("utf-8")
                 episode_data = json.loads(episode_str)
+                # TODO: Do we want to use case-insensitive matching for keys?
+                # # We use case-insensitive matching for keys.
+                # pre_size = len(episode_data)
+                # episode_data = {k.lower(): v for k, v in episode_data.items()}
+                # assert len(episode_data) == pre_size, "Duplicate keys found"
             except json.JSONDecodeError as e:
                 print("Error decoding JSON:", e)
         else:
             print("Failed to retrieve file")
-
         pprint.pprint(episode_data)
 
-    def _parse_episode(self, episode_data: dict) -> Episode:
-        uuid = utils.extract_uuid(episode_data.get("id"))
-        if uuid and uuid in self._model_cache:
-            # Episode has been enriched, so return cached object
-            episode = self._model_cache.get(uuid)
-        else:
-            episode_props = episode_data.get("properties", {})
+        if episode_data:
             episode = Episode(
-                title=episode_props.get("name", ""),
-                airdate=self._parse_date(episode_props.get("datePublished")),
-                url=episode_props.get("url"),
-                audio_url="",  # episode_props.get("contentUrl"),
-                uuid=uuid,
-                description=episode_props.get("description"),
-                type=episode_props.get("additionalType"),
-                metadata=episode_data
+                title=episode_data.get("title", ""),  # case sensitive!
+                airdate=self._parse_date(episode_data.get("airdate")),
+                url=episode_data.get("url"),  # episode url
+                media_url=utils.strip_query_params(
+                    episode_data.get("media", "")[0].get("url")),
+                uuid=episode_data.get("uuid"),
+                show_uuid=episode_data.get("show_uuid"),
+                # TODO: add hosts []!
+                description=episode_data.get("html_description"),
+                songlist=episode_data.get("songlist"),
+                image=episode_data.get("image"),
+                # should this be schemas.org compliant?
+                type=episode_data.get("content_type"),
+                duration=episode_data.get("duration"),
+                ending=self._parse_date(episode_data.get("ending")),
+                last_updated=self._parse_date(episode_data.get("modified")),
+                # metadata=episode_data
             )
-            self._model_cache[uuid] = episode
-        episode = Episode()
+            self._model_cache[episode.uuid] = episode
+        pprint.pprint(episode)
         return episode
+
+    # def _parse_episode(self, episode_data: dict) -> Episode:
+    #     uuid = utils.extract_uuid(episode_data.get("id"))
+    #     if uuid and uuid in self._model_cache:
+    #         # Episode has been enriched, so return cached object
+    #         episode = self._model_cache.get(uuid)
+    #     else:
+    #         episode_props = episode_data.get("properties", {})
+    #         episode = Episode(
+    #             title=episode_props.get("name", ""),
+    #             airdate=self._parse_date(episode_props.get("datePublished")),
+    #             url=episode_props.get("url"),
+    #             media_url="",  # episode_props.get("contentUrl"),
+    #             uuid=uuid,
+    #             description=episode_props.get("description"),
+    #             type=episode_props.get("additionalType"),
+    #             metadata=episode_data
+    #         )
+    #         self._model_cache[uuid] = episode
+    #     episode = Episode()
+    #     return episode
 
     def _fetch_media(self, url: str) -> Episode:
         """
@@ -223,7 +239,7 @@ class ShowProcessor:
         if episode_data:
             episode = Episode(
                 title=episode_data.get("name", url.split("/")[-1]),
-                audio_url=episode_data.get("contentUrl", url),
+                media_url=episode_data.get("contentUrl", url),
                 uuid=episode_data.get("identifier"),
                 description=episode_data.get("description"),
                 airdate=self._parse_date(episode_data.get("datePublished"))
@@ -236,7 +252,7 @@ class ShowProcessor:
             title = title_tag.text.strip() if title_tag else url.split("/")[-1]
             episode = Episode(
                 title=title,
-                audio_url=url,  # Fallback
+                media_url=url,  # Fallback
                 airdate=datetime.now(),
                 description=""
             )

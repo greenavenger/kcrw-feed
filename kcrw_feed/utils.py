@@ -4,7 +4,7 @@ import fsspec
 import os
 import re
 from typing import Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
 import uuid
 
 
@@ -75,3 +75,10 @@ def normalize_location(base: str, loc: str) -> str:
         # Force loc to be treated as relative by stripping leading slashes.
         rel = loc.lstrip(os.sep)
         return os.path.normpath(os.path.join(base, rel))
+
+
+def strip_query_params(url: str) -> str:
+    parsed = urlparse(url)
+    # Create a new ParseResult with an empty query
+    stripped = parsed._replace(query="")
+    return urlunparse(stripped)

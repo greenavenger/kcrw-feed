@@ -52,7 +52,7 @@ def test_episode_from_dict():
     episode = js.episode_from_dict(data)
     assert isinstance(episode, Episode)
     assert episode.title == "Episode 1"
-    assert episode.audio_url == "http://example.com/episode1.mp3"
+    assert episode.media_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"
     assert episode.airdate == datetime.fromisoformat(dt_str)
 
@@ -141,7 +141,7 @@ def test_save_and_load_state_in_memory(fake_fs):
     episode = Episode(
         title="Episode A",
         airdate=dt1,
-        audio_url="http://example.com/episodeA.mp3",
+        media_url="http://example.com/episodeA.mp3",
         description="Episode A desc"
     )
     show = Show(
@@ -185,6 +185,6 @@ def test_save_and_load_state_in_memory(fake_fs):
     loaded_episode = loaded_show.episodes[0]
     original_episode = show.episodes[0]
     assert loaded_episode.title == original_episode.title
-    assert loaded_episode.audio_url == original_episode.audio_url
+    assert loaded_episode.media_url == original_episode.media_url
     assert loaded_episode.description == original_episode.description
     assert loaded_episode.airdate.isoformat() == original_episode.airdate.isoformat()

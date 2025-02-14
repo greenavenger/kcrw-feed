@@ -61,8 +61,15 @@ class Episode:
     title: str
     airdate: datetime
     url: str
-    audio_url: str
+    media_url: str
     uuid: Optional[str] = None
+    show_uuid: Optional[str] = None
+    hosts: List[Host] = field(default_factory=list)
     description: Optional[str] = None
+    songlist: Optional[str] = None
+    image: Optional[str] = None
     type: Optional[str] = None
+    duration: Optional[float] = None
+    ending: Optional[datetime] = None
+    last_updated: Optional[datetime] = None
     metadata: Dict = field(default_factory=dict)

@@ -56,7 +56,7 @@ def test_show_add_episode():
     episode = Episode(
         title="Episode 1",
         airdate=pub_date,
-        audio_url="http://example.com/episode1.mp3",
+        media_url="http://example.com/episode1.mp3",
         description="Episode description"
     )
 
@@ -87,10 +87,10 @@ def test_episode_creation():
     episode = Episode(
         title="Episode 1",
         airdate=pub_date,
-        audio_url="http://example.com/episode1.mp3",
+        media_url="http://example.com/episode1.mp3",
         description="Test episode"
     )
     assert episode.title == "Episode 1"
     assert episode.airdate == pub_date
-    assert episode.audio_url == "http://example.com/episode1.mp3"
+    assert episode.media_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"

@@ -75,7 +75,7 @@ def test_fetch_episode(processor):
     assert isinstance(result, Episode)
     assert result.title == "Test Episode"
     assert result.uuid == "episode-uuid-456"
-    assert result.audio_url == "https://www.testsite.com/audio/episode.mp3"
+    assert result.media_url == "https://www.testsite.com/audio/episode.mp3"
     # Check that the publication date is parsed correctly.
     expected_date = datetime.fromisoformat("2025-04-01T12:00:00")
     assert result.airdate == expected_date
