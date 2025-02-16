@@ -37,7 +37,7 @@ class Json:
             title=data["title"],
             airdate=self._parse_datetime(
                 data["pub_date"]) if data.get("pub_date") else None,
-            audio_url=data["audio_url"],
+            media_url=data["audio_url"],
             uuid=data.get("uuid"),
             description=data.get("description")
         )

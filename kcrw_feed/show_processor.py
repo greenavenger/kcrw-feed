@@ -1,5 +1,6 @@
 """Module to enrich sitemap data and populate the core model objects"""
 
+from __future__ import annotations
 import json
 import pprint
 # TODO: Add requests when we're ready to test things against the live site.
@@ -8,7 +9,8 @@ from urllib.parse import urlparse, urljoin
 import extruct
 from bs4 import BeautifulSoup
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Dict, Optional, Sequence
+import uuid
 
 from kcrw_feed.models import Show, Episode, Host
 from kcrw_feed import utils
@@ -21,8 +23,17 @@ class ShowProcessor:
     def __init__(self, timeout: int = 10):
         self.timeout = timeout
         # This will hold a dict of Show objects keyed by UUID.
-        self._model_cache = {}
+        self._model_cache: Dict[uuid.UUID, Show] = {}
 
+    # Accessors
+    def get_show_by_url(self, url: str) -> Optional[Show]:
+        """Return a Show from the internal cache matching the given URL, if available."""
+        for show in self._model_cache.values():
+            if show.url == url:
+                return show
+        return None
+
+    # Core methods
     def fetch(self, url: str):
         """Given a URL, decide whether it is a Show page or an Episode page
         and return the corresponding object."""
@@ -54,6 +65,7 @@ class ShowProcessor:
         else:
             print("Fetching episode: ", url)
             return self._fetch_episode(url)
+        # TODO: Should I return show_uuid, maybe?
         # return self._fetch_show(url)
 
     def _fetch_show(self, url: str) -> Show:
@@ -63,7 +75,10 @@ class ShowProcessor:
         # html = utils.get_file(url)
         # Try to extract structured data using extruct (e.g., microdata).
         data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
-        # pprint.pprint(data)
+        pprint.pprint(data)
+
+        show: Show
+        show_uuid: uuid.UUID
 
         show_data = None
         # Look for an object that indicates it's a radio series.
@@ -71,8 +86,8 @@ class ShowProcessor:
             if isinstance(item, dict) and item.get("type") == "http://schema.org/RadioSeries":
                 show_data = item
                 break
-        # print("show_data:")
-        # pprint.pprint(show_data)
+        print("show_data:")
+        pprint.pprint(show_data)
 
         episode_data = None
         # Look for an object that indicates it's an episode (or similar).
@@ -85,25 +100,29 @@ class ShowProcessor:
             episodes.extend(self._parse_episodes(episode_data))
 
         if show_data:
-            uuid = utils.extract_uuid(show_data.get("id"))
-            if uuid and uuid in self._model_cache:
-                # Show has been fetched, so return cached object
-                show = self._model_cache.get(uuid)
+            show_html_id: str = show_data.get("id")
+            print("show_html_id:", show_html_id)
+            assert show_html_id is not None, "Failed to extract UUID!"
+            show_uuid = utils.extract_uuid(show_html_id)
+            print("show_uuid:", show_uuid)
+            if show_uuid in self._model_cache:
+                # Show has already been fetched, so return cached object
+                show = self._model_cache.get(show_uuid)
             else:
                 show = Show(
                     title=show_data.get("name", url.split("/")[-1]),
                     url=url,
-                    uuid=utils.extract_uuid(show_data.get("id")),
+                    uuid=show_uuid,
                     description=show_data.get(
                         "properties", {}).get("description"),
                     # Host enrichment can be added later.
-                    hosts=self._parse_host(show_data),
+                    hosts=self._parse_hosts(show_data),
                     episodes=episodes,      # Episodes can be added later.
                     type=show_data.get("type"),
                     last_updated=datetime.now()  # ,  # Or parse if available.
                     # metadata=show_data
                 )
-                self._model_cache['uuid'] = show
+                self._model_cache["uuid"] = show
         else:
             # Fallback: use BeautifulSoup to get the title.
             soup = BeautifulSoup(html, "html.parser")
@@ -115,26 +134,35 @@ class ShowProcessor:
                 last_updated=datetime.now(),
                 metadata={}
             )
+            self._model_cache["uuid"] = show
         pprint.pprint(show)
         return show
 
     def _parse_episodes(self, episode_data: dict) -> List[Episode]:
         """Parse episode data extracted from structured data."""
-        # print("episode_data:")
-        # pprint.pprint(episode_data)
+        print("episode_data:")
+        pprint.pprint(episode_data)
+
+        episode: Episode
+        episode_uuid: uuid.UUID
+
         episodes = []
         if episode_data:
-            episodes_list = episode_data.get(
+            episodes_list: list = episode_data.get(
                 "properties", {}).get("itemListElement", [])
             for item in episodes_list:
                 if isinstance(item, dict) and item.get("type") == "http://schema.org/ListItem":
                     url = item.get("properties", {}).get("url")
-                    uuid = utils.extract_uuid(item.get("id"))
-                    if not url and not uuid:
+                    episode_html_id: str = item.get("id")
+                    assert episode_html_id is not None, "Failed to extract episode UUID!"
+                    print("episode_html_id:", episode_html_id)
+                    episode_uuid = utils.extract_uuid(item.get("id"))
+                    print("episode_uuid:", episode_uuid)
+                    if not url and not episode_uuid:
                         print("Failed to extract episode URL!")
                         continue
-                    elif url and uuid:
-                        episode = self._fetch_episode(url, uuid)
+                    elif url and episode_uuid:
+                        episode = self._fetch_episode(url, episode_uuid)
                     else:
                         episode = self._fetch_episode(url)
                     episodes.append(episode)
@@ -189,33 +217,46 @@ class ShowProcessor:
                 last_updated=self._parse_date(episode_data.get("modified")),
                 # metadata=episode_data
             )
-            self._model_cache[episode.uuid] = episode
+            if episode.uuid:
+                self._model_cache[episode.uuid] = episode
         pprint.pprint(episode)
         return episode
 
-    def _parse_host(self, show_data: dict) -> Optional[List[Host]]:
+    def _parse_hosts(self, show_data: dict) -> Optional[List[Host]]:
         """Try to parse a host object from structured data."""
+        hosts: List(Host) = []
+
         # TODO: Is there sometimes more than one host?
-        host = []
+        print("show_data for hosts:")
+        pprint.pprint(show_data)
         if show_data:
             # pprint.pprint(show_data)
-            author = show_data.get("properties", {}).get("author", {})
-            uuid = utils.extract_uuid(author.get("id"))
-            if uuid and uuid in self._model_cache:
+            author_data = show_data.get("properties", {}).get("author", {})
+            print("author_data:", author_data)
+            if not author_data:
+                print("No hosts data found!")
+                print("hosts:", hosts)
+                return []
+            author_uuid = utils.extract_uuid(author_data.get("id"))
+            if author_uuid and author_uuid in self._model_cache:
                 # Host has been enriched, so return cached object
-                host = self._model_cache.get(uuid)
+                hosts = self._model_cache.get(author_uuid)
             else:
-                host.append(Host(
-                    name=author.get("properties", {}).get("name"),
-                    uuid=uuid,
-                    url=author.get("properties", {}).get("url"),
-                    socials=show_data.get("properties", {}).get("sameAs", []),
-                    type=author.get("type"),
-                    # metadata=show_data
+                hosts.append(Host(
+                    name=author_data.get("properties", {}).get("name"),
+                    uuid=author_uuid,
+                    url=author_data.get("properties", {}).get("url"),
+                    socials=show_data.get(
+                        "properties", {}).get("sameAs", []),
+                    type=author_data.get("type"),
+                    # metadata=author_data
                 ))
-            self._model_cache[uuid] = host
-        # pprint.pprint(host)
-        return host
+            if author_uuid:
+                self._model_cache[author_uuid] = hosts
+        hosts = self._dedup_by_uuid(hosts)
+        print("hosts:")
+        pprint.pprint(hosts)
+        return hosts
 
     def _parse_date(self, date_str: str) -> Optional[datetime]:
         """Try to parse a date string into a datetime object."""
@@ -226,15 +267,22 @@ class ShowProcessor:
                 return None
         return None
 
-    def _dedup_by_uuid(self, episodes: List[Episode]) -> List[Episode]:
-        """Deduplicate a list of episodes based on UUID."""
+    def _dedup_by_uuid(self, entities: Sequence[Episode | Host]) -> list[Episode | Host]:
+        """Deduplicate a list of entities based on UUID.
+
+        Assumes that all items in the list are of the same type (either all Episode or all Host).
+        Raises an AssertionError if a mixed list is provided."""
+        if entities:
+            first_type = type(entities[0])
+            for e in entities:
+                assert type(
+                    e) == first_type, "Mixed types provided to _dedup_by_uuid"
         seen = {}
-        deduped = []
-        for ep in episodes:
-            if ep.uuid is None:
-                # Decide how to handle episodes without a UUID; here we add them as unique.
-                deduped.append(ep)
-            elif ep.uuid not in seen:
-                seen[ep.uuid] = True
-                deduped.append(ep)
+        deduped: list[Episode | Host] = []
+        for e in entities:
+            if e.uuid is None:
+                deduped.append(e)
+            elif e.uuid not in seen:
+                seen[e.uuid] = True
+                deduped.append(e)
         return deduped

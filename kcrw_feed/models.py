@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+import uuid
 
 
 @dataclass
@@ -62,7 +63,8 @@ class Episode:
     airdate: datetime
     url: str
     media_url: str
-    uuid: Optional[str] = None
+    # Transition: uuid str -> uuid.UUID
+    uuid: Optional[uuid.UUID | str | None] = None
     show_uuid: Optional[str] = None
     hosts: List[Host] = field(default_factory=list)
     description: Optional[str] = None

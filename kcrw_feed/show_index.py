@@ -17,7 +17,7 @@ from kcrw_feed import utils
 
 
 class ShowIndex:
-    def __init__(self, source_url: str, extra_sitemaps: List[str] = None) -> None:
+    def __init__(self, source_url: str, extra_sitemaps: List[str] = []) -> None:
         """Parameters:
             source_url (str): The base URL (or local base path) for the site.
             extra_sitemaps (List[str], optional): Additional sitemap paths to include.
