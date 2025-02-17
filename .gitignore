@@ -177,3 +177,7 @@ cython_debug/
 
 # Research artifacts
 research/
+
+# Log files (e.g. JSON lines)
+*.jsonl
+logs/

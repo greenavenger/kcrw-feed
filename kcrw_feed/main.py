@@ -1,29 +1,59 @@
 import argparse
 import logging.config
+import logging.handlers
 # import pprint
 
 from kcrw_feed.config import CONFIG
+from kcrw_feed import persistent_logger
 from kcrw_feed import show_index
 
-# Set up logging
+# Logging set up: Instantiate custom logger to use in code. Configure
+# handlers/filters/formatters/etc. at the root level. Depend on
+# default propagation to process the log messages centrally at the root
+# logger (messages from our customer logger and from 3rd party libs).
 logger = logging.getLogger("kcrw_feed")
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,  # get log messages from 3rd party libraries
     "formatters": {
         "simple": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            # Roughly google style
+            "format": "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] (%(module)s) %(message)s",
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z",  # ISO 8601 format
+        },
+        "json": {
+            "()": "kcrw_feed.persistent_logger.JSONFormatter",
+            "fmt_keys": {
+                "level": "levelname",
+                "message": "message",
+                "timestamp": "timestamp",
+                "logger": "name",
+                "module": "module",
+                "function": "funcName",
+                "filename": "filename",
+                "line": "lineno",
+                "thread_name": "threadName",
+            }
         }
     },
     "handlers": {
-        "stdout": {
+        "stderr": {
             "class": "logging.StreamHandler",
+            # "level": "WARNING",
             "formatter": "simple",
-            "stream": "ext://sys.stdout"
-        }
+            "stream": "ext://sys.stderr"
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "json",
+            "filename": "kcrw_feed.jsonl",  # log",
+            "maxBytes": 10485760,
+            "backupCount": 3,
+        },
     },
     "loggers": {
-        "root": {"level": "DEBUG", "handlers": ["stdout"]},
+        "root": {"level": "DEBUG", "handlers": ["stderr", "file"]},
     },
 }
 
@@ -50,7 +80,7 @@ def main():
     save_parser = subparsers.add_parser("save", help="Save the state to disk")
 
     args = parser.parse_args()
-    logger.info(f"Command: {args.command}")
+    logger.info(f"Command: {args.command}", extra={"parsers": vars(args)})
 
     collection = show_index.ShowIndex(
         CONFIG["source_url"], extra_sitemaps=CONFIG["extra_sitemaps"])
@@ -78,6 +108,8 @@ def main():
     elif args.command == "save":
         # Call your state persistence functions.
         pass
+    else:
+        logger.error("Unknown command")
 
 
 if __name__ == "__main__":
