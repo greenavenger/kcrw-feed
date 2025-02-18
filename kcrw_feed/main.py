@@ -1,7 +1,10 @@
+"""Main entry point for the KCRW Feed Generator."""
+
 import argparse
 import logging.config
 import logging.handlers
 import pprint
+from typing import Any, Dict
 
 from kcrw_feed.config import CONFIG
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM  # also: JSONFormatter
@@ -12,13 +15,13 @@ from kcrw_feed import show_index
 # default propagation to process the log messages centrally at the root
 # logger (messages from our customer logger and from 3rd party libs).
 logger = logging.getLogger("kcrw_feed")
-logging_config = {
+logging_config: Dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,  # get log messages from 3rd party libraries
     "formatters": {
         "simple": {
             # Roughly google style
-            "format": "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] (%(module)s) %(message)s",
+            "format": "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(module)s.%(funcName)s:%(lineno)d] %(message)s",
             "datefmt": "%Y-%m-%dT%H:%M:%S%z",  # ISO 8601 format
         },
         "json": {
@@ -37,11 +40,11 @@ logging_config = {
         }
     },
     "handlers": {
-        "stderr": {
+        "stdout": {
             "class": "logging.StreamHandler",
-            # "level": "WARNING",
+            "level": "INFO",
             "formatter": "simple",
-            "stream": "ext://sys.stderr"
+            "stream": "ext://sys.stdout"
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -53,7 +56,8 @@ logging_config = {
         },
     },
     "loggers": {
-        "root": {"level": "TRACE", "handlers": ["stderr", "file"]},
+        # Enable TRACE here to see the full log output.
+        "root": {"level": "DEBUG", "handlers": ["stdout", "file"]},
     },
 }
 
@@ -88,22 +92,11 @@ def main():
         urls = collection.process_sitemap(args.source or CONFIG["source"])
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Gathered URLs: %s", pprint.pformat(urls))
+        logger.info("Gathered %s URLs", len(urls))
     elif args.command == "update":
-        # urls = collection.process_sitemap(args.source or CONFIG["source"])
-        # # If --shows is specified, filter the URLs.
-        # urls = [url.replace("https://www.kcrw.com",
-        #                     "https://www.example.com") for url in urls]
-        # pprint.pprint(urls[:10])
-        # if args.shows:
-        #     urls = [url for url in urls if url in args.shows]
-        # pprint.pprint(urls[:10])
         updated_shows = collection.update(
             source=(args.source or CONFIG["source"]), selected_urls=args.shows)
         # Save the state or pass it to the next phase.
-        # For now, print a summary.
-        # for s in updated_shows:
-        #     # print(s.title, s.last_updated)
-        #     pprint.pprint(s)
         logger.info("Updated %s", updated_shows)
     elif args.command == "save":
         # Call your state persistence functions.
