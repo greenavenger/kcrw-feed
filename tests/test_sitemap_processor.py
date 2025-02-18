@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime
 from typing import Optional
 from kcrw_feed.sitemap_processor import SitemapProcessor
-from kcrw_feed import utils
+from kcrw_feed import source_manager
 
 
 def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
@@ -54,8 +54,8 @@ def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
 
 @pytest.fixture(autouse=True)
 def patch_get_file(monkeypatch):
-    """Automatically patch utils.get_file in all tests in this module."""
-    monkeypatch.setattr(utils, "get_file", fake_get_file)
+    """Automatically patch source_manager.get_file in all tests in this module."""
+    monkeypatch.setattr(source_manager, "get_file", fake_get_file)
 
 
 def test_find_sitemaps():

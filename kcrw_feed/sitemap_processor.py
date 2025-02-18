@@ -6,7 +6,7 @@ from typing import List
 import urllib.robotparser as urobot
 import xmltodict
 
-from kcrw_feed import utils
+from kcrw_feed import source_manager
 
 # Create a module-level logger that integrates with your logging hierarchy.
 import logging
@@ -112,10 +112,11 @@ class SitemapProcessor:
         Returns:
             List[str]: A list of sitemap URLs."""
         # Construct the robots.txt location.
-        robots_path = utils.normalize_location(self.source_url, ROBOTS_FILE)
+        robots_path = source_manager.normalize_location(
+            self.source_url, ROBOTS_FILE)
         if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
             logger.trace("Robots path: %s", robots_path)
-        robots_bytes = utils.get_file(robots_path)
+        robots_bytes = source_manager.get_file(robots_path)
         if not robots_bytes:
             raise FileNotFoundError(f"robots.txt not found at {robots_path}")
         robots_txt = robots_bytes.decode("utf-8")
@@ -123,7 +124,7 @@ class SitemapProcessor:
         rp.parse(robots_txt.splitlines())
         sitemap_urls = rp.site_maps() or []
         # Append any extra sitemaps provided.
-        sitemap_urls += [utils.normalize_location(self.source_url, s)
+        sitemap_urls += [source_manager.normalize_location(self.source_url, s)
                          for s in self.extra_sitemaps]
         # Filter to only include sitemap URLs.
         sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
@@ -142,7 +143,7 @@ class SitemapProcessor:
 
         Returns:
             List[str]: A list of URL strings."""
-        sitemap_bytes = utils.get_file(sitemap)
+        sitemap_bytes = source_manager.get_file(sitemap)
         if not sitemap_bytes:
             logger.error("Sitemap file not found: %s", sitemap)
             return []

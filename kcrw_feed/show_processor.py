@@ -14,6 +14,7 @@ from typing import List, Dict, Optional, Sequence
 import uuid
 
 from kcrw_feed.models import Show, Episode, Host
+from kcrw_feed import source_manager
 from kcrw_feed import utils
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 
@@ -73,8 +74,9 @@ class ShowProcessor:
     def _fetch_show(self, url: str) -> Show:
         """Fetch a Show page and extract basic details."""
         # TODO: remove after testing
-        html = utils.get_file("./tests/data/henry-rollins/henry-rollins")
-        # html = utils.get_file(url)
+        html = source_manager.get_file(
+            "./tests/data/henry-rollins/henry-rollins")
+        # html = source_manager.get_file(url)
         # Try to extract structured data using extruct (e.g., microdata).
         data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
@@ -180,7 +182,7 @@ class ShowProcessor:
         local_file = "./tests/data/henry-rollins/" + \
             url.split("/")[-1] + "/player.json"
         logger.debug("local_file: %s", local_file)
-        episode_bytes = utils.get_file(local_file)
+        episode_bytes = source_manager.get_file(local_file)
         episode_data = None
         if episode_bytes is not None:
             try:
@@ -195,7 +197,7 @@ class ShowProcessor:
                 title=episode_data.get("title", ""),
                 airdate=self._parse_date(episode_data.get("airdate")),
                 url=episode_data.get("url"),
-                media_url=utils.strip_query_params(
+                media_url=source_manager.strip_query_params(
                     episode_data.get("media", "")[0].get("url")),
                 uuid=utils.extract_uuid(episode_data.get("uuid")),
                 show_uuid=utils.extract_uuid(episode_data.get("show_uuid")),

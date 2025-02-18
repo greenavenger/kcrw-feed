@@ -9,7 +9,7 @@ import pytest
 
 from kcrw_feed.show_processor import ShowProcessor
 from kcrw_feed.models import Show, Episode, Host
-from kcrw_feed import utils
+from kcrw_feed import source_manager
 
 # Fake microdata HTML for a Show page.
 FAKE_SHOW_UUID = "c5bb1ae9-fd3a-4995-9e78-33e377cc8e78"
@@ -64,7 +64,7 @@ FAKE_EPISODE_JSON: Dict[str, Any] = {
 @pytest.fixture(name="fake_processor")
 def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
     """
-    Return a ShowProcessor instance with utils.get_file() monkeypatched to return
+    Return a ShowProcessor instance with source_manager.get_file() monkeypatched to return
     predetermined content based on the URL.
 
     The fake function returns:
@@ -89,7 +89,7 @@ def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
         # Default fallback.
         return FAKE_SHOW_HTML.encode("utf-8")
 
-    monkeypatch.setattr(utils, "get_file", fake_get_file)
+    monkeypatch.setattr(source_manager, "get_file", fake_get_file)
     return sp
 
 
