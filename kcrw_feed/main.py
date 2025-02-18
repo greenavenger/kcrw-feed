@@ -7,7 +7,7 @@ import pprint
 from typing import Any, Dict
 
 from kcrw_feed.config import CONFIG
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM  # also: JSONFormatter
+from kcrw_feed.persistent_logger import LOGGING_LEVEL_MAP  # also: JSONFormatter
 from kcrw_feed import show_index
 
 # Logging set up: Instantiate custom logger to use in code. Configure
@@ -46,21 +46,12 @@ def main():
     # If --loglevel is provided, update the stdout handler level.
     # We want to leave the file handler unchanged.
     if args.loglevel:
-        # Map from string to numeric level.
-        level_map = {
-            "trace": TRACE_LEVEL_NUM,
-            "debug": logging.DEBUG,
-            "info": logging.INFO,
-            "warning": logging.WARNING,
-            "error": logging.ERROR,
-            "critical": logging.CRITICAL,
-        }
-        stdout_override = level_map[args.loglevel.lower()]
+        stdout_override = LOGGING_LEVEL_MAP[args.loglevel.lower()]
         # Override stdout handler's level.
         CONFIG["logging"]["handlers"]["stdout"]["level"] = args.loglevel.upper()
         # The file file handler remains unchanged.
-        file_level = level_map[CONFIG["logging"]
-                               ["handlers"]["file"]["level"].lower()]
+        file_level = LOGGING_LEVEL_MAP[CONFIG["logging"]
+                                       ["handlers"]["file"]["level"].lower()]
         # The root logger level must be at the lowest (most detailed) of the two.
         new_root_numeric = min(stdout_override, file_level)
         new_root_str = logging.getLevelName(new_root_numeric)
@@ -78,7 +69,7 @@ def main():
         CONFIG["source_url"], extra_sitemaps=CONFIG["extra_sitemaps"])
     if args.command == "gather":
         urls = collection.process_sitemap(args.source or CONFIG["source"])
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+        if logger.isEnabledFor(LOGGING_LEVEL_MAP["trace"]):
             logger.trace("Gathered URLs: %s", pprint.pformat(urls))
         logger.info("Gathered %s URLs", len(urls))
     elif args.command == "update":

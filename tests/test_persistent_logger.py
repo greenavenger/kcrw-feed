@@ -5,7 +5,7 @@ import json
 import datetime as dt
 import io
 
-from kcrw_feed.persistent_logger import JSONFormatter, NonErrorFilter, TRACE_LEVEL_NUM
+from kcrw_feed.persistent_logger import JSONFormatter, NonErrorFilter, LOGGING_LEVEL_MAP
 
 
 def test_logger_trace_enabled():
@@ -13,7 +13,7 @@ def test_logger_trace_enabled():
     Test that a logger set to the TRACE level outputs trace messages.
     """
     logger = logging.getLogger("test_logger_trace_enabled")
-    logger.setLevel(TRACE_LEVEL_NUM)
+    logger.setLevel(LOGGING_LEVEL_MAP["trace"])
     stream = io.StringIO()
     handler = logging.StreamHandler(stream)
     formatter = logging.Formatter("%(levelname)s: %(message)s")

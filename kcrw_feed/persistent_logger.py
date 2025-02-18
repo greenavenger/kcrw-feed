@@ -11,6 +11,14 @@ from typing import override
 # the main thread?
 
 TRACE_LEVEL_NUM = 5
+LOGGING_LEVEL_MAP = {
+    "trace": TRACE_LEVEL_NUM,  # 5
+    "debug": logging.DEBUG,  # 10
+    "info": logging.INFO,  # 20
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+    "critical": logging.CRITICAL,
+}
 logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
 
 
