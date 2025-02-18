@@ -62,7 +62,7 @@ FAKE_EPISODE_JSON: Dict[str, Any] = {
 
 
 @pytest.fixture(name="fake_processor")
-def processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
+def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
     """
     Return a ShowProcessor instance with utils.get_file() monkeypatched to return
     predetermined content based on the URL.

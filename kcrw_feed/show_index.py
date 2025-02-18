@@ -52,8 +52,9 @@ class ShowIndex:
         raw_urls = [url.replace("https://www.kcrw.com",
                                 "https://www.example.com") for url in raw_urls]
         # Optionally filter raw_urls based on selected_urls.
-        selected_urls = [url.rstrip("/") for url in selected_urls]  # normalize
         if selected_urls:
+            selected_urls = [url.rstrip("/")
+                             for url in selected_urls]  # normalize
             raw_urls = [url for url in raw_urls if url in selected_urls]
 
         updated_shows = []

@@ -101,7 +101,7 @@ def test_show_from_dict():
 
 @pytest.fixture(name="fake_fs")
 # Hermetic: Test file ops without actually touching local disk
-def fs(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
+def _fake_fs(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
     """
     A simple fake file system using a dictionary.
     Files written to 'open' in write mode will be stored in the dictionary.

@@ -24,10 +24,10 @@ class FakeSitemapProcessor:
         ]
 
 
-class FakeShowScraper:
+class FakeShowProcessor:
     """A fake ShowScraper that returns a dummy Show object for a given URL."""
 
-    def scrape_show(self, url: str) -> Show:
+    def fetch(self, url: str) -> Show:
         # For testing, derive a dummy uuid and title from the URL.
         if "show1" in url:
             uuid = "uuid-show1"
@@ -54,8 +54,8 @@ class FakeShowScraper:
         )
 
 
-@pytest.fixture
-def fake_show_index():
+@pytest.fixture(name="fake_show_index")
+def _fake_show_index() -> ShowIndex:
     """Fixture that creates a ShowIndex with fake processor and scraper."""
     si = ShowIndex("https://www.testsite.com/",
                    extra_sitemaps=["extra-sitemap.xml"])
@@ -63,13 +63,13 @@ def fake_show_index():
     si.sitemap_processor = FakeSitemapProcessor(
         si.source_url, si.extra_sitemaps)
     # Uncomment and assign our fake scraper.
-    si.show_processor = FakeShowScraper()
+    si.show_processor = FakeShowProcessor()
     # Initialize the repository dictionary.
     si.shows = {}
     return si
 
 
-def test_process_sitemap(fake_show_index):
+def test_process_sitemap(fake_show_index: ShowIndex) -> None:
     """Test that process_sitemap() returns the raw URLs from the fake processor."""
     raw_urls = fake_show_index.process_sitemap("sitemap")
     expected = [
@@ -80,7 +80,7 @@ def test_process_sitemap(fake_show_index):
     assert set(raw_urls) == set(expected)
 
 
-def test_update(fake_show_index):
+def test_update(fake_show_index: ShowIndex) -> None:
     """
     Test that update() calls the scraper on the URLs and populates the shows
     dictionary with only music show URLs.
@@ -102,7 +102,7 @@ def test_update(fake_show_index):
     assert fake_show_index.get_show_by_name("Other") is None
 
 
-def test_get_show_by_name(fake_show_index):
+def test_get_show_by_name(fake_show_index: ShowIndex) -> None:
     """Test lookup by name (case-insensitive)."""
     fake_show_index.update()
     show = fake_show_index.get_show_by_name("show two")
@@ -110,7 +110,7 @@ def test_get_show_by_name(fake_show_index):
     assert show.title == "Show Two"
 
 
-def test_get_episodes(fake_show_index):
+def test_get_episodes(fake_show_index: ShowIndex) -> None:
     """Test that get_episodes() returns a combined list of episodes from all shows."""
     # First update the index so that it has three shows.
     fake_show_index.update()
@@ -119,6 +119,7 @@ def test_get_episodes(fake_show_index):
     ep = Episode(
         title="Episode 1",
         airdate=datetime(2025, 1, 2),
+        url="https://www.testsite.com/music/shows/show1/ep1",
         media_url="https://www.testsite.com/audio/1.mp3",
         uuid="ep1",
         description="Episode 1 description"
@@ -129,7 +130,7 @@ def test_get_episodes(fake_show_index):
     assert episodes[0].title == "Episode 1"
 
 
-def test_get_episode_by_uuid(fake_show_index):
+def test_get_episode_by_uuid(fake_show_index: ShowIndex) -> None:
     """Test that get_episode_by_uuid() returns the correct episode."""
     fake_show_index.update()
     # Add an episode with a known UUID to show2.
@@ -137,6 +138,7 @@ def test_get_episode_by_uuid(fake_show_index):
     ep = Episode(
         title="Episode X",
         airdate=datetime(2025, 1, 3),
+        url="https://www.testsite.com/music/shows/show2/ep-x",
         media_url="https://www.testsite.com/audio/x.mp3",
         uuid="ep-x",
         description="Test episode X"
