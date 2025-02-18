@@ -20,5 +20,5 @@ wget -S 'https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-novemb
 ## Media JSON
 ```shell
 wget -S 'https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822/player.json'
-for i in $(seq 825 -1 817) ; do { wget -S -O kcrw-broadcast-${i}_player.json "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-${i}/player.json" ; }; done
+for i in $(seq 825 -1 817) ; do { mkdir kcrw-broadcast-${i} && wget -S -O kcrw-broadcast-${i}/player.json "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-${i}/player.json" ; }; done
 ```

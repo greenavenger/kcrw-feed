@@ -104,7 +104,7 @@ class ShowProcessor:
 
         if show_data:
             show_html_id: str = show_data.get("id")
-            logger.debug("show_html_id: %s", show_html_id)
+            logger.trace("show_html_id: %s", show_html_id)
             assert show_html_id is not None, "Failed to extract UUID!"
             show_uuid = utils.extract_uuid(show_html_id)
             logger.debug("show_uuid: %s", show_uuid)
@@ -154,7 +154,7 @@ class ShowProcessor:
                     url = item.get("properties", {}).get("url")
                     episode_html_id: str = item.get("id")
                     assert episode_html_id is not None, "Failed to extract episode UUID!"
-                    logger.debug("episode_html_id: %s", episode_html_id)
+                    logger.trace("episode_html_id: %s", episode_html_id)
                     episode_uuid = utils.extract_uuid(item.get("id"))
                     logger.debug("episode_uuid: %s", episode_uuid)
                     if not url and not episode_uuid:
@@ -169,13 +169,16 @@ class ShowProcessor:
 
     def _fetch_episode(self, url: str, uuid: Optional[str] = "") -> Episode:
         """Fetch the player for the Episode and extract details."""
+
+        episode: Episode
+
         if uuid and uuid in self._model_cache:
             # Episode has been fetched, so return cached object
             return self._model_cache.get(uuid)
 
         # TODO: remove after testing
         local_file = "./tests/data/henry-rollins/" + \
-            url.split("/")[-1] + "_player.json"
+            url.split("/")[-1] + "/player.json"
         logger.debug("local_file: %s", local_file)
         episode_bytes = utils.get_file(local_file)
         episode_data = None
