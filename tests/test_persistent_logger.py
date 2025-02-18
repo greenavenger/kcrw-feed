@@ -3,9 +3,49 @@
 import logging
 import json
 import datetime as dt
-import pytest
+import io
 
-from kcrw_feed.persistent_logger import JSONFormatter, NonErrorFilter
+from kcrw_feed.persistent_logger import JSONFormatter, NonErrorFilter, TRACE_LEVEL_NUM
+
+
+def test_logger_trace_enabled():
+    """
+    Test that a logger set to the TRACE level outputs trace messages.
+    """
+    logger = logging.getLogger("test_logger_trace_enabled")
+    logger.setLevel(TRACE_LEVEL_NUM)
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # Log a trace message. Since logger is set to TRACE, it should output.
+    logger.trace("This is a trace message")
+    handler.flush()
+    output = stream.getvalue()
+    assert "TRACE: This is a trace message" in output
+    logger.removeHandler(handler)
+
+
+def test_logger_trace_disabled():
+    """
+    Test that a logger with a level higher than TRACE (e.g. INFO) does not output trace messages.
+    """
+    logger = logging.getLogger("test_logger_trace_disabled")
+    logger.setLevel(logging.INFO)
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # This trace message should not be output because the logger level is INFO.
+    logger.trace("This trace message should not appear")
+    handler.flush()
+    output = stream.getvalue()
+    assert output == ""
+    logger.removeHandler(handler)
 
 
 def test_json_formatter_basic():

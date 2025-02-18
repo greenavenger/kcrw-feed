@@ -1,9 +1,10 @@
 """Simple configuration reader"""
 
+from typing import Any, Dict
 import yaml
 
 
-def read_config(filename: str) -> dict[str, str]:
+def read_config(filename: str) -> Dict[str, Any]:
     """
     Reads a YAML configuration file and returns its contents as a dictionary.
 

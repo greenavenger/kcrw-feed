@@ -1,10 +1,10 @@
 import argparse
 import logging.config
 import logging.handlers
-# import pprint
+import pprint
 
 from kcrw_feed.config import CONFIG
-from kcrw_feed import persistent_logger
+from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM  # also: JSONFormatter
 from kcrw_feed import show_index
 
 # Logging set up: Instantiate custom logger to use in code. Configure
@@ -53,14 +53,14 @@ logging_config = {
         },
     },
     "loggers": {
-        "root": {"level": "DEBUG", "handlers": ["stderr", "file"]},
+        "root": {"level": "TRACE", "handlers": ["stderr", "file"]},
     },
 }
 
 
 def main():
     logging.config.dictConfig(config=logging_config)
-    logger.debug(f"CONFIG: {CONFIG}")
+    logger.debug("CONFIG: %s", pprint.pformat(CONFIG))
 
     parser = argparse.ArgumentParser(description="KCRW Feed Generator")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -80,14 +80,14 @@ def main():
     save_parser = subparsers.add_parser("save", help="Save the state to disk")
 
     args = parser.parse_args()
-    logger.info(f"Command: {args.command}", extra={"parsers": vars(args)})
+    logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
     collection = show_index.ShowIndex(
         CONFIG["source_url"], extra_sitemaps=CONFIG["extra_sitemaps"])
     if args.command == "gather":
         urls = collection.process_sitemap(args.source or CONFIG["source"])
-        logger.info(f"Gathered URLs: {urls[:10]}")
-        # pprint.pprint(urls)  # [:10])
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Gathered URLs: %s", pprint.pformat(urls))
     elif args.command == "update":
         # urls = collection.process_sitemap(args.source or CONFIG["source"])
         # # If --shows is specified, filter the URLs.
@@ -104,7 +104,7 @@ def main():
         # for s in updated_shows:
         #     # print(s.title, s.last_updated)
         #     pprint.pprint(s)
-        logger.info(f"Updated {updated_shows} shows")
+        logger.info("Updated %s", updated_shows)
     elif args.command == "save":
         # Call your state persistence functions.
         pass

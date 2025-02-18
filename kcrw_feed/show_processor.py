@@ -5,6 +5,7 @@ import json
 import pprint
 # TODO: Add requests when we're ready to test things against the live site.
 # import requests
+import logging
 from urllib.parse import urlparse, urljoin
 import extruct
 from bs4 import BeautifulSoup
@@ -14,10 +15,14 @@ import uuid
 
 from kcrw_feed.models import Show, Episode, Host
 from kcrw_feed import utils
+from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+
+# Create a module-level logger for this module
+logger = logging.getLogger("kcrw_feed")
 
 
 class ShowProcessor:
-    """ShowProcessor fetches a show or an episode page  and extracts details
+    """ShowProcessor fetches a show or an episode page and extracts details
     to enrich a raw URL into a full domain model object."""
 
     def __init__(self, timeout: int = 10):
@@ -37,36 +42,33 @@ class ShowProcessor:
     def fetch(self, url: str):
         """Given a URL, decide whether it is a Show page or an Episode page
         and return the corresponding object."""
-        print(f"Fetching: {url}")
+        logger.debug("Fetching: %s", url)
         # Parse the URL to determine its structure.
         parsed = urlparse(url)
         # Remove leading/trailing slashes and split path into segments.
         path_parts = parsed.path.strip("/").split("/")
-        print(f"path_parts: {path_parts}")
+        logger.debug("path_parts: %s", path_parts)
         # We're expecting a structure like: music/shows/<show>[/<episode>]
         try:
             music_idx = path_parts.index("music")
             shows_idx = path_parts.index("shows")
-            print(f"music_idx: {music_idx}, shows_idx: {shows_idx}")
+            logger.debug("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
         except ValueError:
             # If the URL doesn't match our expected structure, assume it's a Show.
             return self._fetch_show(url)
 
         # Determine how many segments come after "shows" in the path
-        after = path_parts[shows_idx+1:]
-        print(f"after: {after}")
+        after = path_parts[shows_idx + 1:]
+        logger.debug("after: %s", after)
         if len(after) == 0:
             # No show identifier found; fallback.
-            # return self._fetch_show(url)
             assert False, f"No show identifier found! {url}"
         elif len(after) == 1:
-            print("Fetching show: ", url)
+            logger.info("Fetching show: %s", url)
             return self._fetch_show(url)
         else:
-            print("Fetching episode: ", url)
+            logger.info("Fetching episode: %s", url)
             return self._fetch_episode(url)
-        # TODO: Should I return show_uuid, maybe?
-        # return self._fetch_show(url)
 
     def _fetch_show(self, url: str) -> Show:
         """Fetch a Show page and extract basic details."""
@@ -75,7 +77,8 @@ class ShowProcessor:
         # html = utils.get_file(url)
         # Try to extract structured data using extruct (e.g., microdata).
         data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
-        pprint.pprint(data)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Extracted data: %s", pprint.pformat(data))
 
         show: Show
         show_uuid: uuid.UUID
@@ -86,8 +89,8 @@ class ShowProcessor:
             if isinstance(item, dict) and item.get("type") == "http://schema.org/RadioSeries":
                 show_data = item
                 break
-        print("show_data:")
-        pprint.pprint(show_data)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("show_data: %s", pprint.pformat(show_data))
 
         episode_data = None
         # Look for an object that indicates it's an episode (or similar).
@@ -101,10 +104,10 @@ class ShowProcessor:
 
         if show_data:
             show_html_id: str = show_data.get("id")
-            print("show_html_id:", show_html_id)
+            logger.debug("show_html_id: %s", show_html_id)
             assert show_html_id is not None, "Failed to extract UUID!"
             show_uuid = utils.extract_uuid(show_html_id)
-            print("show_uuid:", show_uuid)
+            logger.debug("show_uuid: %s", show_uuid)
             if show_uuid in self._model_cache:
                 # Show has already been fetched, so return cached object
                 show = self._model_cache.get(show_uuid)
@@ -115,12 +118,10 @@ class ShowProcessor:
                     uuid=show_uuid,
                     description=show_data.get(
                         "properties", {}).get("description"),
-                    # Host enrichment can be added later.
                     hosts=self._parse_hosts(show_data),
                     episodes=episodes,      # Episodes can be added later.
                     type=show_data.get("type"),
-                    last_updated=datetime.now()  # ,  # Or parse if available.
-                    # metadata=show_data
+                    last_updated=datetime.now()
                 )
                 self._model_cache["uuid"] = show
         else:
@@ -135,16 +136,14 @@ class ShowProcessor:
                 metadata={}
             )
             self._model_cache["uuid"] = show
-        pprint.pprint(show)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Final show object: %s", pprint.pformat(show))
         return show
 
     def _parse_episodes(self, episode_data: dict) -> List[Episode]:
         """Parse episode data extracted from structured data."""
-        print("episode_data:")
-        pprint.pprint(episode_data)
-
-        episode: Episode
-        episode_uuid: uuid.UUID
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("episode_data: %s", pprint.pformat(episode_data))
 
         episodes = []
         if episode_data:
@@ -155,11 +154,11 @@ class ShowProcessor:
                     url = item.get("properties", {}).get("url")
                     episode_html_id: str = item.get("id")
                     assert episode_html_id is not None, "Failed to extract episode UUID!"
-                    print("episode_html_id:", episode_html_id)
+                    logger.debug("episode_html_id: %s", episode_html_id)
                     episode_uuid = utils.extract_uuid(item.get("id"))
-                    print("episode_uuid:", episode_uuid)
+                    logger.debug("episode_uuid: %s", episode_uuid)
                     if not url and not episode_uuid:
-                        print("Failed to extract episode URL!")
+                        logger.error("Failed to extract episode URL!")
                         continue
                     elif url and episode_uuid:
                         episode = self._fetch_episode(url, episode_uuid)
@@ -175,87 +174,74 @@ class ShowProcessor:
             return self._model_cache.get(uuid)
 
         # TODO: remove after testing
-        # "./tests/data/henry-rollins/kcrw-broadcast-825_player.json")
         local_file = "./tests/data/henry-rollins/" + \
             url.split("/")[-1] + "_player.json"
-        print("local_file:", local_file)
+        logger.debug("local_file: %s", local_file)
         episode_bytes = utils.get_file(local_file)
+        episode_data = None
         if episode_bytes is not None:
             try:
                 episode_str = episode_bytes.decode("utf-8")
                 episode_data = json.loads(episode_str)
-                # TODO: Do we want to use case-insensitive matching for keys?
-                # # We use case-insensitive matching for keys.
-                # pre_size = len(episode_data)
-                # episode_data = {k.lower(): v for k, v in episode_data.items()}
-                # assert len(episode_data) == pre_size, "Duplicate keys found"
             except json.JSONDecodeError as e:
-                print("Error decoding JSON:", e)
+                logger.error("Error decoding JSON: %s", e)
         else:
-            print("Failed to retrieve file")
-        # pprint.pprint(episode_data)
-
+            logger.error("Failed to retrieve file")
         if episode_data:
             episode = Episode(
-                title=episode_data.get("title", ""),  # case sensitive!
+                title=episode_data.get("title", ""),
                 airdate=self._parse_date(episode_data.get("airdate")),
-                url=episode_data.get("url"),  # episode url
+                url=episode_data.get("url"),
                 media_url=utils.strip_query_params(
                     episode_data.get("media", "")[0].get("url")),
                 uuid=utils.extract_uuid(episode_data.get("uuid")),
                 show_uuid=utils.extract_uuid(episode_data.get("show_uuid")),
-                # Store host(s) UUID here to avoid duplicate Host objects.
                 hosts=[utils.extract_uuid(item.get("uuid"))
                        for item in episode_data.get("hosts", [])],
                 description=episode_data.get("html_description"),
                 songlist=episode_data.get("songlist"),
                 image=episode_data.get("image"),
-                # should this be schemas.org compliant?
                 type=episode_data.get("content_type"),
                 duration=episode_data.get("duration"),
                 ending=self._parse_date(episode_data.get("ending")),
                 last_updated=self._parse_date(episode_data.get("modified")),
-                # metadata=episode_data
             )
             if episode.uuid:
                 self._model_cache[episode.uuid] = episode
-        pprint.pprint(episode)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Final episode object: %s",
+                         pprint.pformat(episode_data))
         return episode
 
     def _parse_hosts(self, show_data: dict) -> Optional[List[Host]]:
         """Try to parse a host object from structured data."""
-        hosts: List(Host) = []
-
-        # TODO: Is there sometimes more than one host?
-        print("show_data for hosts:")
-        pprint.pprint(show_data)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("show_data for hosts: %s", pprint.pformat(show_data))
+        hosts = []
         if show_data:
-            # pprint.pprint(show_data)
             author_data = show_data.get("properties", {}).get("author", {})
-            print("author_data:", author_data)
+            if logger.isEnabledFor(TRACE_LEVEL_NUM):
+                logger.trace("author_data: %s", pprint.pformat(author_data))
             if not author_data:
-                print("No hosts data found!")
-                print("hosts:", hosts)
+                logger.info("No hosts data found!")
+                logger.debug("hosts: %s", hosts)
                 return []
             author_uuid = utils.extract_uuid(author_data.get("id"))
             if author_uuid and author_uuid in self._model_cache:
-                # Host has been enriched, so return cached object
                 hosts = self._model_cache.get(author_uuid)
             else:
                 hosts.append(Host(
                     name=author_data.get("properties", {}).get("name"),
                     uuid=author_uuid,
                     url=author_data.get("properties", {}).get("url"),
-                    socials=show_data.get(
-                        "properties", {}).get("sameAs", []),
+                    socials=show_data.get("properties", {}).get("sameAs", []),
                     type=author_data.get("type"),
-                    # metadata=author_data
                 ))
             if author_uuid:
                 self._model_cache[author_uuid] = hosts
         hosts = self._dedup_by_uuid(hosts)
-        print("hosts:")
-        pprint.pprint(hosts)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("hosts: %s", pprint.pformat(hosts))
         return hosts
 
     def _parse_date(self, date_str: str) -> Optional[datetime]:
@@ -263,7 +249,8 @@ class ShowProcessor:
         if date_str:
             try:
                 return datetime.fromisoformat(date_str)
-            except ValueError:
+            except ValueError as e:
+                logger.error("Error parsing date '%s': %s", date_str, e)
                 return None
         return None
 
@@ -278,7 +265,7 @@ class ShowProcessor:
                 assert type(
                     e) == first_type, "Mixed types provided to _dedup_by_uuid"
         seen = {}
-        deduped: list[Episode | Host] = []
+        deduped = []
         for e in entities:
             if e.uuid is None:
                 deduped.append(e)

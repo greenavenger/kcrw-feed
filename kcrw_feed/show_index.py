@@ -4,8 +4,9 @@ from datetime import datetime
 import io
 import pprint
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional
 import urllib.robotparser as urobot
+import uuid
 import xmltodict
 
 from kcrw_feed.models import Show, Episode
@@ -29,9 +30,9 @@ class ShowIndex:
         self.show_processor = ShowProcessor()
         # This will hold a dict keyed by URL with sitemap metadata (e.g. lastmod).
         # TODO: Maybe remove this, as it could just be wasted memory.
-        self._sitemap_urls = List[str]
+        self._sitemap_urls: List[str] = []
         # This will hold fully enriched Show objects.
-        self.shows: List[Show] = {}
+        self.shows: Dict[str | uuid.UUID, Show] = {}
 
     def process_sitemap(self, source: str = "sitemap") -> List[str]:
         """Use SitemapProcessor to get a list of raw show URLs."""

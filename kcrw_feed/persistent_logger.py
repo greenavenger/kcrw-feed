@@ -10,6 +10,17 @@ from typing import override
 # TODO: Should I handle logs in a QueueHandler to offload processing from
 # the main thread?
 
+TRACE_LEVEL_NUM = 5
+logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
+
+
+def trace(self, message, *args, **kws):
+    if self.isEnabledFor(TRACE_LEVEL_NUM):
+        self._log(TRACE_LEVEL_NUM, message, args, **kws)
+
+
+logging.Logger.trace = trace
+
 LOG_RECORD_BUILTIN_ATTRS = {
     "args",
     "asctime",
