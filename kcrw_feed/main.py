@@ -25,8 +25,8 @@ logging_config = {
             "()": "kcrw_feed.persistent_logger.JSONFormatter",
             "fmt_keys": {
                 "level": "levelname",
-                "message": "message",
                 "timestamp": "timestamp",
+                "message": "message",
                 "logger": "name",
                 "module": "module",
                 "function": "funcName",
@@ -47,7 +47,7 @@ logging_config = {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "json",
-            "filename": "kcrw_feed.jsonl",  # log",
+            "filename": "./logs/kcrw_feed.jsonl",  # log",
             "maxBytes": 10485760,
             "backupCount": 3,
         },

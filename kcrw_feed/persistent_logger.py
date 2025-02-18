@@ -7,6 +7,9 @@ import json
 import logging
 from typing import override
 
+# TODO: Should I handle logs in a QueueHandler to offload processing from
+# the main thread?
+
 LOG_RECORD_BUILTIN_ATTRS = {
     "args",
     "asctime",
@@ -47,10 +50,10 @@ class JSONFormatter(logging.Formatter):
     def _prepare_log_dict(self, record: logging.LogRecord):
         always_fields = {
             "level": record.levelname,
-            "message": record.getMessage(),
             "timestamp": dt.datetime.fromtimestamp(
                 record.created, tz=dt.timezone.utc
             ).isoformat(),
+            "message": record.getMessage(),
         }
         if record.exc_info is not None:
             always_fields["exc_info"] = self.formatException(record.exc_info)
@@ -73,6 +76,8 @@ class JSONFormatter(logging.Formatter):
         return message
 
 
+# TODO: Modify filter to send INFO and DEBUG to stdout, and the rest to
+# stderr.
 class NonErrorFilter(logging.Filter):
     @override
     def filter(self, record: logging.LogRecord) -> bool | logging.LogRecord:
