@@ -18,10 +18,13 @@ logger = logging.getLogger("kcrw_feed")
 
 
 def main():
-    logging.config.dictConfig(config=CONFIG["logging"])
-    logger.debug("CONFIG: %s", pprint.pformat(CONFIG))
-
     parser = argparse.ArgumentParser(description="KCRW Feed Generator")
+    parser.add_argument(
+        "--loglevel",
+        type=str,
+        choices=["trace", "debug", "info", "warning", "error", "critical"],
+        help="Override log level for stdout logging",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     gather_parser = subparsers.add_parser("gather", help="Gather show URLs")
@@ -39,6 +42,36 @@ def main():
     save_parser = subparsers.add_parser("save", help="Save the state to disk")
 
     args = parser.parse_args()
+
+    # If --loglevel is provided, update the stdout handler level.
+    # We want to leave the file handler unchanged.
+    if args.loglevel:
+        # Map from string to numeric level.
+        level_map = {
+            "trace": TRACE_LEVEL_NUM,
+            "debug": logging.DEBUG,
+            "info": logging.INFO,
+            "warning": logging.WARNING,
+            "error": logging.ERROR,
+            "critical": logging.CRITICAL,
+        }
+        stdout_override = level_map[args.loglevel.lower()]
+        # Override stdout handler's level.
+        CONFIG["logging"]["handlers"]["stdout"]["level"] = args.loglevel.upper()
+        # The file file handler remains unchanged.
+        file_level = level_map[CONFIG["logging"]
+                               ["handlers"]["file"]["level"].lower()]
+        # The root logger level must be at the lowest (most detailed) of the two.
+        new_root_numeric = min(stdout_override, file_level)
+        new_root_str = logging.getLevelName(new_root_numeric)
+        CONFIG["logging"]["loggers"]["root"]["level"] = new_root_str
+
+    # Configure logging using the YAML-derived configuration.
+    logging.config.dictConfig(CONFIG["logging"])
+    logger.debug("CONFIG: %s", pprint.pformat(CONFIG))
+    logger.debug("Log handler levels: %s", [(name, handler["level"])
+                 for name, handler in CONFIG["logging"]["handlers"].items()])
+
     logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
     collection = show_index.ShowIndex(
