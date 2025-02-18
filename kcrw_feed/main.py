@@ -15,55 +15,10 @@ from kcrw_feed import show_index
 # default propagation to process the log messages centrally at the root
 # logger (messages from our customer logger and from 3rd party libs).
 logger = logging.getLogger("kcrw_feed")
-logging_config: Dict[str, Any] = {
-    "version": 1,
-    "disable_existing_loggers": False,  # get log messages from 3rd party libraries
-    "formatters": {
-        "simple": {
-            # Roughly google style
-            "format": "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(module)s.%(funcName)s:%(lineno)d] %(message)s",
-            "datefmt": "%Y-%m-%dT%H:%M:%S%z",  # ISO 8601 format
-        },
-        "json": {
-            "()": "kcrw_feed.persistent_logger.JSONFormatter",
-            "fmt_keys": {
-                "level": "levelname",
-                "timestamp": "timestamp",
-                "message": "message",
-                "logger": "name",
-                "module": "module",
-                "function": "funcName",
-                "filename": "filename",
-                "line": "lineno",
-                "thread_name": "threadName",
-            }
-        }
-    },
-    "handlers": {
-        "stdout": {
-            "class": "logging.StreamHandler",
-            "level": "INFO",
-            "formatter": "simple",
-            "stream": "ext://sys.stdout"
-        },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": "DEBUG",
-            "formatter": "json",
-            "filename": "./logs/kcrw_feed.jsonl",  # log",
-            "maxBytes": 10485760,
-            "backupCount": 3,
-        },
-    },
-    "loggers": {
-        # Enable TRACE here to see the full log output.
-        "root": {"level": "DEBUG", "handlers": ["stdout", "file"]},
-    },
-}
 
 
 def main():
-    logging.config.dictConfig(config=logging_config)
+    logging.config.dictConfig(config=CONFIG["logging"])
     logger.debug("CONFIG: %s", pprint.pformat(CONFIG))
 
     parser = argparse.ArgumentParser(description="KCRW Feed Generator")
