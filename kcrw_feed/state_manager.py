@@ -3,6 +3,8 @@
 import json
 from datetime import datetime
 from dataclasses import asdict
+from typing import Any, Dict
+import uuid
 
 from kcrw_feed.models import Host, Show, Episode
 
@@ -12,7 +14,7 @@ class Json:
         self.filename = filename
 
     # Serialization
-    def default_serializer(self, obj):
+    def default_serializer(self, obj: Any) -> Any:
         """Helper to convert non-serializable objects like datetime."""
         if isinstance(obj, datetime):
             return obj.isoformat()
@@ -32,28 +34,46 @@ class Json:
         """Assume ISO format dates."""
         return datetime.fromisoformat(dt_str)
 
-    def episode_from_dict(self, data: dict) -> Episode:
+    def _parse_uuid(self, uuid_str: str) -> uuid.UUID:
+        """Assume valid UUID format."""
+        return uuid.UUID(uuid_str)
+
+    def episode_from_dict(self, data: Dict[Any, Any]) -> Episode:
         return Episode(
             title=data["title"],
             airdate=self._parse_datetime(
-                data["pub_date"]) if data.get("pub_date") else None,
-            media_url=data["audio_url"],
+                data["airdate"]) if data.get("airdate") else None,
+            url=data["url"],
+            media_url=data["media_url"],
             uuid=data.get("uuid"),
-            description=data.get("description")
+            show_uuid=data.get("show_uuid"),
+            hosts=[self.host_from_dict(h) for h in data.get("hosts", [])],
+            description=data.get("description"),
+            songlist=data.get("songlist"),
+            image=data.get("image"),
+            type=data.get("type"),
+            duration=data.get("duration"),
+            ending=self._parse_datetime(
+                data["ending"]) if data.get("ending") else None,
+            last_updated=self._parse_datetime(
+                data["last_updated"]) if data.get("last_updated") else None,
+            metadata=data.get("metadata", {})
         )
 
-    def host_from_dict(self, data: dict) -> Host:
+    def host_from_dict(self, data: Dict[Any, Any]) -> Host:
         return Host(
             name=data["name"],
             uuid=data.get("uuid"),
             title=data.get("title"),
             url=data.get("url"),
             image_url=data.get("image_url"),
-            twitter=data.get("twitter"),
-            description=data.get("description")
+            socials=data.get("socials", []),
+            description=data.get("description"),
+            type=data.get("type"),
+            metadata=data.get("metadata", {})
         )
 
-    def show_from_dict(self, data: dict) -> Show:
+    def show_from_dict(self, data: Dict[Any, Any]) -> Show:
         episodes = [self.episode_from_dict(ep)
                     for ep in data.get("episodes", [])]
         hosts = [self.host_from_dict(h) for h in data.get("hosts", [])]
@@ -66,6 +86,7 @@ class Json:
             description=data.get("description"),
             hosts=hosts,
             episodes=episodes,
+            type=data.get("type"),
             last_updated=last_updated,
             metadata=data.get("metadata", {})
         )

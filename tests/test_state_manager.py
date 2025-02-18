@@ -1,9 +1,10 @@
-"""Module to test state_manager.py"""
+"""Module to test the state management component."""
 
 import io
 import json
 from datetime import datetime
 import pytest
+from typing import Dict, Any, IO
 
 from kcrw_feed.state_manager import Json
 from kcrw_feed.models import Host, Show, Episode
@@ -45,13 +46,15 @@ def test_episode_from_dict():
     dt_str = "2025-01-01T12:30:00"
     data = {
         "title": "Episode 1",
-        "pub_date": dt_str,
-        "audio_url": "http://example.com/episode1.mp3",
+        "airdate": dt_str,
+        "url": "http://example.com/episode1",
+        "media_url": "http://example.com/episode1.mp3",
         "description": "Test episode"
     }
     episode = js.episode_from_dict(data)
     assert isinstance(episode, Episode)
     assert episode.title == "Episode 1"
+    assert episode.url == "http://example.com/episode1"
     assert episode.media_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"
     assert episode.airdate == datetime.fromisoformat(dt_str)
@@ -74,8 +77,9 @@ def test_show_from_dict():
         "episodes": [
             {
                 "title": "Episode A",
-                "pub_date": "2025-01-01T12:30:00",
-                "audio_url": "http://example.com/episodeA.mp3",
+                "airdate": "2025-01-01T12:30:00",
+                "url": "http://example.com/episode1",
+                "media_url": "http://example.com/episodeA.mp3",
                 "description": "Episode A desc"
             }
         ]
@@ -95,17 +99,17 @@ def test_show_from_dict():
     assert ep.title == "Episode A"
 
 
-@pytest.fixture
+@pytest.fixture(name="fake_fs")
 # Hermetic: Test file ops without actually touching local disk
-def fake_fs(monkeypatch):
+def fs(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
     """
     A simple fake file system using a dictionary.
     Files written to 'open' in write mode will be stored in the dictionary.
     Reads will return a StringIO initialized with the stored contents.
     """
-    files = {}
+    files: Dict[str, str] = {}
 
-    def fake_open(filename, mode='r', *args, **kwargs):
+    def fake_open(filename: str, mode: str = 'r', *args: Any, **kwargs: Any) -> IO[str]:
         # For writing: create a StringIO and store its contents when closed.
         if 'w' in mode:
             file_obj = io.StringIO()
@@ -113,7 +117,7 @@ def fake_fs(monkeypatch):
             # Override close to store the file content
             orig_close = file_obj.close
 
-            def fake_close():
+            def fake_close() -> None:
                 files[filename] = file_obj.getvalue()
                 orig_close()
             file_obj.close = fake_close
@@ -131,8 +135,8 @@ def fake_fs(monkeypatch):
     return files
 
 
-def test_save_and_load_state_in_memory(fake_fs):
-    # Create test data: a Host with one Show and one Episode
+def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
+    """Create test data: a Host with one Show and one Episode"""
     dt1 = datetime(2025, 1, 1, 12, 30)
     dt2 = datetime(2025, 1, 2, 13, 45)
     host = Host(
@@ -141,6 +145,7 @@ def test_save_and_load_state_in_memory(fake_fs):
     episode = Episode(
         title="Episode A",
         airdate=dt1,
+        url="http://example.com/episodeA",
         media_url="http://example.com/episodeA.mp3",
         description="Episode A desc"
     )
