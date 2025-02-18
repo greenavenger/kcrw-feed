@@ -1,14 +1,16 @@
 """Module to gather the urls of shows and episodes"""
 
 from datetime import datetime
-# import io
-import pprint
 import re
 from typing import List
 import urllib.robotparser as urobot
 import xmltodict
 
 from kcrw_feed import utils
+
+# Create a module-level logger that integrates with your logging hierarchy.
+import logging
+logger = logging.getLogger("kcrw_feed")
 
 # Regular expression to match sitemap XML filenames.
 SITEMAP_RE = re.compile(r"sitemap.*\.xml", re.IGNORECASE)
@@ -111,7 +113,8 @@ class SitemapProcessor:
             List[str]: A list of sitemap URLs."""
         # Construct the robots.txt location.
         robots_path = utils.normalize_location(self.source_url, ROBOTS_FILE)
-        pprint.pprint(robots_path)
+        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+            logger.trace("Robots path: %s", robots_path)
         robots_bytes = utils.get_file(robots_path)
         if not robots_bytes:
             raise FileNotFoundError(f"robots.txt not found at {robots_path}")
@@ -125,7 +128,10 @@ class SitemapProcessor:
         # Filter to only include sitemap URLs.
         sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
         # Remove duplicates.
-        return list(set(sitemap_urls))
+        unique_sitemaps = list(set(sitemap_urls))
+        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+            logger.trace("Found sitemap URLs: %s", unique_sitemaps)
+        return unique_sitemaps
 
     def read_sitemap(self, sitemap: str) -> List[str]:
         """Reads a sitemap XML file and extracts all URLs from <loc>
@@ -138,8 +144,11 @@ class SitemapProcessor:
             List[str]: A list of URL strings."""
         sitemap_bytes = utils.get_file(sitemap)
         if not sitemap_bytes:
+            logger.error("Sitemap file not found: %s", sitemap)
             return []
         sitemap_text = sitemap_bytes.decode("utf-8")
+        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+            logger.trace("Parsing sitemap XML from: %s", sitemap)
         parsed = xmltodict.parse(sitemap_text)
         self._extract_entries(parsed)
 
@@ -185,9 +194,11 @@ class SitemapProcessor:
                     entry["changefreq"] = data[lower_keys["changefreq"]]
                 if "priority" in lower_keys:
                     entry["priority"] = data[lower_keys["priority"]]
-                # Add only entries that match the music filter
+                # Add only entries that match the music filter.
                 if MUSIC_FILTER_RE.search(entry["loc"]):
                     self._sitemap_entities[entry["loc"]] = entry
+                    if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+                        logger.trace("Extracted entry: %s", entry)
             else:
                 # Otherwise, traverse all values.
                 for value in data.values():
@@ -204,5 +215,6 @@ class SitemapProcessor:
 
         Returns:
             List[str]: A list of show URLs."""
+        logger.info("parse_feeds() is not yet implemented.")
         # Implementation to be added later.
         return []
