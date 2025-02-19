@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import logging
+import pprint
 import re
 from typing import Any, Dict, List, Set
 import urllib.robotparser as urobot
@@ -168,9 +169,7 @@ class SitemapProcessor:
         return collected
 
     def _read_sitemap_for_child_sitemaps(self, sitemap: str) -> List[str]:
-        """
-        Reads a sitemap XML and returns any child sitemap URLs (if this is an index file).
-
+        """Reads a sitemap XML and returns any child sitemap URLs (if this is an index file).
         Returns:
             List[str]: Child sitemap URLs, or an empty list if none are found.
         """
@@ -179,22 +178,46 @@ class SitemapProcessor:
             logger.warning("Sitemap %s could not be retrieved", sitemap)
             return []
         try:
-            tree = ET.fromstring(sitemap_bytes)
-        except ET.ParseError:
-            logger.warning("Sitemap %s is not valid XML", sitemap)
+            sitemap_str = sitemap_bytes.decode("utf-8")
+            doc = xmltodict.parse(sitemap_str)
+        except Exception as e:
+            logger.warning("Sitemap %s could not be parsed: %s", sitemap, e)
             return []
+
+        # Check if this is a sitemap index
+        sitemap_index = doc.get("sitemapindex")
+        if not sitemap_index:
+            # Not a sitemap index, so no child sitemaps.
+            return []
+
+        # The "sitemap" key may be a single dict or a list
+        sitemap_entries = sitemap_index.get("sitemap")
+        if not sitemap_entries:
+            return []
+
+        if isinstance(sitemap_entries, dict):
+            sitemap_entries = [sitemap_entries]
+
         child_sitemaps = []
-        # In a sitemap index, child sitemaps are found under <sitemap>/<loc>
-        for sitemap_elem in tree.findall(".//sitemap"):
-            loc = sitemap_elem.find("loc")
-            if loc is not None and loc.text:
-                child_sitemaps.append(loc.text.strip())
-        logger.debug("Found child_sitemaps: %s", child_sitemaps)
+        for entry in sitemap_entries:
+            loc = entry.get("loc")
+            if loc:
+                child_sitemaps.append(loc.strip())
+        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+            logger.trace("Found child_sitemaps: %s",
+                         pprint.pformat(child_sitemaps))
+        # Rewrite returned urls and filter for music.
+        child_sitemaps = [
+            self.source.rewrite_base_source(url)
+            for url in child_sitemaps
+            if MUSIC_FILTER_RE.search(url)
+        ]
+        logger.debug("Child sitemaps to read: %s", child_sitemaps)
         return child_sitemaps
 
     def _read_sitemap_for_entries(self, sitemap: str) -> None:
         """
-        Reads a sitemap and extracts show references (e.g. from <url>/<loc> tags),
+        Reads a sitemap and extracts show references from <url>/<loc> tags,
         adding them to self._sitemap_entities.
         """
         sitemap_bytes = self.source.get_resource(sitemap)
@@ -202,16 +225,30 @@ class SitemapProcessor:
             logger.warning("Sitemap %s could not be retrieved", sitemap)
             return
         try:
-            tree = ET.fromstring(sitemap_bytes)
-        except ET.ParseError:
-            logger.warning("Sitemap %s is not valid XML", sitemap)
+            sitemap_str = sitemap_bytes.decode("utf-8")
+            doc = xmltodict.parse(sitemap_str)
+        except Exception as e:
+            logger.warning("Sitemap %s could not be parsed: %s", sitemap, e)
             return
-        # If the sitemap is a regular sitemap (not an index), look for <url> elements.
-        for url_elem in tree.findall(".//url"):
-            loc = url_elem.find("loc")
-            if loc is not None and loc.text:
-                # You might process metadata here as well.
-                self._sitemap_entities[loc.text.strip()] = {}
+
+        # Check if this is a URL sitemap (typically under the "urlset" key)
+        urlset = doc.get("urlset")
+        if not urlset:
+            # If not, it might be a sitemap index or unexpected format; nothing to do here.
+            return
+
+        urls = urlset.get("url")
+        if not urls:
+            return
+
+        # Normalize a single URL entry to a list
+        if isinstance(urls, dict):
+            urls = [urls]
+
+        for entry in urls:
+            loc = entry.get("loc")
+            if loc:
+                self._sitemap_entities[loc.strip()] = {}
 
     def read_sitemap(self, sitemap: str) -> List[str]:
         """Reads a sitemap XML file and extracts all URLs from <loc>
