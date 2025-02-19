@@ -97,6 +97,9 @@ class SitemapProcessor:
         # Recursively collect all sitemap URLs.
         all_sitemaps = self._collect_sitemaps(root_sitemaps)
         logger.debug("All sitemaps collected: %s", all_sitemaps)
+        # TODO: We're fetching and reading the sitemaps twice. We should cache
+        # to avoid excessive load.
+        logger.debug("Reading sitemaps for entries")
         # Process each sitemap to extract show entries.
         for sitemap in all_sitemaps:
             self._read_sitemap_for_entries(sitemap)
@@ -104,33 +107,11 @@ class SitemapProcessor:
         sitemap_entries = list(self._sitemap_entities.keys())
         return sorted(sitemap_entries)
 
-    # def find_sitemaps(self) -> List[str]:
-    #     """Reads the robots.txt file and extracts sitemap URLs.
-
-    #     Returns:
-    #         List[str]: A list of sitemap URLs."""
-    #     root_sitemap = self._sitemap_from_robots()
-    #     logger.debug("Found sitemap URLs: %s", sitemap_urls)
-    #     sitemaps = [self.source.rewrite_base_source(
-    #         url) for url in sitemap_urls]
-    #     sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
-    #     logger.debug("Rewritten sitemaps: %s", sitemaps)
-    #     # # Append any extra sitemaps provided.
-    #     # sitemap_urls += [source_manager.normalize_location(self.source_url, s)
-    #     #                  for s in self.extra_sitemaps]
-    #     # Filter to only include sitemap URLs.
-    #     # Remove duplicates.
-    #     unique_sitemaps = list(set(sitemap_urls))
-    #     if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
-    #         logger.trace("Found sitemap URLs: %s", unique_sitemaps)
-    #     return unique_sitemaps
-
     def _sitemaps_from_robots(self) -> List[str]:
         """Reads the robots.txt file and extracts root sitemap URLs.
 
         Returns:
-            List[str]: The list of sitemap URLs found in robots.txt.
-        """
+            List[str]: The list of sitemap URLs found in robots.txt."""
         robots_bytes = self.source.get_resource(ROBOTS_FILE)
         if not robots_bytes:
             raise FileNotFoundError(f"robots.txt not found at {self.source}")
@@ -145,19 +126,18 @@ class SitemapProcessor:
             for url in sitemap_urls
             if SITEMAP_RE.search(url)
         ]
-        logger.debug("sitemap_urls from robots.txt: %s", sitemap_urls)
+        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+            logger.trace("Stripped sitemaps from robots.txt: %s", sitemap_urls)
         return list(set(sitemap_urls))
 
     def _collect_sitemaps(self, sitemaps: List[str]) -> Set[str]:
-        """
-        Recursively collects sitemap URLs from sitemap index files.
+        """Recursively collects sitemap URLs from sitemap index files.
 
         Parameters:
             sitemaps: Initial list of sitemap URLs.
 
         Returns:
-            A set of all discovered sitemap URLs.
-        """
+            A set of all discovered sitemap URLs."""
         collected: Set[str] = set(sitemaps)
         for sitemap in sitemaps:
             child_sitemaps = self._read_sitemap_for_child_sitemaps(sitemap)
@@ -171,8 +151,7 @@ class SitemapProcessor:
     def _read_sitemap_for_child_sitemaps(self, sitemap: str) -> List[str]:
         """Reads a sitemap XML and returns any child sitemap URLs (if this is an index file).
         Returns:
-            List[str]: Child sitemap URLs, or an empty list if none are found.
-        """
+            List[str]: Child sitemap URLs, or an empty list if none are found."""
         sitemap_bytes = self.source.get_resource(sitemap)
         if not sitemap_bytes:
             logger.warning("Sitemap %s could not be retrieved", sitemap)
@@ -216,10 +195,8 @@ class SitemapProcessor:
         return child_sitemaps
 
     def _read_sitemap_for_entries(self, sitemap: str) -> None:
-        """
-        Reads a sitemap and extracts show references from <url>/<loc> tags,
-        adding them to self._sitemap_entities.
-        """
+        """Reads a sitemap and extracts show references from <url>/<loc> tags,
+        adding them to self._sitemap_entities."""
         sitemap_bytes = self.source.get_resource(sitemap)
         if not sitemap_bytes:
             logger.warning("Sitemap %s could not be retrieved", sitemap)
@@ -245,84 +222,15 @@ class SitemapProcessor:
         if isinstance(urls, dict):
             urls = [urls]
 
+        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+            logger.trace("Raw sitemap entries: %s", pprint.pformat(urls))
+
         for entry in urls:
             loc = entry.get("loc")
-            if loc:
+            # Keep only music shows
+            # TODO: Should the keys be absolute or relative URLs?
+            if loc and MUSIC_FILTER_RE.search(loc):
                 self._sitemap_entities[loc.strip()] = {}
-
-    def read_sitemap(self, sitemap: str) -> List[str]:
-        """Reads a sitemap XML file and extracts all URLs from <loc>
-        elements recursively.
-
-        Parameters:
-            sitemap (str): The path (or URL) to the sitemap XML.
-
-        Returns:
-            List[str]: A list of URL strings."""
-        sitemap_bytes = source_manager.get_file(sitemap)
-        if not sitemap_bytes:
-            logger.error("Sitemap file not found: %s", sitemap)
-            return []
-        sitemap_text = sitemap_bytes.decode("utf-8")
-        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
-            logger.trace("Parsing sitemap XML from: %s", sitemap)
-        parsed = xmltodict.parse(sitemap_text)
-        self._extract_entries(parsed)
-
-    def _extract_locs(self, data) -> List[str]:
-        """Recursively extract all values associated with the key 'loc'.
-
-        Parameters:
-            data: The parsed XML (dict or list) from xmltodict.
-
-        Returns:
-            List[str]: A list of URL strings."""
-        locs = []
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if key.lower() == "loc" and isinstance(value, str):
-                    locs.append(value)
-                else:
-                    locs.extend(self._extract_locs(value))
-        elif isinstance(data, list):
-            for item in data:
-                locs.extend(self._extract_locs(item))
-        return locs
-
-    def _extract_entries(self, data) -> List[dict]:
-        """Recursively traverse a dictionary or list parsed by xmltodict and
-        collect all sitemap entries. Each entry is a dict with at least a
-        "loc" key, and optionally "lastmod", "changefreq", and "priority".
-
-        Parameters:
-            data: The parsed XML (a dict or list) from xmltodict.
-
-        Returns:
-            List[dict]: A list of sitemap entry dictionaries."""
-        if isinstance(data, dict):
-            # Check if this dict appears to represent a sitemap entry:
-            # We use case-insensitive matching for keys.
-            lower_keys = {k.lower(): k for k in data.keys()}
-            if "loc" in lower_keys:
-                entry = {"loc": data[lower_keys["loc"]]}
-                if "lastmod" in lower_keys:
-                    entry["lastmod"] = data[lower_keys["lastmod"]]
-                if "changefreq" in lower_keys:
-                    entry["changefreq"] = data[lower_keys["changefreq"]]
-                if "priority" in lower_keys:
-                    entry["priority"] = data[lower_keys["priority"]]
-                # Add only entries that match the music filter.
-                if MUSIC_FILTER_RE.search(entry["loc"]):
-                    self._sitemap_entities[entry["loc"]] = entry
-                    if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
-                        logger.trace("Extracted entry: %s", entry)
-            else:
-                # Otherwise, traverse all values.
-                for value in data.values():
-                    self._extract_entries(value)
-        elif isinstance(data, list):
-            for item in data:
-                self._extract_entries(item)
 
     def parse_feeds(self, feed_path: str) -> List[str]:
         """Placeholder for gathering shows from RSS/Atom feeds.

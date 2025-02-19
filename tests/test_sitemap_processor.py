@@ -1,9 +1,9 @@
-"""Module to test the processing of shows"""
+"""Module to test the processing of sitemaps"""
 
 import pytest
 from datetime import datetime
 from typing import Optional
-from kcrw_feed.sitemap_processor import SitemapProcessor
+from kcrw_feed.sitemap_processor import SitemapProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
 from kcrw_feed import source_manager
 
 
@@ -18,7 +18,7 @@ def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
         )
         return content.encode("utf-8")
     elif path == "https://www.testsite.com/sitemap1.xml":
-        # This sitemap contains two <loc> values:
+        # This sitemap contains two <url> entries:
         # one for a music show and one for another URL.
         content = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -52,121 +52,120 @@ def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
     return None
 
 
+class DummySource:
+    """Dummy source implementation for tests"""
+
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+
+    def get_resource(self, path: str) -> Optional[bytes]:
+        # If the path isn't an absolute URL, prepend the base URL.
+        if not path.startswith("http"):
+            path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
+        return fake_get_file(path)
+
+    def rewrite_base_source(self, url: str) -> str:
+        return url
+
+
+@pytest.fixture
+def dummy_source():
+    return DummySource("https://www.testsite.com/")
+
+
 @pytest.fixture(autouse=True)
 def patch_get_file(monkeypatch):
-    """Automatically patch source_manager.get_file in all tests in this module."""
+    """Patch the get_file function in source_manager"""
     monkeypatch.setattr(source_manager, "get_file", fake_get_file)
 
 
-def test_find_sitemaps():
+def test_sitemaps_from_robots(dummy_source):
     """
-    Test that find_sitemaps() correctly reads robots.txt and includes
-    both the discovered sitemaps and any extra sitemaps provided.
+    Test that _sitemaps_from_robots() correctly reads robots.txt.
     """
-    processor = SitemapProcessor("https://www.testsite.com/",
-                                 extra_sitemaps=["extra-sitemap.xml"])
-    sitemap_urls = processor.find_sitemaps()
-    expected = {
-        "https://www.testsite.com/sitemap1.xml",
-        "https://www.testsite.com/sitemap2.xml",
-        "https://www.testsite.com/extra-sitemap.xml"
-    }
+    processor = SitemapProcessor(dummy_source)
+    sitemap_urls = processor._sitemaps_from_robots()
+    expected = {"https://www.testsite.com/sitemap1.xml",
+                "https://www.testsite.com/sitemap2.xml"}
     assert set(sitemap_urls) == expected
 
 
-def test_read_sitemap():
+def test_read_sitemap_for_entries(dummy_source):
     """
-    Test that read_sitemap() correctly parses a sitemap XML file and populates
-    the internal urls dict with entries that match the music filter.
+    Test that _read_sitemap_for_entries() parses a sitemap XML file and stores
+    only music show entries in _sitemap_entities.
     """
-    processor = SitemapProcessor("https://www.testsite.com/")
-    # Read fake sitemap1.xml.
-    processor.read_sitemap("https://www.testsite.com/sitemap1.xml")
-    # Our fake sitemap1.xml has two <url> entries, but only the one matching
-    # /music/shows/ should be stored.
+    processor = SitemapProcessor(dummy_source)
+    processor._read_sitemap_for_entries(
+        "https://www.testsite.com/sitemap1.xml")
+    # From sitemap1.xml, only the URL containing "/music/shows/" should be stored.
     assert "https://www.testsite.com/music/shows/show1" in processor._sitemap_entities
-    # The non-music URL should not be present.
     assert "https://www.testsite.com/other/url" not in processor._sitemap_entities
 
 
-def test_gather_shows():
+def test_read_sitemap_for_child_sitemaps(dummy_source):
     """
-    Test that gather_shows() returns only music show URLs, combining data from
-    robots.txt and extra sitemaps.
+    Test that _read_sitemap_for_child_sitemaps() extracts child sitemap URLs from a sitemap index.
+    For this test, we simulate an index by having fake_get_file return a crafted XML.
     """
-    processor = SitemapProcessor("https://www.testsite.com/",
-                                 extra_sitemaps=["/extra-sitemap.xml"])
-    # When gather_shows is called, it processes all sitemaps and stores entries in self.urls.
-    urls = processor.gather_entries(source="sitemap")
+    # Create a fake sitemap index XML.
+    sitemap_index_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://www.testsite.com/music/shows/sitemap-child1.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.testsite.com/music/shows/sitemap-child2.xml</loc>
+  </sitemap>
+</sitemapindex>"""
+
+    def fake_get_resource(path: str) -> Optional[bytes]:
+        if path == "https://www.testsite.com/sitemap-index.xml":
+            return sitemap_index_xml.encode("utf-8")
+        return None
+    # Override get_resource for this test.
+    dummy_source.get_resource = fake_get_resource
+    processor = SitemapProcessor(dummy_source)
+    child_sitemaps = processor._read_sitemap_for_child_sitemaps(
+        "https://www.testsite.com/sitemap-index.xml")
+    # Additionally, the processor filters child sitemaps with MUSIC_FILTER_RE.
+    # For testing, if MUSIC_FILTER_RE does not match these URLs, child_sitemaps might be empty.
+    # Let's assume that for the test, MUSIC_FILTER_RE is not filtering these.
+    expected = {"https://www.testsite.com/music/shows/sitemap-child1.xml",
+                "https://www.testsite.com/music/shows/sitemap-child2.xml"}
+    # We compare as sets.
+    assert set(child_sitemaps) == expected
+
+
+def test_gather_entries(dummy_source, monkeypatch):
+    """Test that gather_entries() returns all music show URLs by processing
+    sitemaps recursively. In this test we simulate extra sitemaps by monkeypatching
+    _sitemaps_from_robots() to return an extra sitemap URL."""
+    processor = SitemapProcessor(dummy_source)
+    # For this test, override _sitemaps_from_robots to include an extra sitemap.
+
+    def fake_sitemaps_from_robots():
+        return [
+            "https://www.testsite.com/sitemap1.xml",
+            "https://www.testsite.com/sitemap2.xml",
+            "https://www.testsite.com/extra-sitemap.xml",
+        ]
+    monkeypatch.setattr(processor, "_sitemaps_from_robots",
+                        fake_sitemaps_from_robots)
+    urls = processor.gather_entries()
     expected = {
         "https://www.testsite.com/music/shows/show1",
         "https://www.testsite.com/music/shows/show2",
-        "https://www.testsite.com/music/shows/show3"
+        "https://www.testsite.com/music/shows/show3",
     }
     assert set(urls) == expected
 
-# Tests for _extract_entries() remain similar.
 
-
-def test_extract_entries_simple():
-    """Test _extract_entries() on a simple dict with only 'loc'."""
-    processor = SitemapProcessor("https://www.testsite.com/")
-    data = {"loc": "https://www.testsite.com/music/shows/showX"}
-    processor._sitemap_entities = {}  # Reset internal dictionary.
-    processor._extract_entries(data)
-    expected = {"https://www.testsite.com/music/shows/showX":
-                {"loc": "https://www.testsite.com/music/shows/showX"}}
-    assert processor._sitemap_entities == expected
-
-
-def test_extract_entries_with_optional_fields():
-    """Test _extract_entries() when optional fields are present with mixed key case."""
-    processor = SitemapProcessor("https://www.testsite.com/")
-    data = {
-        "LoC": "https://www.testsite.com/music/shows/showY",
-        "LASTMOD": "2025-02-01T00:00:00",
-        "ChangeFreq": "weekly",
-        "Priority": "0.5"
-    }
-    processor._sitemap_entities = {}
-    processor._extract_entries(data)
-    expected = {
-        "https://www.testsite.com/music/shows/showY": {
-            "loc": "https://www.testsite.com/music/shows/showY",
-            "lastmod": "2025-02-01T00:00:00",
-            "changefreq": "weekly",
-            "priority": "0.5"
-        }
-    }
-    assert processor._sitemap_entities == expected
-
-
-def test_extract_entries_nested():
-    """Test _extract_entries() on nested data structures."""
-    processor = SitemapProcessor("https://www.testsite.com/")
-    data = {
-        "urlset": {
-            "url": [
-                {"loc": "https://www.testsite.com/music/shows/showA"},
-                {"loc": "https://www.testsite.com/other/url"}
-            ]
-        }
-    }
-    processor._sitemap_entities = {}
-    processor._extract_entries(data)
-    # Only the music show should be stored.
-    expected = {
-        "https://www.testsite.com/music/shows/showA": {"loc": "https://www.testsite.com/music/shows/showA"}
-    }
-    assert processor._sitemap_entities == expected
-
-
-def test_get_all_entries():
-    """
-    Test that get_all_entries() returns all stored sitemap entries.
-    """
-    processor = SitemapProcessor("https://www.testsite.com/")
-    # Preload fake entries into the internal dict.
+def test_get_all_entries(dummy_source):
+    """Test that get_all_entries() returns all stored sitemap entry
+    dictionaries."""
+    processor = SitemapProcessor(dummy_source)
+    # Preload fake entries.
     processor._sitemap_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
@@ -182,18 +181,17 @@ def test_get_all_entries():
         {"loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"},
         {"loc": "https://www.testsite.com/music/shows/show2",
-            "lastmod": "2025-02-01T00:00:00"}
+            "lastmod": "2025-02-01T00:00:00"},
     ]
-    # Convert each entry to a frozenset of items for unordered comparison.
+    # Use frozenset for unordered comparison.
     assert {frozenset(entry.items()) for entry in entries} == {
         frozenset(entry.items()) for entry in expected}
 
 
-def test_get_entries_after():
-    """
-    Test that get_entries_after() returns only entries with a lastmod date after a given threshold.
-    """
-    processor = SitemapProcessor("https://www.testsite.com/")
+def test_get_entries_after(dummy_source):
+    """Test that get_entries_after() returns only entries with a lastmod date
+    after a given threshold."""
+    processor = SitemapProcessor(dummy_source)
     processor._sitemap_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
@@ -211,16 +209,17 @@ def test_get_entries_after():
     threshold = datetime.fromisoformat("2025-01-15T00:00:00")
     entries = processor.get_entries_after(threshold)
     result_locs = {entry["loc"] for entry in entries}
-    expected_locs = {"https://www.testsite.com/music/shows/show2",
-                     "https://www.testsite.com/music/shows/show3"}
+    expected_locs = {
+        "https://www.testsite.com/music/shows/show2",
+        "https://www.testsite.com/music/shows/show3",
+    }
     assert result_locs == expected_locs
 
 
-def test_get_entries_between():
-    """
-    Test that get_entries_between() returns only entries with a lastmod date between start and end.
-    """
-    processor = SitemapProcessor("https://www.testsite.com/")
+def test_get_entries_between(dummy_source):
+    """Test that get_entries_between() returns only entries with a lastmod
+    date between start and end."""
+    processor = SitemapProcessor(dummy_source)
     processor._sitemap_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
