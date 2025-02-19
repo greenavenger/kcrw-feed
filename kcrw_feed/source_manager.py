@@ -10,7 +10,7 @@ import fsspec
 
 # Regex pattern to match the prefix of KCRW URLs
 REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
-REPLACE_TEXT = './tests/data/'
+REPLACE_TEXT = ""  # ./tests/data/"
 
 logger = logging.getLogger("kcrw_feed")
 
@@ -27,7 +27,7 @@ class BaseSource(ABC):
 
     def rewrite_base_source(self, entity_reference: str) -> str:
         """Regular expression to rewrite entity path"""
-        return REWRITE_RE.sub(self.base_source, entity_reference)
+        return REWRITE_RE.sub(REPLACE_TEXT, entity_reference)
 
 
 class HttpsSource(BaseSource):

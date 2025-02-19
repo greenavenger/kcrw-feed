@@ -3,7 +3,7 @@
 from datetime import datetime
 import logging
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 import urllib.robotparser as urobot
 import xmltodict
 
@@ -86,46 +86,132 @@ class SitemapProcessor:
 
     # Populate Methods
     def gather_entries(self) -> List[str]:
-        """Gather show resources. Returns: List[str]: A list of show
-        references."""
-        sitemap_entries: List[str] = []
+        """Gather show references by recursively reading sitemaps.
+        Returns:
+            List[str]: A sorted list of show references.
+        """
         logger.debug("Gathering sitemap entries from %s", self.source)
-        sitemaps = self.find_sitemaps()
-        for sitemap in sitemaps:
-            self.read_sitemap(sitemap)
+        # Start by reading robots.txt to get the initial sitemap URLs.
+        root_sitemaps = self._sitemaps_from_robots()
+        # Recursively collect all sitemap URLs.
+        all_sitemaps = self._collect_sitemaps(root_sitemaps)
+        logger.debug("All sitemaps collected: %s", all_sitemaps)
+        # Process each sitemap to extract show entries.
+        for sitemap in all_sitemaps:
+            self._read_sitemap_for_entries(sitemap)
+        # Return the sorted keys (show URLs or IDs)
         sitemap_entries = list(self._sitemap_entities.keys())
         return sorted(sitemap_entries)
 
-    def find_sitemaps(self) -> List[str]:
-        """Reads the robots.txt file and extracts sitemap URLs.
+    # def find_sitemaps(self) -> List[str]:
+    #     """Reads the robots.txt file and extracts sitemap URLs.
+
+    #     Returns:
+    #         List[str]: A list of sitemap URLs."""
+    #     root_sitemap = self._sitemap_from_robots()
+    #     logger.debug("Found sitemap URLs: %s", sitemap_urls)
+    #     sitemaps = [self.source.rewrite_base_source(
+    #         url) for url in sitemap_urls]
+    #     sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
+    #     logger.debug("Rewritten sitemaps: %s", sitemaps)
+    #     # # Append any extra sitemaps provided.
+    #     # sitemap_urls += [source_manager.normalize_location(self.source_url, s)
+    #     #                  for s in self.extra_sitemaps]
+    #     # Filter to only include sitemap URLs.
+    #     # Remove duplicates.
+    #     unique_sitemaps = list(set(sitemap_urls))
+    #     if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+    #         logger.trace("Found sitemap URLs: %s", unique_sitemaps)
+    #     return unique_sitemaps
+
+    def _sitemaps_from_robots(self) -> List[str]:
+        """Reads the robots.txt file and extracts root sitemap URLs.
 
         Returns:
-            List[str]: A list of sitemap URLs."""
-        root_sitemap = self._sitemap_from_robots()
-        logger.debug("Found sitemap URLs: %s", sitemap_urls)
-        sitemaps = [self.source.rewrite_base_source(
-            url) for url in sitemap_urls]
-        sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
-        logger.debug("Rewritten sitemaps: %s", sitemaps)
-        # # Append any extra sitemaps provided.
-        # sitemap_urls += [source_manager.normalize_location(self.source_url, s)
-        #                  for s in self.extra_sitemaps]
-        # Filter to only include sitemap URLs.
-        # Remove duplicates.
-        unique_sitemaps = list(set(sitemap_urls))
-        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
-            logger.trace("Found sitemap URLs: %s", unique_sitemaps)
-        return unique_sitemaps
-
-    def _sitemap_from_robots(self):
+            List[str]: The list of sitemap URLs found in robots.txt.
+        """
         robots_bytes = self.source.get_resource(ROBOTS_FILE)
         if not robots_bytes:
-            raise FileNotFoundError(f"robots.txt not found at {robots_path}")
+            raise FileNotFoundError(f"robots.txt not found at {self.source}")
         robots_txt = robots_bytes.decode("utf-8")
         rp = urobot.RobotFileParser()
         rp.parse(robots_txt.splitlines())
         sitemap_urls = rp.site_maps() or []
-        return sitemap_urls
+        logger.debug("Sitemaps found in robots.txt: %s", sitemap_urls)
+        # Rewrite base source if needed and filter for valid sitemap URLs.
+        sitemap_urls = [
+            self.source.rewrite_base_source(url)
+            for url in sitemap_urls
+            if SITEMAP_RE.search(url)
+        ]
+        logger.debug("sitemap_urls from robots.txt: %s", sitemap_urls)
+        return list(set(sitemap_urls))
+
+    def _collect_sitemaps(self, sitemaps: List[str]) -> Set[str]:
+        """
+        Recursively collects sitemap URLs from sitemap index files.
+
+        Parameters:
+            sitemaps: Initial list of sitemap URLs.
+
+        Returns:
+            A set of all discovered sitemap URLs.
+        """
+        collected: Set[str] = set(sitemaps)
+        for sitemap in sitemaps:
+            child_sitemaps = self._read_sitemap_for_child_sitemaps(sitemap)
+            for child in child_sitemaps:
+                if child not in collected:
+                    collected.add(child)
+                    # Recursively collect from child sitemap
+                    collected.update(self._collect_sitemaps([child]))
+        return collected
+
+    def _read_sitemap_for_child_sitemaps(self, sitemap: str) -> List[str]:
+        """
+        Reads a sitemap XML and returns any child sitemap URLs (if this is an index file).
+
+        Returns:
+            List[str]: Child sitemap URLs, or an empty list if none are found.
+        """
+        sitemap_bytes = self.source.get_resource(sitemap)
+        if not sitemap_bytes:
+            logger.warning("Sitemap %s could not be retrieved", sitemap)
+            return []
+        try:
+            tree = ET.fromstring(sitemap_bytes)
+        except ET.ParseError:
+            logger.warning("Sitemap %s is not valid XML", sitemap)
+            return []
+        child_sitemaps = []
+        # In a sitemap index, child sitemaps are found under <sitemap>/<loc>
+        for sitemap_elem in tree.findall(".//sitemap"):
+            loc = sitemap_elem.find("loc")
+            if loc is not None and loc.text:
+                child_sitemaps.append(loc.text.strip())
+        logger.debug("Found child_sitemaps: %s", child_sitemaps)
+        return child_sitemaps
+
+    def _read_sitemap_for_entries(self, sitemap: str) -> None:
+        """
+        Reads a sitemap and extracts show references (e.g. from <url>/<loc> tags),
+        adding them to self._sitemap_entities.
+        """
+        sitemap_bytes = self.source.get_resource(sitemap)
+        if not sitemap_bytes:
+            logger.warning("Sitemap %s could not be retrieved", sitemap)
+            return
+        try:
+            tree = ET.fromstring(sitemap_bytes)
+        except ET.ParseError:
+            logger.warning("Sitemap %s is not valid XML", sitemap)
+            return
+        # If the sitemap is a regular sitemap (not an index), look for <url> elements.
+        for url_elem in tree.findall(".//url"):
+            loc = url_elem.find("loc")
+            if loc is not None and loc.text:
+                # You might process metadata here as well.
+                self._sitemap_entities[loc.text.strip()] = {}
 
     def read_sitemap(self, sitemap: str) -> List[str]:
         """Reads a sitemap XML file and extracts all URLs from <loc>
