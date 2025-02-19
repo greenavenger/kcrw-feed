@@ -1,8 +1,8 @@
 # KCRW feed generator config.yaml
 
 # The root URL of the KCRW website
-# source_url: "https://www.kcrw.com/"
-source_url: "./tests/data/"
+# source_root: "https://www.kcrw.com/"
+source_root: "./tests/data/"
 
 # Extra sitemap files
 extra_sitemaps:

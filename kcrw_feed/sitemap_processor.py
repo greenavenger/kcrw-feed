@@ -1,16 +1,14 @@
 """Module to gather the urls of shows and episodes"""
 
 from datetime import datetime
+import logging
 import re
-from typing import List
+from typing import Any, Dict, List
 import urllib.robotparser as urobot
 import xmltodict
 
 from kcrw_feed import source_manager
-
-# Create a module-level logger that integrates with your logging hierarchy.
-import logging
-logger = logging.getLogger("kcrw_feed")
+from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
 # Regular expression to match sitemap XML filenames.
 SITEMAP_RE = re.compile(r"sitemap.*\.xml", re.IGNORECASE)
@@ -19,16 +17,16 @@ MUSIC_FILTER_RE = re.compile(
     r"(/sitemap-shows/music/|/music/shows/)", re.IGNORECASE)
 ROBOTS_FILE = "robots.txt"
 
+logger = logging.getLogger("kcrw_feed")
+
 
 class SitemapProcessor:
-    def __init__(self, source_url: str, extra_sitemaps: List[str] = None) -> None:
+    def __init__(self, source: BaseSource) -> None:
         """Parameters:
-            source_url (str): The base URL (or local base path) for the site.
-            extra_sitemaps (List[str], optional): Additional sitemap paths to include.
+            source: The base URL (or local base path) for the site.
         """
-        self.source_url = source_url
-        self.extra_sitemaps = extra_sitemaps or []
-        self._sitemap_entities = {}
+        self.source = source
+        self._sitemap_entities: Dict[str, Any] = {}
 
     # Accessor Methods
     def get_all_entries(self) -> List[dict]:
@@ -87,52 +85,47 @@ class SitemapProcessor:
         return results
 
     # Populate Methods
-    def gather_entries(self, source: str = "sitemap") -> List[str]:
-        """Gather show URLs based on the chosen source.
-
-        Parameters:
-            source (str): Which source to use: "sitemap" (default) or "feed".
-
-        Returns:
-            List[str]: A list of show URLs."""
-        if source == "sitemap":
-            sitemap_urls = self.find_sitemaps()
-            for sitemap in sitemap_urls:
-                self.read_sitemap(sitemap)
-            return sorted(list(self._sitemap_entities.keys()))
-        elif source == "feed":
-            # Placeholder for future feed-based gathering.
-            return self.parse_feeds("path/to/feeds")
-        else:
-            raise ValueError("Unknown source type")
+    def gather_entries(self) -> List[str]:
+        """Gather show resources. Returns: List[str]: A list of show
+        references."""
+        sitemap_entries: List[str] = []
+        logger.debug("Gathering sitemap entries from %s", self.source)
+        sitemaps = self.find_sitemaps()
+        for sitemap in sitemaps:
+            self.read_sitemap(sitemap)
+        sitemap_entries = list(self._sitemap_entities.keys())
+        return sorted(sitemap_entries)
 
     def find_sitemaps(self) -> List[str]:
         """Reads the robots.txt file and extracts sitemap URLs.
 
         Returns:
             List[str]: A list of sitemap URLs."""
-        # Construct the robots.txt location.
-        robots_path = source_manager.normalize_location(
-            self.source_url, ROBOTS_FILE)
+        root_sitemap = self._sitemap_from_robots()
+        logger.debug("Found sitemap URLs: %s", sitemap_urls)
+        sitemaps = [self.source.rewrite_base_source(
+            url) for url in sitemap_urls]
+        sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
+        logger.debug("Rewritten sitemaps: %s", sitemaps)
+        # # Append any extra sitemaps provided.
+        # sitemap_urls += [source_manager.normalize_location(self.source_url, s)
+        #                  for s in self.extra_sitemaps]
+        # Filter to only include sitemap URLs.
+        # Remove duplicates.
+        unique_sitemaps = list(set(sitemap_urls))
         if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
-            logger.trace("Robots path: %s", robots_path)
-        robots_bytes = source_manager.get_file(robots_path)
+            logger.trace("Found sitemap URLs: %s", unique_sitemaps)
+        return unique_sitemaps
+
+    def _sitemap_from_robots(self):
+        robots_bytes = self.source.get_resource(ROBOTS_FILE)
         if not robots_bytes:
             raise FileNotFoundError(f"robots.txt not found at {robots_path}")
         robots_txt = robots_bytes.decode("utf-8")
         rp = urobot.RobotFileParser()
         rp.parse(robots_txt.splitlines())
         sitemap_urls = rp.site_maps() or []
-        # Append any extra sitemaps provided.
-        sitemap_urls += [source_manager.normalize_location(self.source_url, s)
-                         for s in self.extra_sitemaps]
-        # Filter to only include sitemap URLs.
-        sitemap_urls = [url for url in sitemap_urls if SITEMAP_RE.search(url)]
-        # Remove duplicates.
-        unique_sitemaps = list(set(sitemap_urls))
-        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
-            logger.trace("Found sitemap URLs: %s", unique_sitemaps)
-        return unique_sitemaps
+        return sitemap_urls
 
     def read_sitemap(self, sitemap: str) -> List[str]:
         """Reads a sitemap XML file and extracts all URLs from <loc>

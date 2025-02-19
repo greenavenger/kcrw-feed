@@ -4,11 +4,13 @@ import argparse
 import logging.config
 import logging.handlers
 import pprint
+import time
 from typing import Any, Dict
 
 from kcrw_feed.config import CONFIG
 from kcrw_feed.persistent_logger import LOGGING_LEVEL_MAP  # also: JSONFormatter
 from kcrw_feed import show_index
+from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
 # Logging set up: Instantiate custom logger to use in code. Configure
 # handlers/filters/formatters/etc. at the root level. Depend on
@@ -18,6 +20,7 @@ logger = logging.getLogger("kcrw_feed")
 
 
 def main():
+    t0 = time.time()
     parser = argparse.ArgumentParser(description="KCRW Feed Generator")
     parser.add_argument(
         "--loglevel",
@@ -43,8 +46,8 @@ def main():
 
     args = parser.parse_args()
 
-    # If --loglevel is provided, update the stdout handler level.
-    # We want to leave the file handler unchanged.
+    # If --loglevel is provided, update the stdout handler level. Leave the
+    # file handler log level unchanged.
     if args.loglevel:
         stdout_override = LOGGING_LEVEL_MAP[args.loglevel.lower()]
         # Override stdout handler's level.
@@ -65,13 +68,19 @@ def main():
 
     logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
-    collection = show_index.ShowIndex(
-        CONFIG["source_url"], extra_sitemaps=CONFIG["extra_sitemaps"])
+    source: BaseSource
+    source_root = CONFIG["source_root"]
+    if source_root.startswith("http"):
+        source = HttpsSource(source_root)
+    else:
+        source = CacheSource(source_root)
+
+    collection = show_index.ShowIndex(source=source)
     if args.command == "gather":
-        urls = collection.process_sitemap(args.source or CONFIG["source"])
+        entities = collection.gather()
         if logger.isEnabledFor(LOGGING_LEVEL_MAP["trace"]):
-            logger.trace("Gathered URLs: %s", pprint.pformat(urls))
-        logger.info("Gathered %s URLs", len(urls))
+            logger.trace("Gathered entities: %s", pprint.pformat(entities))
+        logger.info("Gathered %s entities", len(entities))
     elif args.command == "update":
         updated_shows = collection.update(
             source=(args.source or CONFIG["source"]), selected_urls=args.shows)
@@ -82,6 +91,8 @@ def main():
         pass
     else:
         logger.error("Unknown command")
+
+    logger.info("Elapsed time: %fs", time.time() - t0)
 
 
 if __name__ == "__main__":

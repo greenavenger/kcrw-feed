@@ -10,52 +10,61 @@ import uuid
 import xmltodict
 
 from kcrw_feed.models import Show, Episode
-# Handles raw sitemap parsing
+from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.sitemap_processor import SitemapProcessor
-# Handles enrichment (scraping) of Show details
+# from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
 from kcrw_feed import utils
 
 
 class ShowIndex:
-    def __init__(self, source_url: str, extra_sitemaps: List[str] = []) -> None:
+    def __init__(self, source: BaseSource) -> None:
         """Parameters:
-            source_url (str): The base URL (or local base path) for the site.
+            source (str): The base URL (or local base path) for the site.
             extra_sitemaps (List[str], optional): Additional sitemap paths to include.
         """
-        self.source_url = source_url
-        self.extra_sitemaps = extra_sitemaps or []
+        self.source = source
         # Instantiate the helper components.
-        self.sitemap_processor = SitemapProcessor(source_url, extra_sitemaps)
+        self.sitemap_processor = SitemapProcessor(source)
         self.show_processor = ShowProcessor()
         # This will hold a dict keyed by URL with sitemap metadata (e.g. lastmod).
-        # TODO: Maybe remove this, as it could just be wasted memory.
-        self._sitemap_urls: List[str] = []
+        # # TODO: Maybe remove this, as it could just be wasted memory.
+        # self._sitemap_urls: List[str] = []
         # This will hold fully enriched Show objects.
         self.shows: Dict[str | uuid.UUID, Show] = {}
 
-    def process_sitemap(self, source: str = "sitemap") -> List[str]:
-        """Use SitemapProcessor to get a list of raw show URLs."""
-        self._sitemap_urls = self.sitemap_processor.gather_entries(source)
-        return self._sitemap_urls
+    def gather(self) -> List[str]:
+        """Gather a list of raw entities from the source."""
+        # def process_sitemap(self, source: str = "sitemap") -> List[str]:
+        entities: List[str] = []
+        if self.source.uses_sitemap:
+            entities = self.sitemap_processor.gather_entries()
+        else:
+            # Placeholder for future feed processing.
+            pass
+        return entities
 
-    def update(self, source: str = "sitemap", update_after: Optional[datetime] = None,
-               selected_urls: Optional[List[str]] = None) -> int:
+    def update(self, selected_urls: Optional[List[str]] = None, update_after: Optional[datetime] = None,
+               ) -> int:
         """Update the repository with enriched Show objects.
 
         Parameters:
             update_after (datetime, optional): Only update shows that have changed after this timestamp.
             selected_urls (List[str], optional): If provided, only update shows whose URL is in this list.
         """
-        raw_urls = self.process_sitemap("sitemap")
-        # TODO: remove after testing
-        raw_urls = [url.replace("https://www.kcrw.com",
-                                "https://www.example.com") for url in raw_urls]
-        # Optionally filter raw_urls based on selected_urls.
-        if selected_urls:
-            selected_urls = [url.rstrip("/")
-                             for url in selected_urls]  # normalize
-            raw_urls = [url for url in raw_urls if url in selected_urls]
+        if self.source.uses_sitemap:
+            raw_urls = self.gather()
+            # TODO: remove after testing
+            raw_urls = [url.replace("https://www.kcrw.com",
+                                    "https://www.example.com") for url in raw_urls]
+            # Optionally filter raw_urls based on selected_urls.
+            if selected_urls:
+                selected_urls = [url.rstrip("/")
+                                 for url in selected_urls]  # normalize
+                raw_urls = [url for url in raw_urls if url in selected_urls]
+        else:
+            # Placeholder for future feed processing.
+            raw_urls = []
 
         updated_shows = []
         for url in raw_urls:

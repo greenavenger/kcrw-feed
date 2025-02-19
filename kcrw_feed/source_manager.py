@@ -1,9 +1,93 @@
 """Module for managing the source of show URLs."""
 
+from abc import ABC, abstractmethod
+import logging
 import os
+import re
 from urllib.parse import urljoin, urlparse, urlunparse
 from typing import Optional
 import fsspec
+
+# Regex pattern to match the prefix of KCRW URLs
+REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
+REPLACE_TEXT = './tests/data/'
+
+logger = logging.getLogger("kcrw_feed")
+
+
+class BaseSource(ABC):
+    """Abstract base class for sources."""
+    base_source: str
+    uses_sitemap: bool
+
+    @abstractmethod
+    def get_resource(self, resource: str) -> Optional[bytes]:
+        """Fetch the resource content as bytes."""
+        pass
+
+    def rewrite_base_source(self, entity_reference: str) -> str:
+        """Regular expression to rewrite entity path"""
+        return REWRITE_RE.sub(self.base_source, entity_reference)
+
+
+class HttpsSource(BaseSource):
+    def __init__(self, url: str, rewrite_rule: Optional[str] = None):
+        self.base_source = url
+        self.url = self.base_source  # convenience reference
+        self.rewrite_rule = rewrite_rule
+        self.uses_sitemap = True
+
+    def get_resource(self, url: str) -> Optional[bytes]:
+        # Here you'd use requests and potentially rewrite the URL according to your rule.
+        # For now, we'll leave a stub.
+        print(f"Fetching via HTTPS: {url}")
+        # Example: If rewrite_rule is provided, use it.
+        # url = self._rewrite_url(url)
+        # return requests.get(url, timeout=10).content
+        return None
+
+
+class CacheSource(BaseSource):
+    def __init__(self, path: str):
+        self.base_source = path
+        self.path = self.base_source  # convenience reference
+        self.uses_sitemap = True
+
+    def get_resource(self, resource: str) -> Optional[bytes]:
+        # Read from the local cache directory.
+        full_normalized_path = normalize_location(self.path, resource)
+        return get_file(full_normalized_path)
+
+
+class RssFeedSource(BaseSource):
+    def __init__(self, url_or_path: str):
+        self.url_or_path = url_or_path
+        self.uses_sitemap = False
+
+    def get_resource(self, resource: str) -> Optional[bytes]:
+        # For RSS feeds, you might parse a feed and then retrieve a resource.
+        # Placeholder implementation:
+        print(f"Fetching from RSS feed: {self.url_or_path}")
+        return None
+
+
+class AtomFeedSource(BaseSource):
+    def __init__(self, url_or_path: str):
+        self.url_or_path = url_or_path
+        self.uses_sitemap = False
+
+    def get_resource(self, resource: str) -> Optional[bytes]:
+        # Similar to RssFeedSource.
+        print(f"Fetching from Atom feed: {self.url_or_path}")
+        return None
+
+
+# class SourceManager:
+#     def __init__(self, source: BaseSource):
+#         self.source = source
+
+#     def get_resource(self, resource: str) -> Optional[bytes]:
+#         return self.source.get_resource(resource)
 
 
 def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
@@ -17,6 +101,7 @@ def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
 
     Returns:
         Optional[bytes]: The sitemap content, or None if an error occurs."""
+    logger.debug("Reading: %s", path)
     try:
         # fsspec.open() supports local files, HTTP, and more. Using
         # compression="infer" will automatically decompress if the file ends in .gz.
@@ -24,7 +109,7 @@ def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
             sitemap = f.read()
         return sitemap
     except Exception as e:
-        print(f"Error: Could not read sitemap from {path}: {e}")
+        print(f"Error: Could not read data from {path}: {e}")
         return None
 
 
