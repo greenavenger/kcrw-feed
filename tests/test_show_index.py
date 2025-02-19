@@ -2,30 +2,93 @@
 
 import pytest
 from datetime import datetime
-from typing import List
+from typing import Optional, List
 from kcrw_feed.models import Show, Episode
 from kcrw_feed.show_index import ShowIndex
+from kcrw_feed.sitemap_processor import MUSIC_FILTER_RE
+
+
+class DummySource:
+    """Dummy Source Implementation"""
+
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+        self.uses_sitemap = True
+
+    def get_resource(self, path: str) -> Optional[bytes]:
+        # If the path is not an absolute URL, prepend the base URL.
+        if not path.startswith("http"):
+            path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
+        return fake_get_file(path)
+
+    def rewrite_base_source(self, url: str) -> str:
+        # For our tests, assume the URL is already correct.
+        return url
+
+
+def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
+    """Fake get_file function to simulate file retrieval."""
+    if path == "https://www.testsite.com/robots.txt":
+        content = (
+            "User-agent: *\n"
+            "Disallow: /private/\n"
+            "Sitemap: https://www.testsite.com/sitemap1.xml\n"
+            "Sitemap: https://www.testsite.com/sitemap2.xml\n"
+        )
+        return content.encode("utf-8")
+    elif path == "https://www.testsite.com/sitemap1.xml":
+        # This sitemap contains two <url> entries:
+        # one for a music show and one for another URL.
+        content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.testsite.com/music/shows/show1</loc>
+    <lastmod>2025-01-01T00:00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://www.testsite.com/other/url</loc>
+  </url>
+</urlset>"""
+        return content.encode("utf-8")
+    elif path == "https://www.testsite.com/sitemap2.xml":
+        content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.testsite.com/music/shows/show2</loc>
+    <changefreq>weekly</changefreq>
+  </url>
+</urlset>"""
+        return content.encode("utf-8")
+    elif path == "https://www.testsite.com/extra-sitemap.xml":
+        content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.testsite.com/music/shows/show3</loc>
+    <priority>0.8</priority>
+  </url>
+</urlset>"""
+        return content.encode("utf-8")
+    return None
 
 
 class FakeSitemapProcessor:
     """A fake SitemapProcessor that returns a fixed list of raw URLs."""
 
-    def __init__(self, source_url: str, extra_sitemaps: List[str]):
-        self.source_url = source_url
-        self.extra_sitemaps = extra_sitemaps
+    def __init__(self, source: DummySource) -> None:
+        self.source = source
 
-    def gather_entries(self, source: str) -> List[str]:
-        # Return a fixed list of URLs. Note: One URL does not match the music show regex.
+    def gather_entries(self) -> List[str]:
+        # Return a fixed list of URLs. The FakeShowProcessor will later filter out non-music URLs.
         return [
             "https://www.testsite.com/music/shows/show1",
             "https://www.testsite.com/music/shows/show2",
-            "https://www.testsite.com/music/shows/show3"
+            "https://www.testsite.com/music/shows/show3",
             # "https://www.testsite.com/other/url" # this would be filtered, so excluding
         ]
 
 
 class FakeShowProcessor:
-    """A fake ShowScraper that returns a dummy Show object for a given URL."""
+    """A fake ShowProcessor that returns a dummy Show object for a given URL."""
 
     def fetch(self, url: str) -> Show:
         # For testing, derive a dummy uuid and title from the URL.
@@ -56,38 +119,39 @@ class FakeShowProcessor:
 
 @pytest.fixture(name="fake_show_index")
 def _fake_show_index() -> ShowIndex:
-    """Fixture that creates a ShowIndex with fake processor and scraper."""
-    si = ShowIndex("https://www.testsite.com/",
-                   extra_sitemaps=["extra-sitemap.xml"])
-    # Replace the real processor with our fake one.
-    si.sitemap_processor = FakeSitemapProcessor(
-        si.source_url, si.extra_sitemaps)
-    # Uncomment and assign our fake scraper.
+    """Fixture that creates a ShowIndex with fake processors and a DummySource."""
+    dummy_source = DummySource("https://www.testsite.com/")
+    si = ShowIndex(dummy_source)
+    # Replace the real processors with our fake ones.
+    si.sitemap_processor = FakeSitemapProcessor(dummy_source)
     si.show_processor = FakeShowProcessor()
-    # Initialize the repository dictionary.
     si.shows = {}
     return si
 
 
-def test_process_sitemap(fake_show_index: ShowIndex) -> None:
-    """Test that process_sitemap() returns the raw URLs from the fake processor."""
-    raw_urls = fake_show_index.process_sitemap("sitemap")
-    expected = [
+def test_gather(fake_show_index: ShowIndex) -> None:
+    """Test that gather() returns only music show URLs from the fake
+    sitemap processor."""
+    raw_urls = fake_show_index.gather()
+    # The FakeSitemapProcessor returns 4 URLs but only those containing "/music/shows/"
+    expected = {
         "https://www.testsite.com/music/shows/show1",
         "https://www.testsite.com/music/shows/show2",
-        "https://www.testsite.com/music/shows/show3"
-    ]
-    assert set(raw_urls) == set(expected)
+        "https://www.testsite.com/music/shows/show3",
+    }
+    # Gather() returns the sorted keys from the internal sitemap_entities,
+    # so for our fake, we assume that the filtering in FakeSitemapProcessor
+    # (or later in update) is applied.
+    assert set(raw_urls) == expected
 
 
 def test_update(fake_show_index: ShowIndex) -> None:
-    """
-    Test that update() calls the scraper on the URLs and populates the shows
-    dictionary with only music show URLs.
-    """
+    """Test that update() calls the scraper on the URLs and populates the shows
+    dictionary with only music show URLs."""
     fake_show_index.update()
-    # The fake processor returns 4 URLs, but filtering (using MUSIC_FILTER_RE in gather_entities)
-    # should keep only the ones containing "/music/shows/".
+    # The fake sitemap processor returns 4 URLs, but filtering (using
+    # MUSIC_FILTER_RE in ShowIndex.gather) should keep only the ones
+    # containing "/music/shows/".
     shows = fake_show_index.get_shows()
     # Expect 3 shows.
     assert len(shows) == 3
@@ -111,8 +175,8 @@ def test_get_show_by_name(fake_show_index: ShowIndex) -> None:
 
 
 def test_get_episodes(fake_show_index: ShowIndex) -> None:
-    """Test that get_episodes() returns a combined list of episodes from all shows."""
-    # First update the index so that it has three shows.
+    """Test that get_episodes() returns a combined list of episodes from
+    all shows."""
     fake_show_index.update()
     # For one of the shows (say, show1), add an episode.
     show1 = fake_show_index.get_show_by_uuid("uuid-show1")
