@@ -1,12 +1,11 @@
-"""Module to test the processing of shows"""
+"""Module to test the processing of Shows."""
 
 from datetime import datetime
 import json
-from typing import Any, Dict
 import uuid
+from typing import Any, Dict
 
 import pytest
-
 from kcrw_feed.show_processor import ShowProcessor
 from kcrw_feed.models import Show, Episode, Host
 from kcrw_feed import source_manager
@@ -61,107 +60,112 @@ FAKE_EPISODE_JSON: Dict[str, Any] = {
 }
 
 
+class DummySource:
+    """Fake for BaseSource"""
+
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+        # Not used in ShowProcessor, but provided for completeness.
+        self.uses_sitemap = True
+
+    def get_resource(self, path: str) -> Any:
+        # If path is not an absolute URL, prepend the base URL.
+        if not path.startswith("http"):
+            path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
+        return fake_get_file(path)
+
+    def rewrite_base_source(self, url: str) -> str:
+        # For testing, return the URL unchanged.
+        return url
+
+
+def fake_get_file(url: str, timeout: int = 10) -> Any:
+    """Return content based on resource signature."""
+    # If the URL indicates a player JSON file for an episode.
+    if url.endswith("player.json"):
+        return json.dumps(FAKE_EPISODE_JSON).encode("utf-8")
+    # If the URL indicates an episode page.
+    if "episode" in url:
+        return FAKE_EPISODE_HTML.encode("utf-8")
+    # Otherwise, assume it's a show page.
+    if "test-show" in url:
+        return FAKE_SHOW_HTML.encode("utf-8")
+    # Default fallback.
+    return FAKE_SHOW_HTML.encode("utf-8")
+
+# Fixture for ShowProcessor using DummySource
+
+
 @pytest.fixture(name="fake_processor")
 def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
-    """
-    Return a ShowProcessor instance with source_manager.get_file() monkeypatched to return
-    predetermined content based on the URL.
-
-    The fake function returns:
-      - FAKE_EPISODE_JSON (as JSON-encoded bytes) when the URL indicates an episode page.
-      - FAKE_EPISODE_HTML if "episode" is in the URL (as a fallback).
-      - FAKE_SHOW_HTML for show pages.
-
-    This setup works in both development (using local files) and production mode.
-    """
-    sp = ShowProcessor(timeout=5)
-
-    def fake_get_file(url: str, timeout: int = 10):
-        # If the URL indicates a player JSON file for an episode.
-        if url.endswith("player.json"):
-            return json.dumps(FAKE_EPISODE_JSON).encode("utf-8")
-        # If the URL indicates an episode page.
-        if "episode" in url:
-            return FAKE_EPISODE_HTML.encode("utf-8")
-        # Otherwise, assume it's a show page.
-        if "test-show" in url:
-            return FAKE_SHOW_HTML.encode("utf-8")
-        # Default fallback.
-        return FAKE_SHOW_HTML.encode("utf-8")
-
+    """Return a ShowProcessor instance with DummySource and a monkeypatched
+    source_manager.get_file() to return predetermined content based on the
+    URL."""
+    dummy_source = DummySource("https://www.testsite.com/")
+    sp = ShowProcessor(dummy_source, timeout=5)
     monkeypatch.setattr(source_manager, "get_file", fake_get_file)
     return sp
 
 
 def test_fetch_show(fake_processor: ShowProcessor):
-    """
-    Test that fetch() returns a Show object when given a URL that indicates a show.
-    """
+    """Test that fetch() returns a Show object when given a URL that
+    indicates a show."""
     url = "https://www.testsite.com/music/shows/test-show"
     fake_processor.fetch(url)
     result = fake_processor.get_show_by_url(url)
     assert isinstance(result, Show)
-    # TODO: Should we take the title from the url or the html?
-    # assert result.title == "Test Radio Show"
+    # In our fake setup, the fallback extracts the title from the URL.
     assert result.title == "test-show"
     assert result.uuid == uuid.UUID(FAKE_SHOW_UUID)
     assert result.description == "A description of the test show."
 
 
 def test_fetch_episode(fake_processor: ShowProcessor):
-    """
-    Test that fetch() returns an Episode object when given a URL that indicates an episode.
-    """
+    """Test that fetch() returns an Episode object when given a URL that
+    indicates an episode."""
     url = "https://www.testsite.com/music/shows/test-show/test-episode"
     result = fake_processor.fetch(url)
     assert isinstance(result, Episode)
     assert result.title == "Test Episode Page"
     assert result.uuid == uuid.UUID(FAKE_EPISODE_UUID)
     assert result.show_uuid == uuid.UUID(FAKE_SHOW_UUID)
-    # In our fake JSON, the media URL is provided.
+    # Verify the media URL is correctly set.
     assert result.media_url == "https://www.testsite.com/audio/episode.mp3"
-    # Check that the air date is parsed correctly.
     expected_date = datetime.fromisoformat("2025-04-01T12:00:00")
     assert result.airdate == expected_date
 
 
 def test_fetch_invalid_structure_falls_back_to_show(fake_processor: ShowProcessor):
-    """
-    Test that if the URL structure doesn't match the expected pattern,
-    fetch() falls back to treating it as a Show.
-    """
+    """Test that if the URL structure doesn't match the expected pattern,
+    fetch() falls back to treating it as a Show."""
     url = "https://www.testsite.com/invalid/path"
     result = fake_processor.fetch(url)
     assert isinstance(result, Show)
     # Fallback should yield a Show object using fake show HTML.
-    # TODO: see title question above
-    # assert result.title == "Test Radio Show"
     assert result.description == "A description of the test show."
 
 
 def test_deduplication(fake_processor: ShowProcessor):
-    """
-    Test that _dedup_by_uuid() correctly deduplicates episodes.
-    """
+    """Test that _dedup_by_uuid() correctly deduplicates episodes."""
     dt = datetime.now()
     ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
                   media_url="media1", uuid="uuid1")
+    # Duplicate with same UUID.
     ep2 = Episode(title="Episode 2", airdate=dt, url="url2",
-                  media_url="media2", uuid="uuid1")  # Duplicate
+                  media_url="media2", uuid="uuid1")
     ep3 = Episode(title="Episode 3", airdate=dt, url="url3",
                   media_url="media3", uuid="uuid2")
     episodes = [ep1, ep2, ep3]
     deduped = fake_processor._dedup_by_uuid(episodes)
     assert len(deduped) == 2
-    # Verify that the first occurrence of "uuid1" is preserved.
+    # The first occurrence for "uuid1" should be preserved.
     assert deduped[0] == ep1
     assert deduped[1] == ep3
 
 
 def test_no_duplicates(fake_processor: ShowProcessor):
-    """
-    Test that _dedup_by_uuid() returns all episodes when there are no duplicates.
-    """
+    """Test that _dedup_by_uuid() returns all episodes when there
+    are no duplicates."""
     dt = datetime.now()
     ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
                   media_url="media1", uuid="uuid1")
@@ -173,9 +177,7 @@ def test_no_duplicates(fake_processor: ShowProcessor):
 
 
 def test_none_uuid(fake_processor: ShowProcessor):
-    """
-    Test that episodes with no UUID are all included.
-    """
+    """Test that episodes with no UUID are all included."""
     dt = datetime.now()
     ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
                   media_url="media1", uuid=None)
@@ -187,9 +189,7 @@ def test_none_uuid(fake_processor: ShowProcessor):
 
 
 def test_mix_of_none_and_duplicates(fake_processor: ShowProcessor):
-    """
-    Test deduplication on a mix of episodes with None and duplicate UUIDs.
-    """
+    """Test deduplication on a mix of episodes with None and duplicate UUIDs."""
     dt = datetime.now()
     ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
                   media_url="media1", uuid="uuid1")
@@ -203,7 +203,7 @@ def test_mix_of_none_and_duplicates(fake_processor: ShowProcessor):
                   media_url="media5", uuid=None)
     episodes = [ep1, ep2, ep3, ep4, ep5]
     deduped = fake_processor._dedup_by_uuid(episodes)
-    # Expect ep1 (first uuid "uuid1"), ep2 (None), ep4 (uuid2), and ep5 (None).
+    # Expected: first occurrence of "uuid1", both episodes with None, and "uuid2"
     assert len(deduped) == 4
     assert deduped[0] == ep1
     assert deduped[1] == ep2
@@ -215,7 +215,6 @@ def test_dedup_homogeneous_episodes(fake_processor: ShowProcessor):
     dt = datetime.now()
     ep1 = Episode(title="Episode 1", airdate=dt, url="url1",
                   media_url="media1", uuid="uuid1")
-    # Duplicate uuid; should be dropped.
     ep2 = Episode(title="Episode 2", airdate=dt, url="url2",
                   media_url="media2", uuid="uuid1")
     ep3 = Episode(title="Episode 3", airdate=dt, url="url3",
@@ -223,15 +222,13 @@ def test_dedup_homogeneous_episodes(fake_processor: ShowProcessor):
     episodes = [ep1, ep2, ep3]
     deduped = fake_processor._dedup_by_uuid(episodes)
     assert len(deduped) == 2
-    # Expect the first instance with "uuid1" to be kept.
     assert deduped[0] == ep1
     assert deduped[1] == ep3
 
 
 def test_dedup_homogeneous_hosts(fake_processor: ShowProcessor):
-    # Assuming you have a Host dataclass with at least a uuid attribute:
+    # Assuming Host is defined with at least uuid and name.
     h1 = Host(uuid="host1", name="Alice")
-    # Duplicate host should be deduped.
     h2 = Host(uuid="host1", name="Alice")
     h3 = Host(uuid="host2", name="Bob")
     hosts = [h1, h2, h3]
@@ -245,8 +242,6 @@ def test_mixed_types_dedup(fake_processor: ShowProcessor):
     dt = datetime.now()
     ep = Episode(title="Episode 1", airdate=dt, url="url1",
                  media_url="media1", uuid="uuid1")
-    # Create a Host instance (assuming Host is defined similarly).
     h = Host(uuid="host1", name="Alice")
-    # When mixing types, our type check should trigger an AssertionError.
     with pytest.raises(AssertionError, match="Mixed types provided to _dedup_by_uuid"):
         fake_processor._dedup_by_uuid([ep, h])

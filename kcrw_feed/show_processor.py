@@ -14,11 +14,13 @@ from typing import List, Dict, Optional, Sequence
 import uuid
 
 from kcrw_feed.models import Show, Episode, Host
-from kcrw_feed import source_manager
+from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 
-# Create a module-level logger for this module
+SHOW_FILE = "/index.html"
+EPISODE_FILE = "/player.json"
+
 logger = logging.getLogger("kcrw_feed")
 
 
@@ -26,7 +28,8 @@ class ShowProcessor:
     """ShowProcessor fetches a show or an episode page and extracts details
     to enrich a raw URL into a full domain model object."""
 
-    def __init__(self, timeout: int = 10):
+    def __init__(self, source: BaseSource, timeout: int = 10):
+        self.source = source
         self.timeout = timeout
         # This will hold a dict of Show objects keyed by UUID.
         self._model_cache: Dict[uuid.UUID, Show] = {}
@@ -40,13 +43,13 @@ class ShowProcessor:
         return None
 
     # Core methods
-    def fetch(self, url: str):
-        """Given a URL, decide whether it is a Show page or an Episode page
+    def fetch(self, resource: str):
+        """Given a resource, decide whether it is a Show page or an Episode page
         and return the corresponding object."""
-        logger.debug("Fetching: %s", url)
-        # Parse the URL to determine its structure.
-        parsed = urlparse(url)
-        # Remove leading/trailing slashes and split path into segments.
+        logger.debug("Fetching: %s", resource)
+        # Parse the resource to determine its structure.
+        parsed = urlparse(resource)
+        # Remove leading slashes and split path into segments.
         path_parts = parsed.path.strip("/").split("/")
         logger.debug("path_parts: %s", path_parts)
         # We're expecting a structure like: music/shows/<show>[/<episode>]
@@ -56,29 +59,31 @@ class ShowProcessor:
             logger.debug("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
         except ValueError:
             # If the URL doesn't match our expected structure, assume it's a Show.
-            return self._fetch_show(url)
+            return self._fetch_show(resource)
 
         # Determine how many segments come after "shows" in the path
         after = path_parts[shows_idx + 1:]
         logger.debug("after: %s", after)
         if len(after) == 0:
             # No show identifier found; fallback.
-            assert False, f"No show identifier found! {url}"
+            assert False, f"No show identifier found! {resource}"
         elif len(after) == 1:
-            logger.info("Fetching show: %s", url)
-            return self._fetch_show(url)
+            logger.info("Fetching show: %s", resource)
+            return self._fetch_show(resource)
         else:
-            logger.info("Fetching episode: %s", url)
-            return self._fetch_episode(url)
+            logger.info("Fetching episode: %s", resource)
+            return self._fetch_episode(resource)
 
-    def _fetch_show(self, url: str) -> Show:
+    def _fetch_show(self, resource: str) -> Show:
         """Fetch a Show page and extract basic details."""
         # TODO: remove after testing
-        html = source_manager.get_file(
-            "./tests/data/henry-rollins/henry-rollins")
+        # html = source_manager.get_file(
+        #     "./tests/data/henry-rollins/henry-rollins")
         # html = source_manager.get_file(url)
+        show_file = self.source.rewrite_base_source(resource + SHOW_FILE)
+        html = self.source.get_resource(show_file)
         # Try to extract structured data using extruct (e.g., microdata).
-        data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
+        data = extruct.extract(html, base_url=resource, syntaxes=["microdata"])
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Extracted data: %s", pprint.pformat(data))
 
@@ -115,8 +120,8 @@ class ShowProcessor:
                 show = self._model_cache.get(show_uuid)
             else:
                 show = Show(
-                    title=show_data.get("name", url.split("/")[-1]),
-                    url=url,
+                    title=show_data.get("name", resource.split("/")[-1]),
+                    url=resource,
                     uuid=show_uuid,
                     description=show_data.get(
                         "properties", {}).get("description"),
@@ -130,10 +135,11 @@ class ShowProcessor:
             # Fallback: use BeautifulSoup to get the title.
             soup = BeautifulSoup(html, "html.parser")
             title_tag = soup.find("title")
-            title = title_tag.text.strip() if title_tag else url.split("/")[-1]
+            title = title_tag.text.strip(
+            ) if title_tag else resource.split("/")[-1]
             show = Show(
                 title=title,
-                url=url,
+                url=resource,
                 last_updated=datetime.now(),
                 metadata={}
             )
@@ -169,7 +175,7 @@ class ShowProcessor:
                     episodes.append(episode)
         return self._dedup_by_uuid(episodes)
 
-    def _fetch_episode(self, url: str, uuid: Optional[str] = "") -> Episode:
+    def _fetch_episode(self, resource: str, uuid: Optional[str] = "") -> Episode:
         """Fetch the player for the Episode and extract details."""
 
         episode: Episode
@@ -179,10 +185,12 @@ class ShowProcessor:
             return self._model_cache.get(uuid)
 
         # TODO: remove after testing
-        local_file = "./tests/data/henry-rollins/" + \
-            url.split("/")[-1] + "/player.json"
-        logger.debug("local_file: %s", local_file)
-        episode_bytes = source_manager.get_file(local_file)
+        # local_file = "./tests/data/henry-rollins/" + \
+        #     url.split("/")[-1] + "/player.json"
+        # logger.debug("local_file: %s", local_file)
+        # episode_bytes = source_manager.get_file(local_file)
+        episode_file = self.source.rewrite_base_source(resource + EPISODE_FILE)
+        episode_bytes = self.source.get_resource(episode_file)
         episode_data = None
         if episode_bytes is not None:
             try:
@@ -197,7 +205,7 @@ class ShowProcessor:
                 title=episode_data.get("title", ""),
                 airdate=self._parse_date(episode_data.get("airdate")),
                 url=episode_data.get("url"),
-                media_url=source_manager.strip_query_params(
+                media_url=strip_query_params(
                     episode_data.get("media", "")[0].get("url")),
                 uuid=utils.extract_uuid(episode_data.get("uuid")),
                 show_uuid=utils.extract_uuid(episode_data.get("show_uuid")),

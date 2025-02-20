@@ -27,7 +27,8 @@ class BaseSource(ABC):
 
     def rewrite_base_source(self, entity_reference: str) -> str:
         """Regular expression to rewrite entity path"""
-        return REWRITE_RE.sub(REPLACE_TEXT, entity_reference)
+        # Also trim trailing slash for consistency
+        return REWRITE_RE.sub(REPLACE_TEXT, entity_reference).rstrip("/")
 
 
 class HttpsSource(BaseSource):

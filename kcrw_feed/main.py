@@ -82,8 +82,7 @@ def main():
             logger.trace("Gathered entities: %s", pprint.pformat(entities))
         logger.info("Gathered %s entities", len(entities))
     elif args.command == "update":
-        updated_shows = collection.update(
-            source=(args.source or CONFIG["source"]), selected_urls=args.shows)
+        updated_shows = collection.update(selection=args.shows)
         # Save the state or pass it to the next phase.
         logger.info("Updated %s", updated_shows)
     elif args.command == "save":

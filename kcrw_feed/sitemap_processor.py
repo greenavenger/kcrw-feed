@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Set
 import urllib.robotparser as urobot
 import xmltodict
 
+from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 from kcrw_feed import source_manager
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
@@ -126,7 +127,7 @@ class SitemapProcessor:
             for url in sitemap_urls
             if SITEMAP_RE.search(url)
         ]
-        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+        if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
             logger.trace("Stripped sitemaps from robots.txt: %s", sitemap_urls)
         return list(set(sitemap_urls))
 
@@ -182,7 +183,7 @@ class SitemapProcessor:
             loc = entry.get("loc")
             if loc:
                 child_sitemaps.append(loc.strip())
-        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+        if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
             logger.trace("Found child_sitemaps: %s",
                          pprint.pformat(child_sitemaps))
         # Rewrite returned urls and filter for music.
@@ -222,7 +223,7 @@ class SitemapProcessor:
         if isinstance(urls, dict):
             urls = [urls]
 
-        if logger.isEnabledFor(getattr(logging, "TRACE", 5)):
+        if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
             logger.trace("Raw sitemap entries: %s", pprint.pformat(urls))
 
         for entry in urls:
