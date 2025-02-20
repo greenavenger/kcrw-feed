@@ -8,6 +8,8 @@ from urllib.parse import urljoin, urlparse, urlunparse
 from typing import Optional
 import fsspec
 
+from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+
 # Regex pattern to match the prefix of KCRW URLs
 REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
 REPLACE_TEXT = ""  # ./tests/data/"
@@ -30,17 +32,20 @@ class BaseSource(ABC):
         """Relative part of the entity path"""
         pass
 
+    # TODO: Should this be here or in show_processor?
     def is_show(self, resource: str) -> bool:
         """Parse the path to determine if the resource is a show."""
         # Parse the resource to determine its structure.
         parsed = urlparse(resource)
         # Remove leading slashes and split path into segments.
         path_parts = parsed.path.strip("/").split("/")
-        logger.trace("path_parts: %s", path_parts)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("path_parts: %s", path_parts)
         # We're expecting a structure like: music/shows/<show>[/<episode>]
         music_idx = path_parts.index("music")
         shows_idx = path_parts.index("shows")
-        logger.trace("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
         # TODO: add try/except once we're more confident with our parsing
         # try:
         #     music_idx = path_parts.index("music")
@@ -52,7 +57,8 @@ class BaseSource(ABC):
 
         # Determine how many segments come after "shows" in the path
         after = path_parts[shows_idx + 1:]
-        logger.trace("after: %s", after)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("after: %s", after)
         if len(after) == 0:
             # No show identifier found; fallback.
             assert False, f"No show identifier found! {resource}"

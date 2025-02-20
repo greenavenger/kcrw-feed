@@ -149,3 +149,66 @@ def test_complex_url():
     expected = ("https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/"
                 "KCRW-henry_rollins-kcrw_broadcast_825-250125.mp3")
     assert source_manager.strip_query_params(url) == expected
+
+
+def test_basic_url_with_query():
+    url = "https://example.com/path?foo=bar&baz=qux"
+    expected = "https://example.com/path"
+    assert source_manager.strip_query_params(url) == expected
+
+
+def test_url_without_query():
+    url = "https://example.com/path"
+    assert source_manager.strip_query_params(url) == url
+
+
+def test_url_with_fragment():
+    url = "https://example.com/path?foo=bar#section1"
+    # The fragment should remain intact
+    expected = "https://example.com/path#section1"
+    assert source_manager.strip_query_params(url) == expected
+
+
+def test_url_with_only_query():
+    url = "https://example.com/?foo=bar"
+    expected = "https://example.com/"
+    assert source_manager.strip_query_params(url) == expected
+
+
+def test_complex_url():
+    url = ("https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/"
+           "KCRW-henry_rollins-kcrw_broadcast_825-250125.mp3?awCollectionId=henry-rollins&"
+           "aw_0_1st.ri=kcrw&awEpisodeId=kcrw-broadcast-825")
+    expected = ("https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/"
+                "KCRW-henry_rollins-kcrw_broadcast_825-250125.mp3")
+    assert source_manager.strip_query_params(url) == expected
+
+
+def test_is_show_true():
+    """Test that a well-formed show URL is recognized as a show."""
+    # Using HttpsSource as a concrete BaseSource implementation.
+    source = source_manager.HttpsSource("https://www.testsite.com/")
+    show_url = "https://www.testsite.com/music/shows/show1"
+    assert source.is_show(show_url) is True
+    # Since is_episode returns the negation, it should be False.
+    assert source.is_episode(show_url) is False
+
+
+def test_is_episode_true():
+    """Test that a URL with more than one segment after 'shows' is recognized
+    as an episode."""
+    source = source_manager.HttpsSource("https://www.testsite.com/")
+    episode_url = "https://www.testsite.com/music/shows/show1/episode1"
+    # In this case, after splitting, the segments after "shows" are ["show1", "episode1"],
+    # so is_show() should return False, and is_episode() should return True.
+    assert source.is_show(episode_url) is False
+    assert source.is_episode(episode_url) is True
+
+
+def test_is_show_assertion_for_missing_identifier():
+    """Test that a URL lacking a show identifier (i.e. nothing after 'shows')
+    raises an AssertionError."""
+    source = source_manager.HttpsSource("https://www.testsite.com/")
+    no_show_url = "https://www.testsite.com/music/shows"
+    with pytest.raises(AssertionError, match="No show identifier found"):
+        source.is_show(no_show_url)
