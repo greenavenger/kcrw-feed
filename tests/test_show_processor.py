@@ -74,9 +74,17 @@ class DummySource:
             path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
         return fake_get_file(path)
 
-    def rewrite_base_source(self, url: str) -> str:
+    def relative_path(self, url: str) -> str:
         # For testing, return the URL unchanged.
         return url
+
+    def is_show(self, resource: str) -> bool:
+        if "episode" in resource:
+            return False
+        return True
+
+    def is_episode(self, resource: str) -> bool:
+        return not self.is_show(resource)
 
 
 def fake_get_file(url: str, timeout: int = 10) -> Any:

@@ -30,6 +30,25 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    list_parser = subparsers.add_parser("list", help="List shows or episodes")
+    list_parser.add_argument(
+        "mode",
+        nargs="?",
+        choices=["shows", "episodes"],
+        default="shows",
+        help="If specified as 'episodes', list episodes instead of shows. Default lists shows."
+    )
+    list_parser.add_argument(
+        "--shows",
+        type=str,
+        help="Comma-separated list of show names (or fragments) to filter by"
+    )
+    list_parser.add_argument(
+        "--detail",
+        action="store_true",
+        help="Display detailed output of each Show/Episode object"
+    )
+
     gather_parser = subparsers.add_parser("gather", help="Gather show URLs")
     gather_parser.add_argument(
         "--source", default="sitemap", choices=["sitemap", "feed"])
@@ -70,23 +89,60 @@ def main():
 
     source: BaseSource
     source_root = CONFIG["source_root"]
+    logger.info("Source root: %s", source_root)
     if source_root.startswith("http"):
         source = HttpsSource(source_root)
     else:
         source = CacheSource(source_root)
 
     collection = show_index.ShowIndex(source=source)
-    if args.command == "gather":
+
+    if args.command == "list":
+        # Populate collection.shows
+        _ = collection.update()
+        # Determine whether we're listing shows (default) or episodes.
+        if args.mode == "episodes":
+            # For episodes: by default list all episodes; if --shows is provided, filter to episodes
+            # belonging to shows whose title matches one of the provided fragments.
+            episodes = collection.get_episodes()
+            if args.shows:
+                filters = [f.strip().lower() for f in args.shows.split(",")]
+                # Filter shows first.
+                filtered_shows = [show for show in collection.get_shows()
+                                  if any(f in show.title.lower() for f in filters)]
+                # Then collect episodes from these shows.
+                episodes = []
+                for show in filtered_shows:
+                    episodes.extend(show.episodes)
+            if args.detail:
+                for ep in episodes:
+                    print(pprint.pformat(ep.__dict__))
+            else:
+                for ep in episodes:
+                    print(ep.url)
+        else:
+            # Listing shows (default).
+            shows = collection.get_shows()
+            if args.shows:
+                filters = [f.strip().lower() for f in args.shows.split(",")]
+                shows = [show for show in shows if any(
+                    f in show.title.lower() for f in filters)]
+            if args.detail:
+                for show in shows:
+                    print(pprint.pformat(show.__dict__))
+            else:
+                for show in shows:
+                    print(show.url)
+    elif args.command == "gather":
         entities = collection.gather()
         if logger.isEnabledFor(LOGGING_LEVEL_MAP["trace"]):
             logger.trace("Gathered entities: %s", pprint.pformat(entities))
         logger.info("Gathered %s entities", len(entities))
     elif args.command == "update":
         updated_shows = collection.update(selection=args.shows)
-        # Save the state or pass it to the next phase.
         logger.info("Updated %s", updated_shows)
     elif args.command == "save":
-        # Call your state persistence functions.
+        # Save state to disk (not implemented here)
         pass
     else:
         logger.error("Unknown command")

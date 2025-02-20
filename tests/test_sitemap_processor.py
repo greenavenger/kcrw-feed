@@ -64,7 +64,7 @@ class DummySource:
             path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
         return fake_get_file(path)
 
-    def rewrite_base_source(self, url: str) -> str:
+    def relative_path(self, url: str) -> str:
         return url
 
 

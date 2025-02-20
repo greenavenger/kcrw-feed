@@ -123,7 +123,7 @@ class SitemapProcessor:
         logger.debug("Sitemaps found in robots.txt: %s", sitemap_urls)
         # Rewrite base source if needed and filter for valid sitemap URLs.
         sitemap_urls = [
-            self.source.rewrite_base_source(url)
+            self.source.relative_path(url)
             for url in sitemap_urls
             if SITEMAP_RE.search(url)
         ]
@@ -188,7 +188,7 @@ class SitemapProcessor:
                          pprint.pformat(child_sitemaps))
         # Rewrite returned urls and filter for music.
         child_sitemaps = [
-            self.source.rewrite_base_source(url)
+            self.source.relative_path(url)
             for url in child_sitemaps
             if MUSIC_FILTER_RE.search(url)
         ]

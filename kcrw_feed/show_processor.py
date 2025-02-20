@@ -44,44 +44,26 @@ class ShowProcessor:
 
     # Core methods
     def fetch(self, resource: str):
-        """Given a resource, decide whether it is a Show page or an Episode page
-        and return the corresponding object."""
-        logger.debug("Fetching: %s", resource)
-        # Parse the resource to determine its structure.
-        parsed = urlparse(resource)
-        # Remove leading slashes and split path into segments.
-        path_parts = parsed.path.strip("/").split("/")
-        logger.debug("path_parts: %s", path_parts)
-        # We're expecting a structure like: music/shows/<show>[/<episode>]
-        try:
-            music_idx = path_parts.index("music")
-            shows_idx = path_parts.index("shows")
-            logger.debug("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
-        except ValueError:
-            # If the URL doesn't match our expected structure, assume it's a Show.
-            return self._fetch_show(resource)
-
-        # Determine how many segments come after "shows" in the path
-        after = path_parts[shows_idx + 1:]
-        logger.debug("after: %s", after)
-        if len(after) == 0:
-            # No show identifier found; fallback.
-            assert False, f"No show identifier found! {resource}"
-        elif len(after) == 1:
+        """Dispatch show or episode processing and return the corresponding object."""
+        if self.source.is_show(resource):
             logger.info("Fetching show: %s", resource)
             return self._fetch_show(resource)
-        else:
-            logger.info("Fetching episode: %s", resource)
-            return self._fetch_episode(resource)
+        logger.info("Fetching episode: %s", resource)
+        return self._fetch_episode(resource)
 
-    def _fetch_show(self, resource: str) -> Show:
+    def _fetch_show(self, resource: str) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
         # TODO: remove after testing
         # html = source_manager.get_file(
         #     "./tests/data/henry-rollins/henry-rollins")
         # html = source_manager.get_file(url)
-        show_file = self.source.rewrite_base_source(resource + SHOW_FILE)
+        show_file = self.source.relative_path(resource + SHOW_FILE)
+        logger.debug("show_file: %s", show_file)
         html = self.source.get_resource(show_file)
+        if html is None:
+            logger.error("Failed to retrieve file: %s", show_file)
+            return
+
         # Try to extract structured data using extruct (e.g., microdata).
         data = extruct.extract(html, base_url=resource, syntaxes=["microdata"])
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
@@ -175,7 +157,7 @@ class ShowProcessor:
                     episodes.append(episode)
         return self._dedup_by_uuid(episodes)
 
-    def _fetch_episode(self, resource: str, uuid: Optional[str] = "") -> Episode:
+    def _fetch_episode(self, resource: str, uuid: Optional[str] = "") -> Optional[Episode]:
         """Fetch the player for the Episode and extract details."""
 
         episode: Episode
@@ -184,12 +166,8 @@ class ShowProcessor:
             # Episode has been fetched, so return cached object
             return self._model_cache.get(uuid)
 
-        # TODO: remove after testing
-        # local_file = "./tests/data/henry-rollins/" + \
-        #     url.split("/")[-1] + "/player.json"
-        # logger.debug("local_file: %s", local_file)
-        # episode_bytes = source_manager.get_file(local_file)
-        episode_file = self.source.rewrite_base_source(resource + EPISODE_FILE)
+        episode_file = self.source.relative_path(resource + EPISODE_FILE)
+        logger.debug("episode_file: %s", episode_file)
         episode_bytes = self.source.get_resource(episode_file)
         episode_data = None
         if episode_bytes is not None:
@@ -199,7 +177,8 @@ class ShowProcessor:
             except json.JSONDecodeError as e:
                 logger.error("Error decoding JSON: %s", e)
         else:
-            logger.error("Failed to retrieve file")
+            logger.error("Failed to retrieve file: %s", episode_file)
+            return
         if episode_data:
             episode = Episode(
                 title=episode_data.get("title", ""),

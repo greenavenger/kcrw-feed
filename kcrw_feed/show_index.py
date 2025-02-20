@@ -48,9 +48,10 @@ class ShowIndex:
         """Update the repository with enriched Show objects.
 
         Parameters:
-            update_after (datetime, optional): Only update shows that have changed after this timestamp.
-            selected_urls (List[str], optional): If provided, only update shows whose URL is in this list.
-        """
+            update_after (datetime, optional): Only update shows that have
+              changed after this timestamp.
+            selected_urls (List[str], optional): If provided, only update
+              shows whose URL is in this list."""
         selected_resources: List[str] = []
 
         raw_resources: List[str] = self.gather()
@@ -60,8 +61,8 @@ class ShowIndex:
             if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
                 logger.trace("raw_resources: (before) %s",
                              pprint.pformat(raw_resources))
-            # Rewrite based on source semantics
-            raw_resources = [self.source.rewrite_base_source(
+            # Work with relative path
+            raw_resources = [self.source.relative_path(
                 e) for e in raw_resources]
             if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
                 logger.trace("raw_resources: (after) %s",
@@ -80,6 +81,9 @@ class ShowIndex:
             # TODO: Optionally, check update_after against metadata.
             # This returns a fully enriched Show object.
             show = self.show_processor.fetch(resource)
+            if not show:
+                # Failed to retrieve file
+                continue
             # Make sure the show has a unique identifier.
             assert show.uuid is not None
             self.shows[show.uuid] = show
@@ -99,7 +103,7 @@ class ShowIndex:
         selected: Set[str] = set(resources)
         if selection:
             # Normalize for comparison
-            selection = [self.source.rewrite_base_source(
+            selection = [self.source.relative_path(
                 r) for r in selection]
             logger.debug("selection match: %s",
                          pprint.pformat(selection))
@@ -115,6 +119,7 @@ class ShowIndex:
 
     def get_shows(self) -> List[Show]:
         """Return a list of all Show objects."""
+        # logger.debug("%s", pprint.pformat(self.shows))
         return list(self.shows.values())
 
     def get_show_by_uuid(self, uuid: str) -> Optional[Show]:

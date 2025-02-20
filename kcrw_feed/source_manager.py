@@ -25,10 +25,46 @@ class BaseSource(ABC):
         """Fetch the resource content as bytes."""
         pass
 
-    def rewrite_base_source(self, entity_reference: str) -> str:
-        """Regular expression to rewrite entity path"""
-        # Also trim trailing slash for consistency
-        return REWRITE_RE.sub(REPLACE_TEXT, entity_reference).rstrip("/")
+    @abstractmethod
+    def relative_path(self, entity_reference: str) -> str:
+        """Relative part of the entity path"""
+        pass
+
+    def is_show(self, resource: str) -> bool:
+        """Parse the path to determine if the resource is a show."""
+        # Parse the resource to determine its structure.
+        parsed = urlparse(resource)
+        # Remove leading slashes and split path into segments.
+        path_parts = parsed.path.strip("/").split("/")
+        logger.trace("path_parts: %s", path_parts)
+        # We're expecting a structure like: music/shows/<show>[/<episode>]
+        music_idx = path_parts.index("music")
+        shows_idx = path_parts.index("shows")
+        logger.trace("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
+        # TODO: add try/except once we're more confident with our parsing
+        # try:
+        #     music_idx = path_parts.index("music")
+        #     shows_idx = path_parts.index("shows")
+        #     logger.debug("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
+        # except ValueError:
+        #     # If the URL doesn't match our expected structure, assume it's a Show.
+        #     return self._fetch_show(resource)
+
+        # Determine how many segments come after "shows" in the path
+        after = path_parts[shows_idx + 1:]
+        logger.trace("after: %s", after)
+        if len(after) == 0:
+            # No show identifier found; fallback.
+            assert False, f"No show identifier found! {resource}"
+        elif len(after) == 1:
+            # Found show
+            return True
+        # Did not find show
+        return False
+
+    def is_episode(self, resource: str) -> bool:
+        """If it's not a show, assume it's an episode."""
+        return not self.is_show(resource)
 
 
 class HttpsSource(BaseSource):
@@ -39,13 +75,19 @@ class HttpsSource(BaseSource):
         self.uses_sitemap = True
 
     def get_resource(self, url: str) -> Optional[bytes]:
-        # Here you'd use requests and potentially rewrite the URL according to your rule.
-        # For now, we'll leave a stub.
+        # Here you'd use requests and potentially rewrite the URL according
+        # to your rule. For now, we'll leave a stub.
         print(f"Fetching via HTTPS: {url}")
         # Example: If rewrite_rule is provided, use it.
         # url = self._rewrite_url(url)
         # return requests.get(url, timeout=10).content
         return None
+
+    def relative_path(self, entity_reference: str) -> str:
+        """Regular expression to return the relative part of the
+        entity path"""
+        # Also trim trailing slash for consistency
+        return "/" + REWRITE_RE.sub(REPLACE_TEXT, entity_reference).rstrip("/")
 
 
 class CacheSource(BaseSource):
@@ -58,6 +100,12 @@ class CacheSource(BaseSource):
         # Read from the local cache directory.
         full_normalized_path = normalize_location(self.path, resource)
         return get_file(full_normalized_path)
+
+    def relative_path(self, entity_reference: str) -> str:
+        """Regular expression to return the relative part of the
+        entity path"""
+        # Also trim trailing slash for consistency
+        return "./" + REWRITE_RE.sub(REPLACE_TEXT, entity_reference).rstrip("/")
 
 
 class RssFeedSource(BaseSource):
