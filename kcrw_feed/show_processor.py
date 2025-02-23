@@ -53,10 +53,6 @@ class ShowProcessor:
 
     def _fetch_show(self, resource: str) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
-        # TODO: remove after testing
-        # html = source_manager.get_file(
-        #     "./tests/data/henry-rollins/henry-rollins")
-        # html = source_manager.get_file(url)
         show_file = self.source.relative_path(resource + SHOW_FILE)
         logger.debug("show_file: %s", show_file)
         html = self.source.get_resource(show_file)
@@ -103,7 +99,8 @@ class ShowProcessor:
             else:
                 show = Show(
                     title=show_data.get("name", resource.split("/")[-1]),
-                    url=resource,
+                    url=show_data.get("properties", {}).get(
+                        "mainEntityOfPage"),
                     uuid=show_uuid,
                     description=show_data.get(
                         "properties", {}).get("description"),
