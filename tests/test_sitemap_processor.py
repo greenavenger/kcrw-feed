@@ -99,8 +99,8 @@ def test_read_sitemap_for_entries(dummy_source):
     processor._read_sitemap_for_entries(
         "https://www.testsite.com/sitemap1.xml")
     # From sitemap1.xml, only the URL containing "/music/shows/" should be stored.
-    assert "https://www.testsite.com/music/shows/show1" in processor._sitemap_entities
-    assert "https://www.testsite.com/other/url" not in processor._sitemap_entities
+    assert "https://www.testsite.com/music/shows/show1" in processor._source_entities
+    assert "https://www.testsite.com/other/url" not in processor._source_entities
 
 
 def test_read_sitemap_for_child_sitemaps(dummy_source):
@@ -166,7 +166,7 @@ def test_get_all_entries(dummy_source):
     dictionaries."""
     processor = SitemapProcessor(dummy_source)
     # Preload fake entries.
-    processor._sitemap_entities = {
+    processor._source_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"
@@ -192,7 +192,7 @@ def test_get_entries_after(dummy_source):
     """Test that get_entries_after() returns only entries with a lastmod date
     after a given threshold."""
     processor = SitemapProcessor(dummy_source)
-    processor._sitemap_entities = {
+    processor._source_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"
@@ -220,7 +220,7 @@ def test_get_entries_between(dummy_source):
     """Test that get_entries_between() returns only entries with a lastmod
     date between start and end."""
     processor = SitemapProcessor(dummy_source)
-    processor._sitemap_entities = {
+    processor._source_entities = {
         "https://www.testsite.com/music/shows/show1": {
             "loc": "https://www.testsite.com/music/shows/show1",
             "lastmod": "2025-01-01T00:00:00"

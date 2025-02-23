@@ -136,8 +136,7 @@ def main():
                 shows = [show for show in shows if any(
                     f in show.title.lower() for f in filters)]
             if args.detail:
-                for show in shows:
-                    print(pprint.pformat(show.__dict__))
+                print(pprint.pformat(shows))
             else:
                 for show in shows:
                     print(show.url)

@@ -28,7 +28,7 @@ class SitemapProcessor:
             source: The base URL (or local base path) for the site.
         """
         self.source = source
-        self._sitemap_entities: Dict[str, Any] = {}
+        self._source_entities: Dict[str, Any] = {}
 
     # Accessor Methods
     def get_all_entries(self) -> List[dict]:
@@ -38,7 +38,7 @@ class SitemapProcessor:
         Returns:
             List[dict]: A list of all entries stored in the processor.
         """
-        return list(self._sitemap_entities.values())
+        return list(self._source_entities.values())
 
     def get_entries_after(self, dt: datetime) -> List[dict]:
         """
@@ -51,7 +51,7 @@ class SitemapProcessor:
             List[dict]: A list of entries updated after dt.
         """
         results = []
-        for entry in self._sitemap_entities.values():
+        for entry in self._source_entities.values():
             lastmod_str = entry.get("lastmod")
             if lastmod_str:
                 try:
@@ -75,7 +75,7 @@ class SitemapProcessor:
             List[dict]: A list of entries with lastmod between start and end.
         """
         results = []
-        for entry in self._sitemap_entities.values():
+        for entry in self._source_entities.values():
             lastmod_str = entry.get("lastmod")
             if lastmod_str:
                 try:
@@ -104,9 +104,7 @@ class SitemapProcessor:
         # Process each sitemap to extract show entries.
         for sitemap in all_sitemaps:
             self._read_sitemap_for_entries(sitemap)
-        # Return the sorted keys (show URLs or IDs)
-        sitemap_entries = list(self._sitemap_entities.keys())
-        return sorted(sitemap_entries)
+        return self._source_entities
 
     def _sitemaps_from_robots(self) -> List[str]:
         """Reads the robots.txt file and extracts root sitemap URLs.
@@ -231,7 +229,7 @@ class SitemapProcessor:
             # Keep only music shows
             # TODO: Should the keys be absolute or relative URLs?
             if loc and MUSIC_FILTER_RE.search(loc):
-                self._sitemap_entities[loc.strip()] = {}
+                self._source_entities[loc.strip()] = entry
 
     def parse_feeds(self, feed_path: str) -> List[str]:
         """Placeholder for gathering shows from RSS/Atom feeds.

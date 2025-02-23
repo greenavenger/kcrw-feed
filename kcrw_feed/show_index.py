@@ -3,7 +3,7 @@
 from datetime import datetime
 import logging
 import pprint
-from typing import Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set
 import urllib.robotparser as urobot
 import uuid
 
@@ -33,10 +33,10 @@ class ShowIndex:
         # TODO: Should I split out Shows and Episodes?
         self.shows: Dict[str | uuid.UUID, Show | Episode] = {}
 
-    def gather(self) -> List[str]:
+    def gather(self) -> Dict[str, Any]:
         """Gather a list of raw entities from the source."""
         logger.info("Gathering entities")
-        entities: List[str] = []
+        entities: Dict[str, Any] = {}
         if self.source.uses_sitemap:
             entities = self.sitemap_processor.gather_entries()
         else:
