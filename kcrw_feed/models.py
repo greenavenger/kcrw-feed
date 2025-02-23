@@ -55,6 +55,7 @@ class Show:
     episodes: List[Episode] = field(default_factory=list)
     type: Optional[str] = None
     last_updated: Optional[datetime] = None
+    source_metadata: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def update_info(self, new_data: Dict[str, Any]) -> None:
@@ -99,4 +100,5 @@ class Episode:
     duration: Optional[float] = None
     ending: Optional[datetime] = None
     last_updated: Optional[datetime] = None
+    source_metadata: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)

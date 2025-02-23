@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime
-from typing import Optional, List
+from typing import Any, Dict, List, Optional
 from kcrw_feed.models import Show, Episode
 from kcrw_feed.show_index import ShowIndex
 from kcrw_feed.sitemap_processor import MUSIC_FILTER_RE
@@ -26,6 +26,7 @@ class DummySource:
         return url
 
     def is_show(self, resource: str) -> bool:
+        # For testing, if "episode" is in the URL, then it's not a show.
         if "episode" in resource:
             return False
         return True
@@ -80,47 +81,50 @@ def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
 
 
 class FakeSitemapProcessor:
-    """A fake SitemapProcessor that returns a fixed list of raw URLs."""
+    """A fake SitemapProcessor that returns a fixed dict of raw URLs
+    with metadata."""
 
     def __init__(self, source: DummySource) -> None:
         self.source = source
 
-    def gather_entries(self) -> List[str]:
-        # Return a fixed list of URLs. The FakeShowProcessor will later filter out non-music URLs.
-        return [
-            "https://www.testsite.com/music/shows/show1",
-            "https://www.testsite.com/music/shows/show2",
-            "https://www.testsite.com/music/shows/show3",
-            # "https://www.testsite.com/other/url" # this would be filtered, so excluding
-        ]
+    def gather_entries(self) -> Dict[str, Any]:
+        # Return a fixed dict of resource URLs with some metadata.
+        now = datetime.now()
+        return {
+            "https://www.testsite.com/music/shows/show1": {"lastmod": now},
+            "https://www.testsite.com/music/shows/show2": {"lastmod": now},
+            "https://www.testsite.com/music/shows/show3": {"lastmod": now},
+            # "https://www.testsite.com/other/url": {"lastmod": now} # this would be filtered, so excluding
+        }
 
 
 class FakeShowProcessor:
     """A fake ShowProcessor that returns a dummy Show object for a given URL."""
 
-    def fetch(self, url: str) -> Show:
+    def fetch(self, url: str, source_metadata: Optional[Dict[str, Any]] = {}) -> Show:
         # For testing, derive a dummy uuid and title from the URL.
         if "show1" in url:
-            uuid = "uuid-show1"
+            uid = "uuid-show1"
             title = "Show One"
         elif "show2" in url:
-            uuid = "uuid-show2"
+            uid = "uuid-show2"
             title = "Show Two"
         elif "show3" in url:
-            uuid = "uuid-show3"
+            uid = "uuid-show3"
             title = "Show Three"
         else:
-            uuid = None
+            uid = None
             title = "Other"
         # Create a dummy Show. No episodes initially.
         return Show(
             title=title,
             url=url,
-            uuid=uuid,
+            uuid=uid,
             description=f"Description for {title}",
             hosts=[],  # Empty list of hosts for simplicity.
-            episodes=[],
+            episodes=[],  # Initially empty
             last_updated=datetime(2025, 1, 1),
+            source_metadata=source_metadata,
             metadata={}
         )
 
@@ -133,44 +137,36 @@ def _fake_show_index() -> ShowIndex:
     # Replace the real processors with our fake ones.
     si.sitemap_processor = FakeSitemapProcessor(dummy_source)
     si.show_processor = FakeShowProcessor()
-    si.shows = {}
+    si._entities = {}
     return si
 
 
 def test_gather(fake_show_index: ShowIndex) -> None:
-    """Test that gather() returns only music show URLs from the fake
-    sitemap processor."""
-    raw_urls = fake_show_index.gather()
-    # The FakeSitemapProcessor returns 4 URLs but only those containing "/music/shows/"
+    """Test that gather() returns the expected dict of resources."""
+    entries = fake_show_index.gather()
     expected = {
         "https://www.testsite.com/music/shows/show1",
         "https://www.testsite.com/music/shows/show2",
         "https://www.testsite.com/music/shows/show3",
     }
-    # Gather() returns the sorted keys from the internal sitemap_entities,
-    # so for our fake, we assume that the filtering in FakeSitemapProcessor
-    # (or later in update) is applied.
-    assert set(raw_urls) == expected
+    assert set(entries.keys()) == expected
 
 
 def test_update(fake_show_index: ShowIndex) -> None:
-    """Test that update() calls the scraper on the URLs and populates the shows
-    dictionary with only music show URLs."""
-    fake_show_index.update()
-    # The fake sitemap processor returns 4 URLs, but filtering (using
-    # MUSIC_FILTER_RE in ShowIndex.gather) should keep only the ones
-    # containing "/music/shows/".
-    shows = fake_show_index.get_shows()
+    """Test that update() populates _entities with enriched shows."""
+    count = fake_show_index.update()
     # Expect 3 shows.
+    assert count == 3
+    shows = fake_show_index.get_shows()
+    print("shows:", shows)
     assert len(shows) == 3
-    # Verify lookup by UUID.
     show1 = fake_show_index.get_show_by_uuid("uuid-show1")
     show2 = fake_show_index.get_show_by_uuid("uuid-show2")
     show3 = fake_show_index.get_show_by_uuid("uuid-show3")
     assert show1 is not None and show1.title == "Show One"
     assert show2 is not None and show2.title == "Show Two"
     assert show3 is not None and show3.title == "Show Three"
-    # The non-music URL should be filtered out.
+    # The non-music URL is not present in our fake data, so get_show_by_name("Other") should be None.
     assert fake_show_index.get_show_by_name("Other") is None
 
 
@@ -183,11 +179,15 @@ def test_get_show_by_name(fake_show_index: ShowIndex) -> None:
 
 
 def test_get_episodes(fake_show_index: ShowIndex) -> None:
-    """Test that get_episodes() returns a combined list of episodes from
-    all shows."""
+    """Test that get_episodes() returns a combined list of episodes from all shows."""
     fake_show_index.update()
-    # For one of the shows (say, show1), add an episode.
+    # For show1, add an episode.
     show1 = fake_show_index.get_show_by_uuid("uuid-show1")
+    # Make sure show1 exists.
+    assert show1 is not None
+    # Initialize its episodes list if not already.
+    if show1.episodes is None:
+        show1.episodes = []
     ep = Episode(
         title="Episode 1",
         airdate=datetime(2025, 1, 2),
@@ -198,6 +198,8 @@ def test_get_episodes(fake_show_index: ShowIndex) -> None:
     )
     show1.episodes.append(ep)
     episodes = fake_show_index.get_episodes()
+    # Since our fake update() only created shows (with empty episode lists) and we added one episode,
+    # get_episodes() should return that one episode.
     assert len(episodes) == 1
     assert episodes[0].title == "Episode 1"
 
@@ -205,8 +207,11 @@ def test_get_episodes(fake_show_index: ShowIndex) -> None:
 def test_get_episode_by_uuid(fake_show_index: ShowIndex) -> None:
     """Test that get_episode_by_uuid() returns the correct episode."""
     fake_show_index.update()
-    # Add an episode with a known UUID to show2.
+    # For show2, add an episode.
     show2 = fake_show_index.get_show_by_uuid("uuid-show2")
+    assert show2 is not None
+    if show2.episodes is None:
+        show2.episodes = []
     ep = Episode(
         title="Episode X",
         airdate=datetime(2025, 1, 3),

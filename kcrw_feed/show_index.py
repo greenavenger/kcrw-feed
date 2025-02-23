@@ -31,18 +31,18 @@ class ShowIndex:
         self.show_processor = ShowProcessor(self.source)
         # This will hold fully enriched Show objects.
         # TODO: Should I split out Shows and Episodes?
-        self.shows: Dict[str | uuid.UUID, Show | Episode] = {}
+        self._entities: Dict[str | uuid.UUID, Show | Episode] = {}
 
     def gather(self) -> Dict[str, Any]:
-        """Gather a list of raw entities from the source."""
-        logger.info("Gathering entities")
-        entities: Dict[str, Any] = {}
+        """Gather a list of raw entries from the source."""
+        logger.info("Gathering entries")
+        entries: Dict[str, Any] = {}
         if self.source.uses_sitemap:
-            entities = self.sitemap_processor.gather_entries()
+            entries = self.sitemap_processor.gather_entries()
         else:
             # Placeholder for future feed processing.
             raise NotImplementedError
-        return entities
+        return entries
 
     def update(self, selection: List[str] = [], update_after: Optional[datetime] = None,
                ) -> int:
@@ -53,85 +53,72 @@ class ShowIndex:
               changed after this timestamp.
             selected_urls (List[str], optional): If provided, only update
               shows whose URL is in this list."""
-        selected_resources: List[str] = []
-
-        raw_resources: List[str] = self.gather()
+        entries: Dict[str, Any] = self.gather()
 
         logger.info("Updating entities")
-        if self.source.uses_sitemap:
-            if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
-                logger.trace("raw_resources: (before) %s",
-                             pprint.pformat(raw_resources))
-            # Work with relative path
-            raw_resources = [self.source.relative_path(
-                e) for e in raw_resources]
-            if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
-                logger.trace("raw_resources: (after) %s",
-                             pprint.pformat(raw_resources))
-        else:
-            # Placeholder for future feed processing.
-            raise NotImplementedError
 
         # Filter resources
-        selected_resources = self._filter_selected_by_name(
-            raw_resources, selection)
+        selected_entries = self._filter_selected_by_name(
+            entries, selection)
 
-        updated_resources = []
-        for resource in selected_resources:
-            show: Show
+        updated_resources: List[str] = []
+        for resource, source_metadata in selected_entries.items():
+            entity: Show | Episode | None
             # TODO: Optionally, check update_after against metadata.
-            # This returns a fully enriched Show object.
-            show = self.show_processor.fetch(resource)
-            if not show:
-                # Failed to retrieve file
+            # This returns a fully enriched Show or Episode object.
+            entity = self.show_processor.fetch(
+                self.source.relative_path(resource), source_metadata=source_metadata)
+            if not entity:
+                # Failed to retrieve resource
                 continue
             # Make sure the show has a unique identifier.
-            assert show.uuid is not None
-            self.shows[show.uuid] = show
+            assert entity.uuid is not None
+            self._entities[entity.uuid] = entity
             # if show.uuid:
             #     key = show.uuid
             # else:
             #     # If no UUID is provided, you might use the URL as a fallback key.
             #     key = show.url
             # self.shows[key] = show
-            updated_resources.append(show)
+            updated_resources.append(resource)
         logger.info("Updated %d resources", len(updated_resources))
         return len(updated_resources)
 
-    def _filter_selected_by_name(self, resources: List[str], selection: List[str] = []) -> List[str]:
+    def _filter_selected_by_name(self, entities: Dict[str, Any], selection: List[str] = []) -> Dict[str, Any]:
         """Filter resources based on selected_urls if necessary."""
         logging.info("Filtering selection")
-        selected: Set[str] = set(resources)
-        if selection:
-            # Normalize for comparison
-            selection = [self.source.relative_path(
-                r) for r in selection]
-            logger.debug("selection match: %s",
-                         pprint.pformat(selection))
-            selected = set(resources) & set(selection)
-            logger.debug("selected: %s", pprint.pformat(selected))
-            logger.info("Selecting %d entities", len(selected))
-            # TODO: Improve user experience when a bad selection is given
-            assert len(selection) == len(
-                selected), "Selection did not match resources!"
-        return list(selected)
+        # If selection filter is empty, return all entities
+        if not selection:
+            return entities
+        # Otherwise, return only matching entities
+        selected: Dict[str, Any] = {}
+        logger.debug("selection match: %s",
+                     pprint.pformat(selection))
+        for resource in selection:
+            selected[resource] = entities[resource]
+        logger.debug("selected: %s", list(selected.keys()))
+        logger.info("Selecting %d entities", len(selected))
+        # TODO: Improve user experience when a bad selection is given
+        assert len(selection) == len(
+            selected), "Selection did not match resources!"
+        return selected
 
     # Accessor Methods
 
     def get_shows(self) -> List[Show]:
         """Return a list of all Show objects."""
-        shows = (show for show in self.shows.values()
+        shows = (show for show in self._entities.values()
                  if self.source.is_show(show.url))
         # logger.debug("%s", pprint.pformat(shows))
         return list(shows)
 
     def get_show_by_uuid(self, uuid: str) -> Optional[Show]:
         """Return the Show with the given uuid."""
-        return self.shows.get(uuid)
+        return self._entities.get(uuid)
 
     def get_show_by_name(self, name: str) -> Optional[Show]:
         """Return the first Show that matches the given name (case-insensitive)."""
-        for show in self.shows.values():
+        for show in self._entities.values():
             if show.title.lower() == name.lower():
                 return show
         return None
@@ -139,7 +126,7 @@ class ShowIndex:
     def get_episodes(self) -> List[Episode]:
         """Return a combined list of episodes from all shows."""
         episodes: List[Episode] = []
-        for entity in self.shows.values():
+        for entity in self._entities.values():
             if self.source.is_episode(entity.url):
                 episodes.append(entity)
             else:
@@ -150,7 +137,7 @@ class ShowIndex:
 
     def get_episode_by_uuid(self, uuid: str) -> Optional[Episode]:
         """Return the first Episode found with the given uuid."""
-        for show in self.shows.values():
+        for show in self._entities.values():
             for ep in show.episodes:
                 if ep.uuid == uuid:
                     return ep
@@ -158,4 +145,4 @@ class ShowIndex:
 
     def dump_all(self):
         """Dump the values of self.shows for debugging purposes."""
-        return self.shows
+        return self._entities

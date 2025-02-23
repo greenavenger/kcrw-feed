@@ -20,6 +20,7 @@ FAKE_SHOW_HTML = f"""
   <body itemscope itemtype="http://schema.org/RadioSeries" itemid="{FAKE_SHOW_UUID}">
     <span itemprop="name">Test Radio Show</span>
     <meta itemprop="description" content="A description of the test show." />
+    <meta itemprop="mainEntityOfPage" content="https://www.testsite.com/music/shows/test-show" />
   </body>
 </html>
 """
@@ -119,7 +120,8 @@ def test_fetch_show(fake_processor: ShowProcessor):
     """Test that fetch() returns a Show object when given a URL that
     indicates a show."""
     url = "https://www.testsite.com/music/shows/test-show"
-    fake_processor.fetch(url)
+    source_metadata = {"lastmod": datetime.now()}
+    fake_processor.fetch(url, source_metadata=source_metadata)
     result = fake_processor.get_show_by_url(url)
     assert isinstance(result, Show)
     # In our fake setup, the fallback extracts the title from the URL.
@@ -132,7 +134,8 @@ def test_fetch_episode(fake_processor: ShowProcessor):
     """Test that fetch() returns an Episode object when given a URL that
     indicates an episode."""
     url = "https://www.testsite.com/music/shows/test-show/test-episode"
-    result = fake_processor.fetch(url)
+    source_metadata = {"lastmod": datetime.now()}
+    result = fake_processor.fetch(url, source_metadata=source_metadata)
     assert isinstance(result, Episode)
     assert result.title == "Test Episode Page"
     assert result.uuid == uuid.UUID(FAKE_EPISODE_UUID)
@@ -147,7 +150,8 @@ def test_fetch_invalid_structure_falls_back_to_show(fake_processor: ShowProcesso
     """Test that if the URL structure doesn't match the expected pattern,
     fetch() falls back to treating it as a Show."""
     url = "https://www.testsite.com/invalid/path"
-    result = fake_processor.fetch(url)
+    source_metadata = {"lastmod": datetime.now()}
+    result = fake_processor.fetch(url, source_metadata=source_metadata)
     assert isinstance(result, Show)
     # Fallback should yield a Show object using fake show HTML.
     assert result.description == "A description of the test show."

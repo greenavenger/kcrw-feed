@@ -87,7 +87,7 @@ class SitemapProcessor:
         return results
 
     # Populate Methods
-    def gather_entries(self) -> List[str]:
+    def gather_entries(self) -> Dict[str, Any]:
         """Gather show references by recursively reading sitemaps.
         Returns:
             List[str]: A sorted list of show references.

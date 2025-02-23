@@ -1,17 +1,16 @@
 """Module to enrich sitemap data and populate the core model objects"""
 
 from __future__ import annotations
+from datetime import datetime
 import json
+import logging
 import pprint
 # TODO: Add requests when we're ready to test things against the live site.
 # import requests
-import logging
-from urllib.parse import urlparse, urljoin
+from typing import Any, List, Dict, Optional
+import uuid
 import extruct
 from bs4 import BeautifulSoup
-from datetime import datetime
-from typing import List, Dict, Optional, Sequence
-import uuid
 
 from kcrw_feed.models import Show, Episode, Host
 from kcrw_feed.source_manager import BaseSource, strip_query_params
@@ -32,7 +31,7 @@ class ShowProcessor:
         self.source = source
         self.timeout = timeout
         # This will hold a dict of Show objects keyed by UUID.
-        self._model_cache: Dict[uuid.UUID, Show] = {}
+        self._model_cache: Dict[uuid.UUID, Show | Episode] = {}
 
     # Accessors
     def get_show_by_url(self, url: str) -> Optional[Show]:
@@ -43,15 +42,15 @@ class ShowProcessor:
         return None
 
     # Core methods
-    def fetch(self, resource: str):
+    def fetch(self, resource: str, source_metadata: Optional[Dict[str, Any]]) -> Optional[Show | Episode]:
         """Dispatch show or episode processing and return the corresponding object."""
         if self.source.is_show(resource):
             logger.debug("Fetching show: %s", resource)
-            return self._fetch_show(resource)
+            return self._fetch_show(resource, source_metadata=source_metadata)
         logger.debug("Fetching episode: %s", resource)
-        return self._fetch_episode(resource)
+        return self._fetch_episode(resource, source_metadata=source_metadata)
 
-    def _fetch_show(self, resource: str) -> Optional[Show]:
+    def _fetch_show(self, resource: str, source_metadata: Optional[Dict[str, Any]]) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
         show_file = self.source.relative_path(resource + SHOW_FILE)
         logger.debug("show_file: %s", show_file)
@@ -107,6 +106,7 @@ class ShowProcessor:
                     hosts=self._parse_hosts(show_data),
                     episodes=episodes,      # Episodes can be added later.
                     type=show_data.get("type"),
+                    source_metadata=source_metadata,
                     last_updated=datetime.now()
                 )
                 self._model_cache["uuid"] = show
@@ -154,7 +154,7 @@ class ShowProcessor:
                     episodes.append(episode)
         return utils.uniq_by_uuid(episodes)
 
-    def _fetch_episode(self, resource: str, uuid: Optional[str] = "") -> Optional[Episode]:
+    def _fetch_episode(self, resource: str, source_metadata: Optional[Dict[str, Any]], uuid: Optional[str] = "") -> Optional[Episode]:
         """Fetch the player for the Episode and extract details."""
 
         episode: Episode
@@ -194,6 +194,7 @@ class ShowProcessor:
                 duration=episode_data.get("duration"),
                 ending=self._parse_date(episode_data.get("ending")),
                 last_updated=self._parse_date(episode_data.get("modified")),
+                source_metadata=source_metadata
             )
             if episode.uuid:
                 self._model_cache[episode.uuid] = episode
