@@ -34,7 +34,7 @@ def main():
     list_parser.add_argument(
         "mode",
         nargs="?",
-        choices=["shows", "episodes"],
+        choices=["shows", "episodes", "debug"],
         default="shows",
         help="If specified as 'episodes', list episodes instead of shows. Default lists shows."
     )
@@ -101,10 +101,18 @@ def main():
         # Populate collection.shows
         _ = collection.update()
         # Determine whether we're listing shows (default) or episodes.
-        if args.mode == "episodes":
+        if args.mode == "debug":
+            entities = collection.dump_all()
+            if args.detail:
+                pprint.pprint(entities)
+            else:
+                entities = sorted(list(entities.values()), key=lambda e: e.url)
+                pprint.pprint(entities)
+        elif args.mode == "episodes":
             # For episodes: by default list all episodes; if --shows is provided, filter to episodes
             # belonging to shows whose title matches one of the provided fragments.
             episodes = collection.get_episodes()
+            episodes = sorted(episodes, key=lambda s: s.url)
             if args.shows:
                 filters = [f.strip().lower() for f in args.shows.split(",")]
                 # Filter shows first.
@@ -115,14 +123,14 @@ def main():
                 for show in filtered_shows:
                     episodes.extend(show.episodes)
             if args.detail:
-                for ep in episodes:
-                    print(pprint.pformat(ep.__dict__))
+                print(pprint.pformat(episodes))
             else:
                 for ep in episodes:
                     print(ep.url)
         else:
             # Listing shows (default).
             shows = collection.get_shows()
+            shows = sorted(shows, key=lambda s: s.url)
             if args.shows:
                 filters = [f.strip().lower() for f in args.shows.split(",")]
                 shows = [show for show in shows if any(

@@ -3,7 +3,7 @@
 from datetime import datetime
 import logging
 import pprint
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 import urllib.robotparser as urobot
 import uuid
 
@@ -30,7 +30,8 @@ class ShowIndex:
         self.sitemap_processor = SitemapProcessor(self.source)
         self.show_processor = ShowProcessor(self.source)
         # This will hold fully enriched Show objects.
-        self.shows: Dict[str | uuid.UUID, Show] = {}
+        # TODO: Should I split out Shows and Episodes?
+        self.shows: Dict[str | uuid.UUID, Show | Episode] = {}
 
     def gather(self) -> List[str]:
         """Gather a list of raw entities from the source."""
@@ -119,8 +120,10 @@ class ShowIndex:
 
     def get_shows(self) -> List[Show]:
         """Return a list of all Show objects."""
-        # logger.debug("%s", pprint.pformat(self.shows))
-        return list(self.shows.values())
+        shows = (show for show in self.shows.values()
+                 if self.source.is_show(show.url))
+        # logger.debug("%s", pprint.pformat(shows))
+        return list(shows)
 
     def get_show_by_uuid(self, uuid: str) -> Optional[Show]:
         """Return the Show with the given uuid."""
@@ -136,8 +139,13 @@ class ShowIndex:
     def get_episodes(self) -> List[Episode]:
         """Return a combined list of episodes from all shows."""
         episodes: List[Episode] = []
-        for show in self.shows.values():
-            episodes.extend(show.episodes)
+        for entity in self.shows.values():
+            if self.source.is_episode(entity.url):
+                episodes.append(entity)
+            else:
+                # Show objects have a list of Episodes
+                episodes.extend(entity.episodes)
+        episodes = utils.uniq_by_uuid(episodes)
         return episodes
 
     def get_episode_by_uuid(self, uuid: str) -> Optional[Episode]:
@@ -147,3 +155,7 @@ class ShowIndex:
                 if ep.uuid == uuid:
                     return ep
         return None
+
+    def dump_all(self):
+        """Dump the values of self.shows for debugging purposes."""
+        return self.shows

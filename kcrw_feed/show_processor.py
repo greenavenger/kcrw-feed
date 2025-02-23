@@ -46,9 +46,9 @@ class ShowProcessor:
     def fetch(self, resource: str):
         """Dispatch show or episode processing and return the corresponding object."""
         if self.source.is_show(resource):
-            logger.info("Fetching show: %s", resource)
+            logger.debug("Fetching show: %s", resource)
             return self._fetch_show(resource)
-        logger.info("Fetching episode: %s", resource)
+        logger.debug("Fetching episode: %s", resource)
         return self._fetch_episode(resource)
 
     def _fetch_show(self, resource: str) -> Optional[Show]:
@@ -61,7 +61,7 @@ class ShowProcessor:
         logger.debug("show_file: %s", show_file)
         html = self.source.get_resource(show_file)
         if html is None:
-            logger.error("Failed to retrieve file: %s", show_file)
+            logger.debug("Failed to retrieve file: %s", show_file)
             return
 
         # Try to extract structured data using extruct (e.g., microdata).
@@ -155,7 +155,7 @@ class ShowProcessor:
                     else:
                         episode = self._fetch_episode(url)
                     episodes.append(episode)
-        return self._dedup_by_uuid(episodes)
+        return utils.uniq_by_uuid(episodes)
 
     def _fetch_episode(self, resource: str, uuid: Optional[str] = "") -> Optional[Episode]:
         """Fetch the player for the Episode and extract details."""
@@ -177,7 +177,7 @@ class ShowProcessor:
             except json.JSONDecodeError as e:
                 logger.error("Error decoding JSON: %s", e)
         else:
-            logger.error("Failed to retrieve file: %s", episode_file)
+            logger.debug("Failed to retrieve file: %s", episode_file)
             return
         if episode_data:
             episode = Episode(
@@ -231,7 +231,7 @@ class ShowProcessor:
                 ))
             if author_uuid:
                 self._model_cache[author_uuid] = hosts
-        hosts = self._dedup_by_uuid(hosts)
+        hosts = utils.uniq_by_uuid(hosts)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("hosts: %s", pprint.pformat(hosts))
         return hosts
@@ -245,23 +245,3 @@ class ShowProcessor:
                 logger.error("Error parsing date '%s': %s", date_str, e)
                 return None
         return None
-
-    def _dedup_by_uuid(self, entities: Sequence[Episode | Host]) -> list[Episode | Host]:
-        """Deduplicate a list of entities based on UUID.
-
-        Assumes that all items in the list are of the same type (either all Episode or all Host).
-        Raises an AssertionError if a mixed list is provided."""
-        if entities:
-            first_type = type(entities[0])
-            for e in entities:
-                assert type(
-                    e) == first_type, "Mixed types provided to _dedup_by_uuid"
-        seen = {}
-        deduped = []
-        for e in entities:
-            if e.uuid is None:
-                deduped.append(e)
-            elif e.uuid not in seen:
-                seen[e.uuid] = True
-                deduped.append(e)
-        return deduped

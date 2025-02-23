@@ -164,7 +164,7 @@ def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
             sitemap = f.read()
         return sitemap
     except Exception as e:
-        print(f"Error: Could not read data from {path}: {e}")
+        logging.debug("Error: Could not read data from %s: %s", path, e)
         return None
 
 

@@ -25,6 +25,14 @@ class DummySource:
         # For our tests, assume the URL is already correct.
         return url
 
+    def is_show(self, resource: str) -> bool:
+        if "episode" in resource:
+            return False
+        return True
+
+    def is_episode(self, resource: str) -> bool:
+        return not self.is_show(resource)
+
 
 def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
     """Fake get_file function to simulate file retrieval."""

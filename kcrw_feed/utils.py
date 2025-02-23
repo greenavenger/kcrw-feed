@@ -3,9 +3,11 @@
 import fsspec
 import os
 import re
-from typing import Optional
+from typing import Optional, Sequence
 from urllib.parse import urljoin, urlparse, urlunparse
 import uuid
+
+from kcrw_feed.models import Episode, Host, Show
 
 
 def extract_uuid(text: str) -> uuid.UUID | None:
@@ -32,3 +34,24 @@ def extract_uuid(text: str) -> uuid.UUID | None:
         except ValueError:
             return None
     return None
+
+
+def uniq_by_uuid(entities: Sequence[Episode | Host | Show]) -> list[Episode | Host | Show]:
+    """Deduplicate a list of entities based on UUID.
+
+    Assumes that all items in the list are of the same type, and raises
+    an AssertionError if a mixed list is provided."""
+    if entities:
+        first_type = type(entities[0])
+        for e in entities:
+            assert type(
+                e) == first_type, "Mixed types provided to uniq_by_uuid"
+    seen = {}
+    deduped = []
+    for e in entities:
+        if e.uuid is None:
+            deduped.append(e)
+        elif e.uuid not in seen:
+            seen[e.uuid] = True
+            deduped.append(e)
+    return deduped
