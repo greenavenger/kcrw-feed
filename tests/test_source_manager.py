@@ -11,7 +11,7 @@ from kcrw_feed import source_manager
 
 
 def test_get_file_local(tmp_path: Path):
-    """Test 1: Read a local (plain) file."""
+    """Read a local (plain) file."""
     # Create a temporary file with known bytes.
     test_content = b"Hello, world!"
     test_file = tmp_path / "test.txt"
@@ -23,7 +23,7 @@ def test_get_file_local(tmp_path: Path):
 
 
 def test_get_file_gzip(tmp_path: Path):
-    """Test 2: Read a gzipped file (automatic decompression)."""
+    """Read a gzipped file (automatic decompression)."""
     test_content = b"Hello, Gzip!"
     test_file = tmp_path / "test.txt.gz"
     # Write compressed content.
@@ -35,10 +35,11 @@ def test_get_file_gzip(tmp_path: Path):
     assert result == test_content
 
 
-def test_get_file_https(monkeypatch):
-    """Test 3: Simulate an HTTPS file using monkeypatch."""
+def test_get_file_https(monkeypatch: pytest.MonkeyPatch):
+    """Simulate an HTTPS file using monkeypatch."""
     # Define a fake open function that returns a BytesIO.
-    def fake_open(path, mode="rb", timeout=10, compression="infer"):
+    def fake_open(path, mode="rb", timeout=10, compression="infer",
+                  headers={"User-Agent": "Mozilla"}):
         # Check that the path starts with https
         assert path.startswith("https")
         return io.BytesIO(b"Fake HTTPS content")

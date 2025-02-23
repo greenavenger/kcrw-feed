@@ -1,18 +1,22 @@
 """Module for managing the source of show URLs."""
 
 from abc import ABC, abstractmethod
+import aiohttp
 import logging
 import os
 import re
 from urllib.parse import urljoin, urlparse, urlunparse
+import requests
 from typing import Optional
 import fsspec
 
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 
 # Regex pattern to match the prefix of KCRW URLs
-REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
-REPLACE_TEXT = ""  # ./tests/data/"
+# REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
+REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
+# REWRITE_RE = re.compile(r'^(https?://)(?:www\.)?[\w.-]+(?::\d+)?/$')
+# REPLACE_TEXT = ""  # ./tests/data/"
 
 logger = logging.getLogger("kcrw_feed")
 
@@ -21,6 +25,25 @@ class BaseSource(ABC):
     """Abstract base class for sources."""
     base_source: str
     uses_sitemap: bool
+
+    def validate_source_root(self, source_root: str) -> bool:
+        """Validates that source_root is either a valid http/https URL or
+            a local file path.
+        Raises:
+            ValueError: If source_root is not valid."""
+        parsed = urlparse(source_root)
+        if parsed.scheme in ("http", "https"):
+            return True
+        elif os.path.exists(source_root):
+            return True
+        else:
+            # TODO: Should we catch this and error more nicely? It's nice
+            # and noisy right now.
+            raise ValueError(
+                f"Invalid source_root: {source_root}. It must be a valid "
+                "HTTP URL or a valid local file path."
+            )
+        return False
 
     @abstractmethod
     def get_resource(self, resource: str) -> Optional[bytes]:
@@ -75,6 +98,7 @@ class BaseSource(ABC):
 
 class HttpsSource(BaseSource):
     def __init__(self, url: str, rewrite_rule: Optional[str] = None):
+        self.validate_source_root(url)
         self.base_source = url
         self.url = self.base_source  # convenience reference
         self.rewrite_rule = rewrite_rule
@@ -83,35 +107,47 @@ class HttpsSource(BaseSource):
     def get_resource(self, url: str) -> Optional[bytes]:
         # Here you'd use requests and potentially rewrite the URL according
         # to your rule. For now, we'll leave a stub.
-        print(f"Fetching via HTTPS: {url}")
-        # Example: If rewrite_rule is provided, use it.
-        # url = self._rewrite_url(url)
-        # return requests.get(url, timeout=10).content
-        return None
+        logger.debug(f"Fetching via HTTPS: {url}")
+
+        # Rewrite URL if necessary
+        relative_path = self.relative_path(url)
+        full_normalized_url = normalize_location(
+            self.base_source, relative_path)
+
+        return get_file(full_normalized_url)  # .content
 
     def relative_path(self, entity_reference: str) -> str:
         """Regular expression to return the relative part of the
         entity path"""
         # Also trim trailing slash for consistency
-        return "/" + REWRITE_RE.sub(REPLACE_TEXT, entity_reference).rstrip("/")
+        updated_path = REWRITE_RE.sub("/", entity_reference).rstrip("/")
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("relative_path input url: %s", entity_reference)
+            logger.trace("relative_path output url: %s", updated_path)
+        return updated_path
 
 
 class CacheSource(BaseSource):
     def __init__(self, path: str):
+        self.validate_source_root(path)
         self.base_source = path
         self.path = self.base_source  # convenience reference
         self.uses_sitemap = True
 
     def get_resource(self, resource: str) -> Optional[bytes]:
         # Read from the local cache directory.
-        full_normalized_path = normalize_location(self.path, resource)
+
+        # Rewrite path if necessary
+        relative_path = self.relative_path(resource)
+        full_normalized_path = normalize_location(
+            self.base_source, relative_path)
         return get_file(full_normalized_path)
 
     def relative_path(self, entity_reference: str) -> str:
         """Regular expression to return the relative part of the
         entity path"""
         # Also trim trailing slash for consistency
-        return "./" + REWRITE_RE.sub(REPLACE_TEXT, entity_reference).rstrip("/")
+        return "./" + REWRITE_RE.sub("./", entity_reference).rstrip("/")
 
 
 class RssFeedSource(BaseSource):
@@ -157,14 +193,18 @@ def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
     Returns:
         Optional[bytes]: The sitemap content, or None if an error occurs."""
     logger.debug("Reading: %s", path)
+    # TODO: Don't actually hit kcrw.com for now!
+    assert not path.startswith("https://www.kcrw.com/")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
     try:
         # fsspec.open() supports local files, HTTP, and more. Using
         # compression="infer" will automatically decompress if the file ends in .gz.
-        with fsspec.open(path, "rb", timeout=timeout, compression="infer") as f:
+        with fsspec.open(path, "rb", timeout=timeout, compression="infer", headers=headers) as f:
             sitemap = f.read()
         return sitemap
     except Exception as e:
-        logging.debug("Error: Could not read data from %s: %s", path, e)
+        logger.debug("Error: Could not read data from %s: %s", path, e)
         return None
 
 

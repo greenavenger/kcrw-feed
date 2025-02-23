@@ -2,7 +2,8 @@
 
 # The root URL of the KCRW website
 # source_root: "https://www.kcrw.com/"
-source_root: "./tests/data/"
+# source_root: "./tests/data/"
+source_root: "http://localhost:8888/"
 
 # Extra sitemap files
 extra_sitemaps:

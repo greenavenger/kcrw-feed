@@ -1,0 +1,8 @@
+services:
+  nginx:
+    container_name: kcrw-feed-test
+    image: nginx:latest
+    ports:
+      - "8888:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro

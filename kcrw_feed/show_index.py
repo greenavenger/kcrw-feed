@@ -99,7 +99,7 @@ class ShowIndex:
 
     def _filter_selected_by_name(self, entities: Dict[str, Any], selection: List[str] = []) -> Dict[str, Any]:
         """Filter resources based on selected_urls if necessary."""
-        logging.info("Filtering selection")
+        logging.debug("Filtering selection")
         # If selection filter is empty, return all entities
         if not selection:
             return entities
