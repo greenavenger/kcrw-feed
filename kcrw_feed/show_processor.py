@@ -148,9 +148,11 @@ class ShowProcessor:
                         logger.error("Failed to extract episode URL!")
                         continue
                     elif url and episode_uuid:
-                        episode = self._fetch_episode(url, episode_uuid)
+                        # Called from _fetch_show, we don't have Episode metadata
+                        episode = self._fetch_episode(
+                            url, source_metadata={}, uuid=episode_uuid)
                     else:
-                        episode = self._fetch_episode(url)
+                        episode = self._fetch_episode(url, source_metadata={})
                     episodes.append(episode)
         return utils.uniq_by_uuid(episodes)
 
@@ -179,7 +181,7 @@ class ShowProcessor:
         if episode_data:
             episode = Episode(
                 title=episode_data.get("title", ""),
-                airdate=self._parse_date(episode_data.get("airdate")),
+                airdate=utils.parse_date(episode_data.get("airdate")),
                 url=episode_data.get("url"),
                 media_url=strip_query_params(
                     episode_data.get("media", "")[0].get("url")),
@@ -192,8 +194,8 @@ class ShowProcessor:
                 image=episode_data.get("image"),
                 type=episode_data.get("content_type"),
                 duration=episode_data.get("duration"),
-                ending=self._parse_date(episode_data.get("ending")),
-                last_updated=self._parse_date(episode_data.get("modified")),
+                ending=utils.parse_date(episode_data.get("ending")),
+                last_updated=utils.parse_date(episode_data.get("modified")),
                 source_metadata=source_metadata
             )
             if episode.uuid:
@@ -233,13 +235,3 @@ class ShowProcessor:
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("hosts: %s", pprint.pformat(hosts))
         return hosts
-
-    def _parse_date(self, date_str: str) -> Optional[datetime]:
-        """Try to parse a date string into a datetime object."""
-        if date_str:
-            try:
-                return datetime.fromisoformat(date_str)
-            except ValueError as e:
-                logger.error("Error parsing date '%s': %s", date_str, e)
-                return None
-        return None

@@ -11,6 +11,7 @@ import xmltodict
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 from kcrw_feed import source_manager
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
+from kcrw_feed import utils
 
 # Regular expression to match sitemap XML filenames.
 SITEMAP_RE = re.compile(r"sitemap.*\.xml", re.IGNORECASE)
@@ -227,8 +228,10 @@ class SitemapProcessor:
         for entry in urls:
             loc = entry.get("loc")
             # Keep only music shows
-            # TODO: Should the keys be absolute or relative URLs?
             if loc and MUSIC_FILTER_RE.search(loc):
+                if entry.get("lastmod", None):
+                    dt = utils.parse_date(entry["lastmod"])
+                    entry["lastmod"] = dt
                 self._source_entities[loc.strip()] = entry
 
     def parse_feeds(self, feed_path: str) -> List[str]:

@@ -1,13 +1,15 @@
 """Utility functions"""
 
-import fsspec
-import os
+from datetime import datetime
+import logging
 import re
 from typing import Optional, Sequence
 from urllib.parse import urljoin, urlparse, urlunparse
 import uuid
 
 from kcrw_feed.models import Episode, Host, Show
+
+logger = logging.getLogger("kcrw_feed")
 
 
 def extract_uuid(text: str) -> uuid.UUID | None:
@@ -55,3 +57,14 @@ def uniq_by_uuid(entities: Sequence[Episode | Host | Show]) -> list[Episode | Ho
             seen[e.uuid] = True
             deduped.append(e)
     return deduped
+
+
+def parse_date(date_str: str) -> Optional[datetime]:
+    """Try to parse a date string into a datetime object."""
+    if date_str:
+        try:
+            return datetime.fromisoformat(date_str)
+        except ValueError as e:
+            logger.error("Error parsing date '%s': %s", date_str, e)
+            return None
+    return None

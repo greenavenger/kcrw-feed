@@ -58,21 +58,21 @@ class ShowIndex:
         logger.info("Updating entities")
 
         # Filter resources
-        selected_entries = self._filter_selected_by_name(
+        filtered_entries = self._filter_selected_by_name(
             entries, selection)
 
         updated_resources: List[str] = []
-        for resource, source_metadata in selected_entries.items():
-            entity: Show | Episode | None
-            # TODO: Optionally, check update_after against metadata.
-            # This returns a fully enriched Show or Episode object.
+
+        # Helper to fetch and store a resource.
+        def fetch_and_store(resource: str, metadata: Any) -> None:
+            relative = self.source.relative_path(resource)
             entity = self.show_processor.fetch(
-                self.source.relative_path(resource), source_metadata=source_metadata)
+                relative, source_metadata=metadata)
             if not entity:
-                # Failed to retrieve resource
-                continue
+                # Skip resource if fetch failed.
+                return
             # Make sure the show has a unique identifier.
-            assert entity.uuid is not None
+            assert entity.uuid is not None, "Fetched entity must have a UUID"
             self._entities[entity.uuid] = entity
             # if show.uuid:
             #     key = show.uuid
@@ -81,6 +81,19 @@ class ShowIndex:
             #     key = show.url
             # self.shows[key] = show
             updated_resources.append(resource)
+
+        # Process episodes first.
+        for resource, metadata in filtered_entries.items():
+            if self.source.is_episode(resource):
+                logger.debug("Processing episode: %s", resource)
+                fetch_and_store(resource, metadata)
+
+        # Then process shows.
+        for resource, metadata in filtered_entries.items():
+            if not self.source.is_episode(resource):
+                logger.debug("Processing show: %s", resource)
+                fetch_and_store(resource, metadata)
+
         logger.info("Updated %d resources", len(updated_resources))
         return len(updated_resources)
 

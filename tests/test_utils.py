@@ -1,6 +1,6 @@
 """Tests for utility functions."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 import pytest
 import uuid
 
@@ -164,3 +164,29 @@ def test_mixed_types_dedup():
     h = Host(uuid="host1", name="Alice")
     with pytest.raises(AssertionError, match="Mixed types provided to uniq_by_uuid"):
         utils.uniq_by_uuid([ep, h])
+
+
+def test_parse_date_valid():
+    date_str = "2025-04-01T12:00:00"
+    result = utils.parse_date(date_str)
+    expected = datetime(2025, 4, 1, 12, 0, 0)
+    assert result == expected
+
+
+def test_parse_date_valid_with_timezone():
+    date_str = "2025-04-01T12:00:00+00:00"
+    result = utils.parse_date(date_str)
+    expected = datetime(2025, 4, 1, 12, 0, 0, tzinfo=timezone.utc)
+    assert result == expected
+
+
+def test_parse_date_empty_string():
+    date_str = ""
+    result = utils.parse_date(date_str)
+    assert result is None
+
+
+def test_parse_date_invalid_string():
+    date_str = "not-a-date"
+    result = utils.parse_date(date_str)
+    assert result is None

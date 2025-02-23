@@ -7,6 +7,7 @@ from typing import Any, Dict
 import uuid
 
 from kcrw_feed.models import Host, Show, Episode
+from kcrw_feed import utils
 
 
 class Json:
@@ -30,9 +31,9 @@ class Json:
                       default=self.default_serializer, indent=2)
 
     # Deserialization helpers
-    def _parse_datetime(self, dt_str: str) -> datetime:
+    def _parse_datetime(self, date_str: str) -> datetime:
         """Assume ISO format dates."""
-        return datetime.fromisoformat(dt_str)
+        return utils.parse_date(date_str)
 
     def _parse_uuid(self, uuid_str: str) -> uuid.UUID:
         """Assume valid UUID format."""
