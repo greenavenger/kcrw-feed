@@ -1,12 +1,12 @@
 """Module for managing the source of show URLs."""
 
 from abc import ABC, abstractmethod
-import aiohttp
 import logging
 import os
 import re
 from urllib.parse import urljoin, urlparse, urlunparse
-import requests
+import random
+import time
 from typing import Optional
 import fsspec
 
@@ -26,6 +26,16 @@ class BaseSource(ABC):
     base_source: str
     uses_sitemap: bool
 
+    @abstractmethod
+    def get_resource(self, resource: str) -> Optional[bytes]:
+        """Fetch the resource content as bytes."""
+        pass
+
+    @abstractmethod
+    def relative_path(self, entity_reference: str) -> str:
+        """Relative part of the entity path"""
+        pass
+
     def validate_source_root(self, source_root: str) -> bool:
         """Validates that source_root is either a valid http/https URL or
             a local file path.
@@ -44,16 +54,6 @@ class BaseSource(ABC):
                 "HTTP URL or a valid local file path."
             )
         return False
-
-    @abstractmethod
-    def get_resource(self, resource: str) -> Optional[bytes]:
-        """Fetch the resource content as bytes."""
-        pass
-
-    @abstractmethod
-    def relative_path(self, entity_reference: str) -> str:
-        """Relative part of the entity path"""
-        pass
 
     # TODO: Should this be here or in show_processor?
     def is_show(self, resource: str) -> bool:
@@ -95,6 +95,35 @@ class BaseSource(ABC):
         """If it's not a show, assume it's an episode."""
         return not self.is_show(resource)
 
+    def _get_file(self, path: str, timeout: int = 10) -> Optional[bytes]:
+        """Retrieve a file as bytes. If the location starts with 'https' it is fetched over
+        HTTPS; otherwise it is opened from the local file system. Automatic decompression
+        is applied if the file extension suggests compression.
+
+        Parameters:
+            path (str): A URL or local path for the sitemap.
+            timeout (int): Timeout for HTTPS requests (if applicable).
+
+        Returns:
+            Optional[bytes]: The sitemap content, or None if an error occurs."""
+        logger.debug("Reading: %s", path)
+        if "kcrw.com" in path:
+            random_delay()
+        # TODO: Don't actually hit kcrw.com for now!
+        assert not path.startswith("https://www.kcrw.com/")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+        try:
+            # fsspec.open() supports local files, HTTP, and more. Using
+            # compression="infer" will automatically decompress if the file ends in .gz.
+            with fsspec.open(path, "rb", timeout=timeout, compression="infer",
+                             headers=headers) as f:
+                sitemap = f.read()
+            return sitemap
+        except Exception as e:
+            logger.debug("Error: Could not read data from %s: %s", path, e)
+            return None
+
 
 class HttpsSource(BaseSource):
     def __init__(self, url: str, rewrite_rule: Optional[str] = None):
@@ -114,7 +143,7 @@ class HttpsSource(BaseSource):
         full_normalized_url = normalize_location(
             self.base_source, relative_path)
 
-        return get_file(full_normalized_url)  # .content
+        return self._get_file(full_normalized_url)  # .content
 
     def relative_path(self, entity_reference: str) -> str:
         """Regular expression to return the relative part of the
@@ -141,7 +170,7 @@ class CacheSource(BaseSource):
         relative_path = self.relative_path(resource)
         full_normalized_path = normalize_location(
             self.base_source, relative_path)
-        return get_file(full_normalized_path)
+        return self._get_file(full_normalized_path)
 
     def relative_path(self, entity_reference: str) -> str:
         """Regular expression to return the relative part of the
@@ -181,33 +210,6 @@ class AtomFeedSource(BaseSource):
 #         return self.source.get_resource(resource)
 
 
-def get_file(path: str, timeout: int = 10) -> Optional[bytes]:
-    """Retrieve a file as bytes. If the location starts with 'https' it is fetched over
-    HTTPS; otherwise it is opened from the local file system. Automatic decompression
-    is applied if the file extension suggests compression.
-
-    Parameters:
-        path (str): A URL or local path for the sitemap.
-        timeout (int): Timeout for HTTPS requests (if applicable).
-
-    Returns:
-        Optional[bytes]: The sitemap content, or None if an error occurs."""
-    logger.debug("Reading: %s", path)
-    # TODO: Don't actually hit kcrw.com for now!
-    assert not path.startswith("https://www.kcrw.com/")
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
-    try:
-        # fsspec.open() supports local files, HTTP, and more. Using
-        # compression="infer" will automatically decompress if the file ends in .gz.
-        with fsspec.open(path, "rb", timeout=timeout, compression="infer", headers=headers) as f:
-            sitemap = f.read()
-        return sitemap
-    except Exception as e:
-        logger.debug("Error: Could not read data from %s: %s", path, e)
-        return None
-
-
 def normalize_location(base: str, loc: str) -> str:
     """Normalize a relative location by joining it with a base.
 
@@ -234,3 +236,11 @@ def strip_query_params(url: str) -> str:
     # Create a new ParseResult with an empty query
     stripped = parsed._replace(query="")
     return urlunparse(stripped)
+
+
+def random_delay(mean: float = 5, stddev: float = 1) -> None:
+    delay = random.gauss(mean, stddev)
+    # Ensure the delay is not negative.
+    delay = max(0, delay)
+    logger.debug(f"Sleeping for %.2f seconds",  delay)
+    time.sleep(delay)

@@ -108,11 +108,11 @@ def fake_get_file(url: str, timeout: int = 10) -> Any:
 @pytest.fixture(name="fake_processor")
 def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
     """Return a ShowProcessor instance with DummySource and a monkeypatched
-    source_manager.get_file() to return predetermined content based on the
-    URL."""
+    source_manager.BaseSource._get_file() to return predetermined content
+    based on the URL."""
     dummy_source = DummySource("https://www.testsite.com/")
     sp = ShowProcessor(dummy_source, timeout=5)
-    monkeypatch.setattr(source_manager, "get_file", fake_get_file)
+    monkeypatch.setattr(source_manager.BaseSource, "_get_file", fake_get_file)
     return sp
 
 

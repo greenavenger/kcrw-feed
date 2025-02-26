@@ -75,8 +75,8 @@ def dummy_source():
 
 @pytest.fixture(autouse=True)
 def patch_get_file(monkeypatch):
-    """Patch the get_file function in source_manager"""
-    monkeypatch.setattr(source_manager, "get_file", fake_get_file)
+    """Patch the _get_file method in BaseSource to use fake_get_file."""
+    monkeypatch.setattr(source_manager.BaseSource, "_get_file", fake_get_file)
 
 
 def test_sitemaps_from_robots(dummy_source):
