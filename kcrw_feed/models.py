@@ -58,6 +58,10 @@ class Show:
     source_metadata: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self):
+        # Use the URL as the key for ordering.
+        self.sort_index = self.url
+
     def update_info(self, new_data: Dict[str, Any]) -> None:
         """
         Update the show's information based on new data.
@@ -105,3 +109,7 @@ class Episode:
     last_updated: Optional[datetime] = None
     source_metadata: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # Use the airdate as the sort index.
+        self.sort_index = self.airdate

@@ -149,7 +149,7 @@ class BaseSource(ABC):
         if it ends with '.gz', the content is decompressed.
         For non-HTTP paths, use fsspec."""
         logger.debug("Reading: %s", path)
-        if "kcrw.com" in path:
+        if path.startswith("https://www.kcrw.com/"):
             random_delay()
 
         # TODO: Don't actually hit kcrw.com for now!

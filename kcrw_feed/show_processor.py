@@ -47,7 +47,7 @@ class ShowProcessor:
         for entity in self._model_cache.values():
             if isinstance(entity, Show):
                 shows.append(entity)
-        return shows
+        return sorted(shows)
 
     # Core methods
 
@@ -162,7 +162,8 @@ class ShowProcessor:
                             url, source_metadata={}, uuid=episode_uuid)
                     else:
                         episode = self._fetch_episode(url, source_metadata={})
-                    episodes.append(episode)
+                    if episode:
+                        episodes.append(episode)
         return utils.uniq_by_uuid(episodes)
 
     def _fetch_episode(self, resource: str, source_metadata: Optional[Dict[str, Any]], uuid: Optional[str] = "") -> Optional[Episode]:

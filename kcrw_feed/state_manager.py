@@ -34,7 +34,7 @@ class Json(BasePersister):
         """Helper to convert non-serializable objects like datetime."""
         if isinstance(obj, datetime):
             return obj.isoformat()
-        elif isinstance(obj, uuid.UUID):
+        if isinstance(obj, uuid.UUID):
             return str(obj)
         raise TypeError(f"Type {type(obj)} not serializable")
 
