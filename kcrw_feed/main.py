@@ -51,15 +51,28 @@ def main():
 
     gather_parser = subparsers.add_parser("gather", help="Gather show URLs")
     gather_parser.add_argument(
-        "--source", default="sitemap", choices=["sitemap", "feed"])
+        "--source", default="sitemap", choices=["sitemap", "feed"]
+    )
+    # New flags for gather command:
+    gather_parser.add_argument(
+        "--verbose", action="store_true",
+        help="Print the gathered resource URLs"
+    )
+    gather_parser.add_argument(
+        "--debug", action="store_true",
+        help="Print the entire gathered entities dictionary"
+    )
 
     update_parser = subparsers.add_parser("update", help="Update show data")
     update_parser.add_argument(
-        "--source", default="sitemap", choices=["sitemap", "feed"])
+        "--source", default="sitemap", choices=["sitemap", "feed"]
+    )
     update_parser.add_argument(
-        "--delay", type=float, default=5.0, help="Delay between requests")
+        "--delay", type=float, default=5.0, help="Delay between requests"
+    )
     update_parser.add_argument(
-        "--shows", nargs="*", help="List of show URLs to update")
+        "--shows", nargs="*", help="List of show URLs to update"
+    )
 
     save_parser = subparsers.add_parser("save", help="Save the state to disk")
 
@@ -143,8 +156,11 @@ def main():
                     print(show.url)
     elif args.command == "gather":
         entities = collection.gather()
-        if logger.isEnabledFor(LOGGING_LEVEL_MAP["trace"]):
-            logger.trace("Gathered entities: %s", pprint.pformat(entities))
+        if args.verbose:
+            logger.info("Gathered resources: %s",
+                        pprint.pformat(sorted(list(entities.keys()))))
+        elif args.debug:
+            logger.info("Gathered entities: %s", pprint.pformat(entities))
         logger.info("Gathered %s entities", len(entities))
     elif args.command == "update":
         updated_shows = collection.update(selection=args.shows)
