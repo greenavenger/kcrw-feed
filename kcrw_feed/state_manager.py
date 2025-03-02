@@ -12,6 +12,8 @@ from kcrw_feed import utils
 from abc import ABC, abstractmethod
 from kcrw_feed.models import ShowDirectory
 
+FILENAME_JSON: str = "kcrw_feed.json"
+
 
 class BasePersister(ABC):
     @abstractmethod
@@ -24,7 +26,7 @@ class BasePersister(ABC):
 
 
 class Json(BasePersister):
-    def __init__(self, filename: str = "kcrw_feed.json") -> None:
+    def __init__(self, filename: str = FILENAME_JSON) -> None:
         self.filename = filename
 
     # Serialization
@@ -32,6 +34,8 @@ class Json(BasePersister):
         """Helper to convert non-serializable objects like datetime."""
         if isinstance(obj, datetime):
             return obj.isoformat()
+        elif isinstance(obj, uuid.UUID):
+            return str(obj)
         raise TypeError(f"Type {type(obj)} not serializable")
 
     def save(self, directory: ShowDirectory, filename: str | None = None) -> None:

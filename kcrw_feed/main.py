@@ -149,8 +149,7 @@ def main():
         updated_shows = collection.update(selection=args.shows)
         logger.info("Updated %s", updated_shows)
     elif args.command == "save":
-        # Save state to disk (not implemented here)
-        pass
+        collection.save()
     else:
         logger.error("Unknown command")
 

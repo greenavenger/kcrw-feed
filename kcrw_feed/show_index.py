@@ -3,16 +3,17 @@
 from datetime import datetime
 import logging
 import pprint
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 import urllib.robotparser as urobot
 import uuid
 
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
-from kcrw_feed.models import Show, Episode
+from kcrw_feed.models import Show, Episode, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.sitemap_processor import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
+from kcrw_feed import state_manager
 from kcrw_feed import utils
 
 
@@ -159,3 +160,12 @@ class ShowIndex:
     def dump_all(self):
         """Dump the values of self.shows for debugging purposes."""
         return self._entities
+
+    def save(self) -> None:
+        _: int = self.update()
+
+        logger.info("Saving entities")
+
+        persister = state_manager.Json()
+        directory = ShowDirectory(self.show_processor.get_shows())
+        persister.save(directory)

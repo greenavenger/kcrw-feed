@@ -36,12 +36,21 @@ class ShowProcessor:
     # Accessors
     def get_show_by_url(self, url: str) -> Optional[Show]:
         """Return a Show from the internal cache matching the given URL, if available."""
-        for show in self._model_cache.values():
-            if show.url == url:
-                return show
+        for entity in self._model_cache.values():
+            if entity.url == url:
+                return entity
         return None
 
+    def get_shows(self) -> List[Show]:
+        """Return a list of all Shows."""
+        shows: List[Show] = []
+        for entity in self._model_cache.values():
+            if isinstance(entity, Show):
+                shows.append(entity)
+        return shows
+
     # Core methods
+
     def fetch(self, resource: str, source_metadata: Optional[Dict[str, Any]]) -> Optional[Show | Episode]:
         """Dispatch show or episode processing and return the corresponding object."""
         if self.source.is_show(resource):
