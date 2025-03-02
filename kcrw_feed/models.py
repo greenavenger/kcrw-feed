@@ -71,6 +71,9 @@ class Show:
         """Append a new episode to the show's episode list."""
         self.episodes.append(episode)
 
+    def get_episodes(self) -> List[Episode]:
+        return self.episodes
+
     def add_host(self, host: Host) -> None:
         """Append a new host to the show's host list."""
         self.hosts.append(host)

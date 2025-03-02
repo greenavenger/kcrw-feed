@@ -63,9 +63,11 @@ class Json(BasePersister):
                 data["airdate"]) if data.get("airdate") else None,
             url=data["url"],
             media_url=data["media_url"],
-            uuid=data.get("uuid"),
-            show_uuid=data.get("show_uuid"),
-            hosts=[self.host_from_dict(h) for h in data.get("hosts", [])],
+            uuid=self._parse_uuid(data.get("uuid")),
+            show_uuid=self._parse_uuid(data.get("show_uuid")),
+            # Hosts are stored by UUID in Episodes
+            # hosts=[self.host_from_dict(h) for h in data.get("hosts", [])],
+            hosts=[self._parse_uuid(h) for h in data.get("hosts", [])],
             description=data.get("description"),
             songlist=data.get("songlist"),
             image=data.get("image"),
@@ -81,7 +83,7 @@ class Json(BasePersister):
     def host_from_dict(self, data: Dict[Any, Any]) -> Host:
         return Host(
             name=data["name"],
-            uuid=data.get("uuid"),
+            uuid=self._parse_uuid(data.get("uuid")),
             title=data.get("title"),
             url=data.get("url"),
             image_url=data.get("image_url"),
@@ -100,7 +102,7 @@ class Json(BasePersister):
         return Show(
             title=data["title"],
             url=data["url"],
-            uuid=data.get("uuid"),
+            uuid=self._parse_uuid(data.get("uuid")),
             description=data.get("description"),
             hosts=hosts,
             episodes=episodes,

@@ -117,6 +117,32 @@ class ShowIndex:
             selected), "Selection did not match resources!"
         return selected
 
+    def load(self) -> None:
+        """Load data from stable storage."""
+        logger.info("Loading entities")
+
+        persister = state_manager.Json()
+        directory = persister.load()
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Loaded data: %s", pprint.pformat(directory))
+
+        for show in directory.get_shows():
+            self._entities[show.uuid] = show
+            for episode in show.get_episodes():
+                self._entities[episode.uuid] = episode
+
+    def save(self) -> None:
+        """Persist data to stable storage."""
+        _: int = self.update()
+
+        logger.info("Saving entities")
+
+        persister = state_manager.Json()
+        directory = ShowDirectory(self.show_processor.get_shows())
+        persister.save(directory)
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Saved data: %s", pprint.pformat(directory))
+
     # Accessor Methods
 
     def get_shows(self) -> List[Show]:
@@ -160,12 +186,3 @@ class ShowIndex:
     def dump_all(self):
         """Dump the values of self.shows for debugging purposes."""
         return self._entities
-
-    def save(self) -> None:
-        _: int = self.update()
-
-        logger.info("Saving entities")
-
-        persister = state_manager.Json()
-        directory = ShowDirectory(self.show_processor.get_shows())
-        persister.save(directory)

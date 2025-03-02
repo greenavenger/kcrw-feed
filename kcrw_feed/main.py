@@ -99,7 +99,8 @@ def main():
 
     if args.command == "list":
         # Populate collection.shows
-        _ = collection.update()
+        # _ = collection.update()
+        collection.load()
         # Determine whether we're listing shows (default) or episodes.
         if args.mode == "debug":
             entities = collection.dump_all()
