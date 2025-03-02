@@ -6,11 +6,24 @@ from dataclasses import asdict
 from typing import Any, Dict
 import uuid
 
-from kcrw_feed.models import Host, Show, Episode
+from kcrw_feed.models import Host, Show, Episode, ShowDirectory
 from kcrw_feed import utils
 
+from abc import ABC, abstractmethod
+from kcrw_feed.models import ShowDirectory
 
-class Json:
+
+class BasePersister(ABC):
+    @abstractmethod
+    def save(self, state: ShowDirectory, filename: str) -> None:
+        pass
+
+    @abstractmethod
+    def load(self, filename: str) -> ShowDirectory:
+        pass
+
+
+class Json(BasePersister):
     def __init__(self, filename: str = "kcrw_feed.json") -> None:
         self.filename = filename
 
@@ -21,13 +34,13 @@ class Json:
             return obj.isoformat()
         raise TypeError(f"Type {type(obj)} not serializable")
 
-    def save_state(self, show: Show, filename: str | None = None) -> None:
+    def save(self, directory: ShowDirectory, filename: str | None = None) -> None:
         """
-        Save the given Show object's state to a JSON file.
+        Save the given ShowDirectory object's state to a JSON file.
         """
         filename = filename or self.filename
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(asdict(show), f,
+            json.dump(asdict(directory), f,
                       default=self.default_serializer, indent=2)
 
     # Deserialization helpers
@@ -92,11 +105,26 @@ class Json:
             metadata=data.get("metadata", {})
         )
 
-    def load_state(self, filename: str | None = None) -> Show:
+    def directory_from_dict(self, data: Dict[Any, Any]) -> ShowDirectory:
+        shows = [self.show_from_dict(show_data)
+                 for show_data in data.get("shows", [])]
+        return ShowDirectory(shows=shows)
+
+    def load(self, filename: str | None = None) -> ShowDirectory:
         """
-        Load the Show object's state from a JSON file and return a Show instance.
+        Load the state from a JSON file and return a ShowDirectory instance.
         """
         filename = filename or self.filename
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return self.show_from_dict(data)
+        return self.directory_from_dict(data)
+
+
+class Rss(BasePersister):
+    def save(self, state: ShowDirectory, filename: str) -> None:
+        # Generate RSS feed from state
+        pass
+
+    def load(self, filename: str) -> ShowDirectory:
+        # Possibly load from RSS feed, if applicable
+        pass

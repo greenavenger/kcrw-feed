@@ -9,27 +9,27 @@ import uuid
 # TODO: Should I make the Show, Episode and Host dataclasses immutable?
 
 
-# @dataclass
-# class ShowDirectory:
-#     # TODO: Add tests for this class
-#     shows: List[Show] = field(default_factory=list)
+@dataclass
+class ShowDirectory:
+    # TODO: Add tests for this class
+    shows: List[Show] = field(default_factory=list)
 
-#     def add_show(self, show: Show) -> None:
-#         """Append a new show to the show directory."""
-#         self.shows.append(show)
+    def add_show(self, show: Show) -> None:
+        """Append a new show to the show directory."""
+        self.shows.append(show)
 
-#     def get_show(self, uuid: str) -> Optional[Show]:
-#         """Return the show with the given UUID, if it exists."""
-#         for show in self.shows:
-#             if show.uuid == uuid:
-#                 return show
-#         return None
+    def get_show(self, uuid: str) -> Optional[Show]:
+        """Return the show with the given UUID, if it exists."""
+        for show in self.shows:
+            if show.uuid == uuid:
+                return show
+        return None
 
-#     def get_shows(self, type: Optional[str] = None) -> List[Show]:
-#         """Return a list of shows with the given type."""
-#         if type:
-#             return [show for show in self.shows if show.type == type]
-#         return self.shows
+    def get_shows(self, type: Optional[str] = None) -> List[Show]:
+        """Return a list of shows with the given type."""
+        if type:
+            return [show for show in self.shows if show.type == type]
+        return self.shows
 
 
 @dataclass
