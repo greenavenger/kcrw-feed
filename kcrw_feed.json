@@ -1,21 +1,18 @@
 {
   "shows": [
     {
-      "title": "henry-rollins",
-      "url": "https://www.kcrw.com/music/shows/henry-rollins",
-      "uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-      "description": "Henry Rollins hosts a mix of all kinds, from all over and all time.",
+      "title": "ro-wyldeflower-contreras",
+      "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
+      "uuid": "9b97069f-e538-46b7-93f6-cbccc058af81",
+      "description": "Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.",
       "hosts": [
         {
-          "name": "Henry Rollins",
-          "uuid": "5883da63-a527-de85-856a-5c05e27331b8",
+          "name": "Ro \"Wyldeflower\" Contreras",
+          "uuid": "9df20b60-dfcb-4ab4-9eda-cdd11246e496",
           "title": null,
-          "url": "https://www.kcrw.com/people/henry-rollins",
+          "url": "https://www.kcrw.com/people/rocio-contreras",
           "image_url": null,
-          "socials": [
-            "http://facebook.com/officialhenryrollins",
-            "http://twitter.com/henryrollins"
-          ],
+          "socials": "http://twitter.com/wyldeflower",
           "description": null,
           "type": "http://schema.org/Person",
           "metadata": {}
@@ -23,223 +20,71 @@
       ],
       "episodes": [
         {
-          "title": "KCRW Broadcast 825",
-          "airdate": "2025-01-25T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_825-250125.mp3",
-          "uuid": "594b0c11-aca4-4878-b52e-df6dbf052e59",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
+          "title": "Ro \"Wyldeflower\" Contreras' playlist, January 25, 2025",
+          "airdate": "2025-01-25T12:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/rc/KCRW-ro_wyldeflower_contreras-ro_wyldeflower_contreras_playlist_january_25_2025-250125.mp3",
+          "uuid": "f3724135-74ca-451a-9055-a1d00beb1206",
+          "show_uuid": "9b97069f-e538-46b7-93f6-cbccc058af81",
           "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
+            "9df20b60-dfcb-4ab4-9eda-cdd11246e496"
           ],
-          "description": "<p>Fanatic! I hope you had a great week and had a chance to listen to some music.</p>\r\n<p>You might have noticed we\u2019ve been listening to a band called Horsegirl for the last few weeks. Their album Versions Of Modern Performance is really good. Thanks to Fanatic Denise for the heads up. Yesterday I was told the band has a new album slated for February. I went to Bandcamp and found this to be true. The preorder tracks sound really good. We\u2019ll be getting into the album as soon as possible.\u00a0</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/25?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825/@@images/image",
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/25?time=12:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025/@@images/image",
           "type": "episode",
-          "duration": 7196.473,
-          "ending": "2025-01-26T00:00:00-08:00",
-          "last_updated": "2025-01-27T17:32:39-08:00",
-          "source_metadata": {},
-          "metadata": {}
-        },
-        {
-          "title": "KCRW Broadcast 824",
-          "airdate": "2025-01-18T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_824-250118.mp3",
-          "uuid": "c4d2573a-cb1b-4000-a2e5-fd162687356b",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-          "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
-          ],
-          "description": "<p>Fanatic. I hope you had a good week. Hopefully the winds that have been feeding the fires in Southern California are pulling back and allowing firefighting personnel to make advances against the flames.\u00a0\u00a0</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/18?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824/@@images/image",
-          "type": "episode",
-          "duration": 7147.65,
-          "ending": "2025-01-19T00:00:00-08:00",
-          "last_updated": "2025-01-19T20:19:33-08:00",
+          "duration": 10167.666,
+          "ending": "2025-01-25T15:00:00-08:00",
+          "last_updated": "2025-01-27T16:16:08-08:00",
           "source_metadata": {
-            "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
-            "lastmod": "2025-01-19T20:19:33-08:00",
-            "changefreq": "hourly",
-            "priority": "0.8",
-            "image:image": {
-              "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824/@@images/image/page-header"
-            }
-          },
-          "metadata": {}
-        },
-        {
-          "title": "KCRW Broadcast 822",
-          "airdate": "2025-01-11T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_822-250111.mp3",
-          "uuid": "b8502439-a6aa-4558-8496-13efbd4f56b1",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-          "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
-          ],
-          "description": "<p>Fanatic. I hope no matter where you are that you\u2019re safe and in good condition. I can\u2019t explain how sorry I am for what has been lost.</p>\r\n<p>\u00a0We hope you enjoy tonight\u2019s gathering of tracks.</p>\r\n<p>\u00a0Thank you so much for tuning in. Be safe and stay Fanatic.</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/11?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822/@@images/image",
-          "type": "episode",
-          "duration": 7163.794,
-          "ending": "2025-01-12T00:00:00-08:00",
-          "last_updated": "2025-01-13T16:55:41-08:00",
-          "source_metadata": {
-            "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
-            "lastmod": "2025-01-13T16:55:41-08:00",
-            "changefreq": "daily",
-            "priority": "0.8",
-            "image:image": {
-              "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822/@@images/image/page-header"
-            }
-          },
-          "metadata": {}
-        },
-        {
-          "title": "KCRW Broadcast 821",
-          "airdate": "2024-12-28T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_821-251228.mp3",
-          "uuid": "a1d6d70c-9b7d-46b8-bc3b-44d524e53f48",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-          "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
-          ],
-          "description": "<p>Fanatic! It\u2019s our last show for the year. Engineer X, Engineer Am-Rock and I would like to thank you so much for tuning in. We hope we kept things interesting and that you will stay with us as we go fanatically into 2025.</p>\r\n<p>Just my opinion, but I don\u2019t think there\u2019s ever been a time when music wasn\u2019t essential to getting through the challenges life throws at us, seemingly at every turn. That being said, I think music becomes more of an asset in certain times. It keeps us inspired, curious and encouraged. I have no crystal ball for this kind of thing but it very well could be that we will be leaning on music pretty hard next year. Good thing for us, there\u2019s a lot of good music to be heard and we\u2019re going to listen to a lot of it.</p>\r\n<p>\u00a0We hope you\u2019ll find tonight\u2019s show to be a good soundtrack for whatever you\u2019re up to as 2024 draws to a close.\u00a0</p>\r\n<p>Yesterday, Engineer X and I started putting the finishing touches on our first show for next year. It\u2019s going to be a great one. Until then, keep jamming and STAY FANATIC!!!\u00a0</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/12/28?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821/@@images/image",
-          "type": "episode",
-          "duration": 7259.559,
-          "ending": "2024-12-29T00:00:00-08:00",
-          "last_updated": "2024-12-31T16:35:46-08:00",
-          "source_metadata": {},
-          "metadata": {}
-        },
-        {
-          "title": "KCRW Broadcast 820",
-          "airdate": "2024-12-21T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_820-241221.mp3",
-          "uuid": "2b1c0385-265b-4dc0-8887-304f4d4b14e1",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-          "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
-          ],
-          "description": "<p>Fanatic! I hope you had a great week and had a chance to listen to some music.</p>\r\n<p>\u00a0</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2024/12/21?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820/@@images/image",
-          "type": "episode",
-          "duration": 7257.338,
-          "ending": "2024-12-22T00:00:00-08:00",
-          "last_updated": "2024-12-22T21:36:26-08:00",
-          "source_metadata": {
-            "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
-            "lastmod": "2024-12-22T21:36:26-08:00",
+            "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
+            "lastmod": "2025-01-27T16:16:08-08:00",
             "changefreq": "weekly",
             "priority": "0.8",
             "image:image": {
-              "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820/@@images/image/page-header"
+              "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025/@@images/image/page-header"
             }
           },
           "metadata": {}
         },
         {
-          "title": "KCRW Broadcast 819",
-          "airdate": "2024-12-14T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_819-241214.mp3",
-          "uuid": "48441a2d-5796-4c66-b7d4-eb2a63e7de97",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
+          "title": "Ro \"Wyldeflower\" Contreras' playlist, January 22, 2025",
+          "airdate": "2025-01-22T22:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/rc/KCRW-ro_wyldeflower_contreras-ro_wyldeflower_contreras_playlist_january_22_2025-250122.mp3",
+          "uuid": "e2c5c635-4aac-454c-b726-10133c939242",
+          "show_uuid": "9b97069f-e538-46b7-93f6-cbccc058af81",
           "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
+            "9df20b60-dfcb-4ab4-9eda-cdd11246e496"
           ],
-          "description": "<p style=\"text-align: left;\">Fanatic! I hope you had a great and music-filled week. For the most part, I\u2019ve been tied to my desk doing a lot of scanning, proofreading, editing, and writing. I\u2019ve also been able to get some records played. These are but a few.</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2024/12/14?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819/@@images/image",
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/22?time=22:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025/@@images/image",
           "type": "episode",
-          "duration": 7114.84,
-          "ending": "2024-12-15T00:00:00-08:00",
-          "last_updated": "2024-12-16T16:22:30-08:00",
+          "duration": 7163.219,
+          "ending": "2025-01-23T00:00:00-08:00",
+          "last_updated": "2025-01-23T11:11:00-08:00",
           "source_metadata": {
-            "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
-            "lastmod": "2024-12-16T16:22:30-08:00",
+            "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+            "lastmod": "2025-01-23T11:11:00-08:00",
             "changefreq": "weekly",
             "priority": "0.8",
             "image:image": {
-              "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819/@@images/image/page-header"
-            }
-          },
-          "metadata": {}
-        },
-        {
-          "title": "KCRW Broadcast 818",
-          "airdate": "2024-12-07T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_818-241207.mp3",
-          "uuid": "bbd26086-3fc7-47e4-8395-68d3b438ec38",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-          "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
-          ],
-          "description": "<p>Fanatic! I hope you had a great week. I\u2019ve been checking out some good records.</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2024/12/07?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818/@@images/image",
-          "type": "episode",
-          "duration": 7094.569,
-          "ending": "2024-12-08T00:00:00-08:00",
-          "last_updated": "2024-12-08T18:10:35-08:00",
-          "source_metadata": {
-            "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
-            "lastmod": "2024-12-08T18:10:35-08:00",
-            "changefreq": "weekly",
-            "priority": "0.8",
-            "image:image": {
-              "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818/@@images/image/page-header"
-            }
-          },
-          "metadata": {}
-        },
-        {
-          "title": "KCRW Broadcast 817",
-          "airdate": "2024-11-30T22:00:00-08:00",
-          "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
-          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/hr/KCRW-henry_rollins-kcrw_broadcast_817-241130.mp3",
-          "uuid": "b53dabc7-166a-44fb-aeb9-d9d35685fdd9",
-          "show_uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
-          "hosts": [
-            "5883da63-a527-de85-856a-5c05e27331b8"
-          ],
-          "description": "<p>Fanatic! I understand that the Thanksgiving holiday can sometimes be intense for some people who have to gather with members of their family who they might have strong disagreements with, spend hours with them, ending with a grand meal set at a table before all parties are allowed to stagger away fuming and go back to their respective dwellings. The angry parties, all swearing vengeance, promise to do it all over again around this time next year. Sounds crazy to me but humans are highly complex creatures.</p>\r\n<p>\u00a0Tonight\u2019s show is ever so slightly conceptual. If you notice, Generation X tracks start both hours. We are doing this because it is Billy Idol's birthday. Happy birthday, Billy!</p>",
-          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2024/11/30?time=22:00&on_demand=1",
-          "image": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817/@@images/image",
-          "type": "episode",
-          "duration": 7199.895,
-          "ending": "2024-12-01T00:00:00-08:00",
-          "last_updated": "2024-12-02T17:25:37-08:00",
-          "source_metadata": {
-            "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
-            "lastmod": "2024-12-02T18:25:37-07:00",
-            "changefreq": "weekly",
-            "priority": "0.8",
-            "image:image": {
-              "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817/@@images/image/page-header"
+              "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025/@@images/image/page-header"
             }
           },
           "metadata": {}
         }
       ],
       "type": "http://schema.org/RadioSeries",
-      "last_updated": "2025-03-01T17:06:30.568566",
+      "last_updated": "2025-03-02T14:35:06.560075",
       "source_metadata": {
-        "loc": "https://www.kcrw.com/music/shows/henry-rollins",
-        "lastmod": "2025-01-19T20:19:36-08:00",
-        "changefreq": "hourly",
+        "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
+        "lastmod": "2025-02-27T10:46:02-08:00",
+        "changefreq": "daily",
         "priority": "0.9",
         "image:image": {
-          "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/@@images/square_image/giant-square"
+          "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/@@images/square_image/giant-square"
         }
       },
       "metadata": {}
