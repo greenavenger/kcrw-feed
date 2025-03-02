@@ -1,30 +1,77 @@
 """Module for managing the source of show URLs."""
 
 from abc import ABC, abstractmethod
+from datetime import timedelta
 import logging
+import gzip
 import os
 import re
 from urllib.parse import urljoin, urlparse, urlunparse
 import random
+import requests_cache
 import time
-from typing import Optional
+from typing import Dict, Optional
 import fsspec
+
 
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 
-# Regex pattern to match the prefix of KCRW URLs
+# Regex pattern to match the prefix of KCRW URLs (or a test URL)
+REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
 # REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
 REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
 # REWRITE_RE = re.compile(r'^(https?://)(?:www\.)?[\w.-]+(?::\d+)?/$')
 # REPLACE_TEXT = ""  # ./tests/data/"
 
+REQUEST_DELAY_MEAN: float = 5
+REQUEST_DELAY_STDDEV: float = 2
+REQUEST_HEADERS: Dict[str, str] = {
+    "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                   "AppleWebKit/537.36 (KHTML, like Gecko) "
+                   "Chrome/133.0.0.0 Safari/537.36")
+}
+REQUEST_TIMEOUT: int = 10
+
 logger = logging.getLogger("kcrw_feed")
+
+
+def random_delay(mean: float = REQUEST_DELAY_MEAN, stddev: float = REQUEST_DELAY_STDDEV) -> None:
+    delay = random.gauss(mean, stddev)
+    delay = max(0, delay)
+    logger.debug("Sleeping for %.2f seconds", delay)
+    time.sleep(delay)
+
+
+def normalize_location(base: str, loc: str) -> str:
+    """Normalize a relative location by joining it with a base.
+
+    If the base is an HTTP/HTTPS URL, uses urllib.parse.urljoin to combine the URL and loc properly.
+    Otherwise, uses os.path.join and os.path.normpath for file paths.
+
+    Parameters:
+        base (str): The base URL or directory path.
+        loc (str): The relative URL or filename.
+
+    Returns:
+        str: The normalized URL or file path."""
+    if base.startswith("http://") or base.startswith("https://"):
+        return urljoin(base, loc)
+    else:
+        rel = loc.lstrip(os.sep)
+        return os.path.normpath(os.path.join(base, rel))
+
+
+def strip_query_params(url: str) -> str:
+    parsed = urlparse(url)
+    stripped = parsed._replace(query="")
+    return urlunparse(stripped)
 
 
 class BaseSource(ABC):
     """Abstract base class for sources."""
     base_source: str
     uses_sitemap: bool
+    _session = None
 
     @abstractmethod
     def get_resource(self, resource: str) -> Optional[bytes]:
@@ -33,7 +80,7 @@ class BaseSource(ABC):
 
     @abstractmethod
     def relative_path(self, entity_reference: str) -> str:
-        """Relative part of the entity path"""
+        """Return the relative part of the entity path."""
         pass
 
     def validate_source_root(self, source_root: str) -> bool:
@@ -95,34 +142,41 @@ class BaseSource(ABC):
         """If it's not a show, assume it's an episode."""
         return not self.is_show(resource)
 
-    def _get_file(self, path: str, timeout: int = 10) -> Optional[bytes]:
-        """Retrieve a file as bytes. If the location starts with 'https' it is fetched over
-        HTTPS; otherwise it is opened from the local file system. Automatic decompression
-        is applied if the file extension suggests compression.
+    def _get_file(self, path: str, timeout: int = REQUEST_TIMEOUT) -> Optional[bytes]:
+        """Retrieve a file as bytes.
 
-        Parameters:
-            path (str): A URL or local path for the sitemap.
-            timeout (int): Timeout for HTTPS requests (if applicable).
-
-        Returns:
-            Optional[bytes]: The sitemap content, or None if an error occurs."""
+        If the path is an HTTP URL, it is fetched using the cached session;
+        if it ends with '.gz', the content is decompressed.
+        For non-HTTP paths, use fsspec."""
         logger.debug("Reading: %s", path)
         if "kcrw.com" in path:
             random_delay()
+
         # TODO: Don't actually hit kcrw.com for now!
         assert not path.startswith("https://www.kcrw.com/")
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
-        try:
-            # fsspec.open() supports local files, HTTP, and more. Using
-            # compression="infer" will automatically decompress if the file ends in .gz.
-            with fsspec.open(path, "rb", timeout=timeout, compression="infer",
-                             headers=headers) as f:
-                sitemap = f.read()
-            return sitemap
-        except Exception as e:
-            logger.debug("Error: Could not read data from %s: %s", path, e)
-            return None
+
+        if path.startswith("http://") or path.startswith("https://"):
+            assert self._session, f"No requests_cache.CachedSession found!"
+            headers = REQUEST_HEADERS
+            try:
+                response = self._session.get(
+                    path, timeout=timeout, headers=headers)
+                response.raise_for_status()
+                content = response.content
+                if path.endswith(".gz"):
+                    content = gzip.decompress(content)
+                return content
+            except Exception as e:
+                logger.debug("Error: Could not read data from %s: %s", path, e)
+                return None
+        else:
+            try:
+                with fsspec.open(path, "rb", timeout=timeout, compression="infer") as f:
+                    data = f.read()
+                return data
+            except Exception as e:
+                logger.debug("Error: Could not read data from %s: %s", path, e)
+                return None
 
 
 class HttpsSource(BaseSource):
@@ -132,22 +186,30 @@ class HttpsSource(BaseSource):
         self.url = self.base_source  # convenience reference
         self.rewrite_rule = rewrite_rule
         self.uses_sitemap = True
+        # Create a single cached session that will be reused for all HTTP requests.
+        self._session = requests_cache.CachedSession(
+            'kcrw_cache', backend='sqlite',
+            # Use Cache-Control response headers for expiration, if available
+            cache_control=True,
+            # Otherwise expire responses after one day
+            expire_after=timedelta(days=1),
+            # Cache 400 responses as a solemn reminder of your failures
+            allowable_codes=[200, 404],
+
+        )
 
     def get_resource(self, url: str) -> Optional[bytes]:
-        # Here you'd use requests and potentially rewrite the URL according
-        # to your rule. For now, we'll leave a stub.
         logger.debug(f"Fetching via HTTPS: {url}")
 
         # Rewrite URL if necessary
         relative_path = self.relative_path(url)
         full_normalized_url = normalize_location(
             self.base_source, relative_path)
-
-        return self._get_file(full_normalized_url)  # .content
+        return self._get_file(full_normalized_url)
 
     def relative_path(self, entity_reference: str) -> str:
-        """Regular expression to return the relative part of the
-        entity path"""
+        """Regular expression to return the relative part of the entity
+        path."""
         # Also trim trailing slash for consistency
         updated_path = REWRITE_RE.sub("/", entity_reference).rstrip("/")
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
@@ -173,8 +235,8 @@ class CacheSource(BaseSource):
         return self._get_file(full_normalized_path)
 
     def relative_path(self, entity_reference: str) -> str:
-        """Regular expression to return the relative part of the
-        entity path"""
+        """Regular expression to return the relative part of the entity
+        path."""
         # Also trim trailing slash for consistency
         return "./" + REWRITE_RE.sub("./", entity_reference).rstrip("/")
 
@@ -185,8 +247,6 @@ class RssFeedSource(BaseSource):
         self.uses_sitemap = False
 
     def get_resource(self, resource: str) -> Optional[bytes]:
-        # For RSS feeds, you might parse a feed and then retrieve a resource.
-        # Placeholder implementation:
         print(f"Fetching from RSS feed: {self.url_or_path}")
         return None
 
@@ -197,50 +257,5 @@ class AtomFeedSource(BaseSource):
         self.uses_sitemap = False
 
     def get_resource(self, resource: str) -> Optional[bytes]:
-        # Similar to RssFeedSource.
         print(f"Fetching from Atom feed: {self.url_or_path}")
         return None
-
-
-# class SourceManager:
-#     def __init__(self, source: BaseSource):
-#         self.source = source
-
-#     def get_resource(self, resource: str) -> Optional[bytes]:
-#         return self.source.get_resource(resource)
-
-
-def normalize_location(base: str, loc: str) -> str:
-    """Normalize a relative location by joining it with a base.
-
-    If the base is an HTTP/HTTPS URL, uses urllib.parse.urljoin
-    to combine the URL and loc properly (handling extra slashes).
-    Otherwise, uses os.path.join and os.path.normpath for file paths.
-
-    Parameters:
-        base (str): The base URL or directory path.
-        loc (str): The relative URL or filename.
-
-    Returns:
-        str: The normalized URL or file path."""
-    if base.startswith("http://") or base.startswith("https://"):
-        return urljoin(base, loc)
-    else:
-        # Force loc to be treated as relative by stripping leading slashes.
-        rel = loc.lstrip(os.sep)
-        return os.path.normpath(os.path.join(base, rel))
-
-
-def strip_query_params(url: str) -> str:
-    parsed = urlparse(url)
-    # Create a new ParseResult with an empty query
-    stripped = parsed._replace(query="")
-    return urlunparse(stripped)
-
-
-def random_delay(mean: float = 5, stddev: float = 1) -> None:
-    delay = random.gauss(mean, stddev)
-    # Ensure the delay is not negative.
-    delay = max(0, delay)
-    logger.debug(f"Sleeping for %.2f seconds",  delay)
-    time.sleep(delay)

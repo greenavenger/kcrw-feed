@@ -181,3 +181,6 @@ research/
 # Log files (e.g. JSON lines)
 *.jsonl
 logs/
+
+# Local HTTP cache
+*.sqlite
