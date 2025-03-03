@@ -143,6 +143,15 @@ class ShowIndex:
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Saved data: %s", pprint.pformat(directory))
 
+        self.generate_feeds()
+
+    def generate_feeds(self) -> None:
+        """Generate feed files"""
+        logger.info("Writing feeds")
+        persister = state_manager.Rss()
+        directory = ShowDirectory(self.show_processor.get_shows())
+        persister.save(directory)
+
     # Accessor Methods
 
     def get_shows(self) -> List[Show]:

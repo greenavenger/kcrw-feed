@@ -1,18 +1,21 @@
 """Module to handle state persistence"""
 
-import json
+from abc import ABC, abstractmethod
 from datetime import datetime
 from dataclasses import asdict
+import json
+import os
 from typing import Any, Dict
 import uuid
+
+from django.utils.feedgenerator import Rss201rev2Feed
 
 from kcrw_feed.models import Host, Show, Episode, ShowDirectory
 from kcrw_feed import utils
 
-from abc import ABC, abstractmethod
-from kcrw_feed.models import ShowDirectory
 
 FILENAME_JSON: str = "kcrw_feed.json"
+FEED_DIRECTORY: str = "feeds/"
 
 
 class BasePersister(ABC):
@@ -39,9 +42,7 @@ class Json(BasePersister):
         raise TypeError(f"Type {type(obj)} not serializable")
 
     def save(self, directory: ShowDirectory, filename: str | None = None) -> None:
-        """
-        Save the given ShowDirectory object's state to a JSON file.
-        """
+        """Save the given ShowDirectory object's state to a JSON file."""
         filename = filename or self.filename
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(asdict(directory), f,
@@ -117,9 +118,8 @@ class Json(BasePersister):
         return ShowDirectory(shows=shows)
 
     def load(self, filename: str | None = None) -> ShowDirectory:
-        """
-        Load the state from a JSON file and return a ShowDirectory instance.
-        """
+        """Load the state from a JSON file and return a ShowDirectory
+        instance."""
         filename = filename or self.filename
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -127,10 +127,43 @@ class Json(BasePersister):
 
 
 class Rss(BasePersister):
-    def save(self, state: ShowDirectory, filename: str) -> None:
-        # Generate RSS feed from state
-        pass
+    def __init__(self, output_dir: str = FEED_DIRECTORY) -> None:
+        self.output_dir = output_dir
+
+    def save(self, show_directory: ShowDirectory, output_dir: str | None = None) -> None:
+        """Generate an individual RSS feed XML file for each show in the state.
+        Episodes are sorted in reverse chronological order (most recent first).
+
+        Parameters:
+          state: A ShowDirectory instance containing a list of shows.
+          output_dir: The output directory where feed files will be written."""
+        output_dir = output_dir or self.output_dir
+        os.makedirs(output_dir, exist_ok=True)
+        for show in show_directory.shows:
+            # Create an RSS feed using Django's feed generator.
+            feed = Rss201rev2Feed(
+                title=show.title,
+                link=show.url,
+                description=show.description or "",
+                language="en"
+            )
+            # Sort episodes: most recent first.
+            episodes = sorted(
+                [ep for ep in show.episodes if ep.airdate is not None], reverse=True)
+            for ep in episodes:
+                feed.add_item(
+                    title=ep.title,
+                    link=ep.media_url,
+                    description=ep.description or "",
+                    pubdate=ep.airdate
+                )
+            # Generate the XML as a string.
+            feed_xml = feed.writeString("utf-8")
+            # Use the show's UUID as the filename (or fallback to title).
+            file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
+            output_path = os.path.join(output_dir, file_name)
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(feed_xml)
 
     def load(self, filename: str) -> ShowDirectory:
-        # Possibly load from RSS feed, if applicable
-        pass
+        raise NotImplementedError("RSS load not implemented")
