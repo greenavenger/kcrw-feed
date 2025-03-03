@@ -128,6 +128,9 @@ class FakeShowProcessor:
             metadata={}
         )
 
+    def get_episodes(self) -> List[Episode]:
+        return []
+
 
 @pytest.fixture(name="fake_show_index")
 def _fake_show_index() -> ShowIndex:

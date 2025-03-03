@@ -35,11 +35,17 @@ class ShowProcessor:
 
     # Accessors
     def get_show_by_url(self, url: str) -> Optional[Show]:
-        """Return a Show from the internal cache matching the given URL, if available."""
+        """Return a Show from the internal cache matching the given
+        URL, if available."""
         for entity in self._model_cache.values():
             if entity.url == url:
                 return entity
         return None
+
+    def get_show_by_uuid(self, uuid: uuid.UUID) -> Optional[Show]:
+        """Return a Show from the internal cache matching the given
+        uuid, if available."""
+        return self._model_cache.get(uuid, None)
 
     def get_shows(self) -> List[Show]:
         """Return a list of all Shows."""
@@ -48,6 +54,14 @@ class ShowProcessor:
             if isinstance(entity, Show):
                 shows.append(entity)
         return sorted(shows)
+
+    def get_episodes(self) -> List[Episode]:
+        """Return a list of all Episodes."""
+        episodes: List[Episode] = []
+        for entity in self._model_cache.values():
+            if isinstance(entity, Episode):
+                episodes.append(entity)
+        return episodes
 
     # Core methods
 
@@ -85,15 +99,17 @@ class ShowProcessor:
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("show_data: %s", pprint.pformat(show_data))
 
-        episode_data = None
-        # Look for an object that indicates it's an episode (or similar).
-        for item in data.get("microdata", []):
-            if isinstance(item, dict) and item.get("id", "").endswith("-episodes"):
-                episode_data = item
-                break
+        # TODO: Permanently remove Episode population in the Show context
+        # since we don't have source_metadata here.
+        # episode_data = None
+        # # Look for an object that indicates it's an episode (or similar).
+        # for item in data.get("microdata", []):
+        #     if isinstance(item, dict) and item.get("id", "").endswith("-episodes"):
+        #         episode_data = item
+        #         break
         episodes = []
-        if episode_data:
-            episodes.extend(self._parse_episodes(episode_data))
+        # if episode_data:
+        #     episodes.extend(self._parse_episodes(episode_data))
 
         if show_data:
             show_html_id: str = show_data.get("id")

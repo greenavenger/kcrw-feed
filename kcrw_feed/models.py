@@ -74,7 +74,8 @@ class Show:
 
     def add_episode(self, episode: Episode) -> None:
         """Append a new episode to the show's episode list."""
-        self.episodes.append(episode)
+        if episode.uuid not in [e.uuid for e in self.episodes]:
+            self.episodes.append(episode)
 
     def get_episodes(self) -> List[Episode]:
         return self.episodes

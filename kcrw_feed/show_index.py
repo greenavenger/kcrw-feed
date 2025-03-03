@@ -83,20 +83,22 @@ class ShowIndex:
             # self.shows[key] = show
             updated_resources.append(resource)
 
-        # Process episodes first.
         for resource, metadata in filtered_entries.items():
-            if self.source.is_episode(resource):
-                logger.debug("Processing episode: %s", resource)
-                fetch_and_store(resource, metadata)
+            logger.debug("Processing resource: %s", resource)
+            fetch_and_store(resource, metadata)
 
-        # Then process shows.
-        for resource, metadata in filtered_entries.items():
-            if not self.source.is_episode(resource):
-                logger.debug("Processing show: %s", resource)
-                fetch_and_store(resource, metadata)
+        # Associate episodes with shows
+        self._associate()
 
         logger.info("Updated %d resources", len(updated_resources))
         return len(updated_resources)
+
+    def _associate(self) -> None:
+        """Scan all entities and ensure each Episode is associated
+        with a Show."""
+        for episode in self.show_processor.get_episodes():
+            show = self.show_processor.get_show_by_uuid(episode.show_uuid)
+            show.add_episode(episode)
 
     def _filter_selected_by_name(self, entities: Dict[str, Any], selection: List[str] = []) -> Dict[str, Any]:
         """Filter resources based on selected_urls if necessary."""
