@@ -53,13 +53,8 @@ def main():
     gather_parser.add_argument(
         "--source", default="sitemap", choices=["sitemap", "feed"]
     )
-    # New flags for gather command:
     gather_parser.add_argument(
-        "--verbose", action="store_true",
-        help="Print the gathered resource URLs"
-    )
-    gather_parser.add_argument(
-        "--debug", action="store_true",
+        "--detail", action="store_true",
         help="Print the entire gathered entities dictionary"
     )
 
@@ -156,11 +151,10 @@ def main():
                     print(show.url)
     elif args.command == "gather":
         entities = collection.gather()
-        if args.verbose:
-            logger.info("Gathered resources: %s",
-                        pprint.pformat(sorted(list(entities.keys()))))
-        elif args.debug:
+        if args.detail:
             logger.info("Gathered entities: %s", pprint.pformat(entities))
+        logger.info("Gathered resources: %s",
+                    pprint.pformat(sorted(list(entities.keys()))))
         logger.info("Gathered %s entities", len(entities))
     elif args.command == "update":
         updated_shows = collection.update(selection=args.shows)
