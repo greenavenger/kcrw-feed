@@ -45,8 +45,9 @@ class Host:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
+@dataclass(order=True)
 class Show:
+    sort_index: str = field(init=False, repr=False)  # used for ordering
     title: str
     url: str
     uuid: Optional[str] = None
@@ -90,8 +91,9 @@ class Show:
         return self.last_updated is None
 
 
-@dataclass
+@dataclass(order=True)
 class Episode:
+    sort_index: datetime = field(init=False, repr=False)  # used for ordering
     title: str
     airdate: datetime
     url: str
