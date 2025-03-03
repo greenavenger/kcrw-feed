@@ -118,7 +118,7 @@ class ShowProcessor:
                     source_metadata=source_metadata,
                     last_updated=datetime.now()
                 )
-                self._model_cache["uuid"] = show
+                self._model_cache[show.uuid] = show
         else:
             # Fallback: use BeautifulSoup to get the title.
             soup = BeautifulSoup(html, "html.parser")
@@ -131,7 +131,8 @@ class ShowProcessor:
                 last_updated=datetime.now(),
                 metadata={}
             )
-            self._model_cache["uuid"] = show
+            self._model_cache[show.url] = show
+            raise NotImplementedError
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Final show object: %s", pprint.pformat(show))
         return show
