@@ -1,5 +1,6 @@
 """Module to test the state management component."""
 
+from typing import Dict
 from datetime import datetime, timedelta
 from email.utils import parsedate_to_datetime
 import io
@@ -17,20 +18,20 @@ from kcrw_feed.models import Host, Show, Episode, ShowDirectory
 
 
 def test_default_serializer_datetime():
-    js = Json()
+    js = Json(data_root=".")
     dt = datetime(2025, 1, 1, 12, 30)
     result = js.default_serializer(dt)
     assert result == dt.isoformat()
 
 
 def test_default_serializer_invalid():
-    js = Json()
+    js = Json(data_root=".")
     with pytest.raises(TypeError):
         js.default_serializer(123)  # An int should raise TypeError
 
 
 def test_parse_datetime():
-    js = Json()
+    js = Json(data_root=".")
     dt_str = "2025-01-01T12:30:00"
     dt = js._parse_datetime(dt_str)
     expected = datetime(2025, 1, 1, 12, 30)
@@ -38,7 +39,7 @@ def test_parse_datetime():
 
 
 def test_host_from_dict():
-    js = Json()
+    js = Json(data_root=".")
     host_data = {
         "name": "Host 1",
         "uuid": "a690aae0-c48d-4771-ac88-0fe13a730b7b"
@@ -50,7 +51,7 @@ def test_host_from_dict():
 
 
 def test_episode_from_dict():
-    js = Json()
+    js = Json(data_root=".")
     dt_str = "2025-01-01T12:30:00"
     data = {
         "title": "Episode 1",
@@ -73,7 +74,7 @@ def test_episode_from_dict():
 
 
 def test_show_from_dict():
-    js = Json()
+    js = Json(data_root=".")
     dt_str = "2025-01-02T13:45:00"
     show_data = {
         "title": "Show 1",
@@ -113,27 +114,43 @@ def test_show_from_dict():
 
 
 @pytest.fixture(name="fake_fs")
-def fake_fs_fixture(monkeypatch) -> Dict[str, str]:
+def fake_fs_fixture(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
     """
     A fake file system that intercepts open calls.
-    Files written in 'w' mode are stored in a dictionary.
-    Reads return a StringIO initialized with the stored content.
+    Files written in 'w' or 'wb' mode are stored in a dictionary.
+    Reads return a StringIO or BytesIO initialized with the stored content.
     """
     files: Dict[str, str] = {}
 
     def fake_open(filename: str, mode: str = "r", *args, **kwargs):
         if "w" in mode:
-            file_obj = io.StringIO()
-            orig_close = file_obj.close
+            if "b" in mode:
+                # Binary write mode: use BytesIO.
+                file_obj = io.BytesIO()
+                orig_close = file_obj.close
 
-            def fake_close():
-                files[filename] = file_obj.getvalue()
-                orig_close()
-            file_obj.close = fake_close
-            return file_obj
+                def fake_close():
+                    # Store the written bytes as a UTF-8 string.
+                    files[filename] = file_obj.getvalue().decode("utf-8")
+                    orig_close()
+                file_obj.close = fake_close
+                return file_obj
+            else:
+                # Text write mode: use StringIO.
+                file_obj = io.StringIO()
+                orig_close = file_obj.close
+
+                def fake_close():
+                    files[filename] = file_obj.getvalue()
+                    orig_close()
+                file_obj.close = fake_close
+                return file_obj
         elif "r" in mode:
             content = files.get(filename, "")
-            return io.StringIO(content)
+            if "b" in mode:
+                return io.BytesIO(content.encode("utf-8"))
+            else:
+                return io.StringIO(content)
         else:
             raise ValueError(f"Unsupported file mode: {mode}")
 
@@ -173,7 +190,7 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
     )
     directory = ShowDirectory(shows=[show])
     fake_filename = "fake_state.json"
-    persister = Json(filename=fake_filename)
+    persister = Json(data_root=".", filename=fake_filename)
 
     # Save state to the fake file system.
     persister.save(directory, fake_filename)
@@ -265,7 +282,7 @@ def dummy_directory() -> ShowDirectory:
 
 
 def test_rss_save_creates_files(dummy_directory):
-    rss_persister = Rss()
+    rss_persister = Rss(data_root=".")
     with tempfile.TemporaryDirectory() as tmpdirname:
         rss_persister.save(dummy_directory, tmpdirname)
         # Expect one file per show (i.e. 2 files).

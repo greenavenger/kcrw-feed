@@ -119,11 +119,11 @@ class ShowIndex:
             selected), "Selection did not match resources!"
         return selected
 
-    def load(self) -> None:
+    def load(self, data_root: str) -> None:
         """Load data from stable storage."""
         logger.info("Loading entities")
 
-        persister = state_manager.Json()
+        persister = state_manager.Json(data_root)
         directory = persister.load()
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Loaded data: %s", pprint.pformat(directory))
@@ -133,24 +133,24 @@ class ShowIndex:
             for episode in show.get_episodes():
                 self._entities[episode.uuid] = episode
 
-    def save(self) -> None:
+    def save(self, data_root: str) -> None:
         """Persist data to stable storage."""
         _: int = self.update()
 
         logger.info("Saving entities")
 
-        persister = state_manager.Json()
+        persister = state_manager.Json(data_root=data_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Saved data: %s", pprint.pformat(directory))
 
-        self.generate_feeds()
+        self.generate_feeds(data_root)
 
-    def generate_feeds(self) -> None:
+    def generate_feeds(self, data_root: str) -> None:
         """Generate feed files"""
         logger.info("Writing feeds")
-        persister = state_manager.Rss()
+        persister = state_manager.Rss(data_root=data_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
 

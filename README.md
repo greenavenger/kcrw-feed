@@ -216,6 +216,132 @@ sequenceDiagram
 
 ---
 
+# Refactor After Prototype
+
+Thinking about the high level structure, I think there are three major pieces.
+
+## Primary Components
+
+1) resource processing
+- data model: here each show and episode are represented as a  "resource", which his a (unique?) URL
+  - each resource/URL has metadata, the most important of which is `lastmod` (and `priority`, if we want to use it to inform our http caching policy)
+- function: the thing we need to do is to get a list of resources from the sitemap.xml files (the root of which comes from robots.txt)
+- source: sitemap xml files (do I want to read from RSS?)
+- load: doing this has little impact on the kcrw.com website, since we're fetching just ~4 files
+- filtering:
+  - sitemap: we only look at base/root and `music` related sitemaps
+  - resource/show: we only look for URLs that include `music/shows`, or by show name (the next part of the URL after `music/shows`)
+  - time restrict: we may want to restrict the resources we consider(i.e. last day, 2 weeks ago to 1 week ago, etc.)
+- persistence: we don't persist the sitemap/resource data directly, rather we include it into the JSON persistence file (though they do get stored in a local HTTP cache)
+
+2) model "enrichment"
+- data model: Show, Episode, Host
+  - relationships:
+    - a show has 1 or more episodes
+    - a show has 1 or more hosts
+    - an episode has 1 or more hosts
+  - data: `title`, `airdate`, `media_url`, `last_updated`, etc.
+- function: here we use the resources (URL) for each show and episode to a) fetch the html/json, b) parse the returned data and enrich the core models (show populates Show and Host, episode populates Episode).
+- sources:
+  - resources fetched from kcrw.com
+  - objects read from persistent JSON file
+- filtering:
+  - resource/show:
+  - time restrict:
+  - dry run: show me what resources you're going to update, but don't do it yet
+- persistence: we persist all enriched data into a local JSON file for easy integration into a VCS
+
+3) data persistence
+- data model: Directory - container for all shows + metadata (e.g. "last_updated")
+- targets:
+  - JSON
+  - feeds (RSS/Atom)
+- filtering:
+  - JSON: none
+  - feeds:
+    - resource/show
+    - time restrict
+
+## Subsystems/Support or Utility Functionality
+1) source fetching: file based or HTTP
+- persistence:
+  - enriched models
+  - debugging html/json -> if we have a parse failure, we should save a copy of the collected html/json to be able to replay and debug it
+2) list or query interface:
+- function: list resources, shows, episodes, hosts
+- filtering:
+  - resource/show:
+  - time restrict:
+
+## User Tasks
+1) GH Action: fetch updated and regenerate feeds that have changed
+2) list raw resources (sitemap or JSON based?)
+- filtering:
+  - resource/show:
+  - time restrict:
+3) update all or a subset of
+- filtering:
+  - resource/show:
+  - time restrict:
+  - dry run: show me the resources to be updated, but don't do it yet
+4) debug:
+  - common scenarios:
+    - figure out why a show/episode isn't parsing
+    - figure out why episodes aren't show up for a show
+    - figure out why a show is missing
+- filtering:
+  - resource/show:
+
+## Global Options
+- `--verbose`
+- `--dry-run`
+- `--match`
+
+---
+# Updated Component/Flow Diagram
+
+```mermaid
+flowchart TD
+    subgraph Resource_Processing [Resource Processing]
+        RS["Resource Fetcher<br/>(Sitemap/RSS Parser)"]
+        RM[Resource Metadata & Filtering]
+    end
+
+    subgraph Model_Enrichment [Model Enrichment]
+        MP[Enricher / ShowProcessor]
+        DM["Domain Models<br/>(Show, Episode, Host)"]
+    end
+
+    subgraph Data_Persistence [Data Persistence]
+        JP[JSON Persister]
+        FE["Feed Generator<br/>(RSS/Atom)"]
+    end
+
+    subgraph Utilities [Utilities]
+        SF["Source Fetching Utilities<br/>(HTTP, File)"]
+        LOG[Logging & Debugging]
+    end
+
+    subgraph CLI [CLI / Query Interface]
+        CMD["Command-Line Interface<br/>(--verbose, --dry-run, --match)"]
+    end
+
+    CMD --> RS
+    RS --> RM
+    RM --> MP
+    MP --> DM
+    DM --> JP
+    DM --> FE
+
+    SF --> RS
+    SF --> MP
+    LOG --- RS
+    LOG --- MP
+    LOG --- JP
+```
+
+---
+
 # License
 This project is licensed under the GPL-3.0 License.
 

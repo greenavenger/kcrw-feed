@@ -4,18 +4,22 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from dataclasses import asdict
 import json
+import logging
 import os
 from typing import Any, Dict
 import uuid
 
 from django.utils.feedgenerator import Rss201rev2Feed
 
+from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Host, Show, Episode, ShowDirectory
 from kcrw_feed import utils
 
 
 FILENAME_JSON: str = "kcrw_feed.json"
 FEED_DIRECTORY: str = "feeds/"
+
+logger = logging.getLogger("kcrw_feed")
 
 
 class BasePersister(ABC):
@@ -29,8 +33,9 @@ class BasePersister(ABC):
 
 
 class Json(BasePersister):
-    def __init__(self, filename: str = FILENAME_JSON) -> None:
-        self.filename = filename
+    def __init__(self, data_root: str, filename: str = FILENAME_JSON) -> None:
+        self.filename = os.path.join(data_root, filename)
+        logger.debug("JSON file: %s", self.filename)
 
     # Serialization
     def default_serializer(self, obj: Any) -> Any:
@@ -121,14 +126,17 @@ class Json(BasePersister):
         """Load the state from a JSON file and return a ShowDirectory
         instance."""
         filename = filename or self.filename
-        with open(filename, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        with open(filename, "rb") as f:
+            raw = f.read()
+            logger.debug("Read %d bytes from %s", len(raw), filename)
+            data = json.loads(raw.decode("utf-8"))
         return self.directory_from_dict(data)
 
 
 class Rss(BasePersister):
-    def __init__(self, output_dir: str = FEED_DIRECTORY) -> None:
-        self.output_dir = output_dir
+    def __init__(self, data_root: str, output_dir: str = FEED_DIRECTORY) -> None:
+        self.output_dir = os.path.join(data_root, output_dir)
+        logger.debug("RSS outpud directory: %s", self.output_dir)
 
     def save(self, show_directory: ShowDirectory, output_dir: str | None = None) -> None:
         """Generate an individual RSS feed XML file for each show in the state.

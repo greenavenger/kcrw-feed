@@ -3,12 +3,13 @@
 import argparse
 import logging.config
 import logging.handlers
+import os.path
 import pprint
 import time
 from typing import Any, Dict
 
 from kcrw_feed.config import CONFIG
-from kcrw_feed.persistent_logger import LOGGING_LEVEL_MAP  # also: JSONFormatter
+from kcrw_feed.persistent_logger import LOGGING_LEVEL_MAP
 from kcrw_feed import show_index
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
@@ -28,6 +29,16 @@ def main():
         choices=["trace", "debug", "info", "warning", "error", "critical"],
         help="Override log level for stdout logging",
     )
+    parser.add_argument("-d",
+                        "--data_root",
+                        type=str,
+                        help="Specify the root data directory for state and feed files",
+                        )
+    parser.add_argument("-r",
+                        "--source_root",
+                        type=str,
+                        help='Specify the source root (e.g. "https://www.kcrw.com/", "http://localhost:8888/", "./tests/data/")',
+                        )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = subparsers.add_parser("list", help="List shows or episodes")
@@ -96,19 +107,26 @@ def main():
     logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
     source: BaseSource
-    source_root = CONFIG["source_root"]
-    logger.info("Source root: %s", source_root)
+    source_root = args.source_root or CONFIG["source_root"]
     if source_root.startswith("http"):
         source = HttpsSource(source_root)
     else:
+        # Use an absolute path for the source_root so it's unambiguous.
+        source_root = os.path.abspath(source_root)
         source = CacheSource(source_root)
+    logger.info("Source root: %s", source_root)
+
+    data_root = args.data_root or CONFIG["data_root"]
+    # Use an absolute path for the data_root so it's unambiguous.
+    data_root = os.path.abspath(data_root)
+    logger.info("Data root: %s", data_root)
 
     collection = show_index.ShowIndex(source=source)
 
     if args.command == "list":
         # Populate collection.shows
         # _ = collection.update()
-        collection.load()
+        collection.load(data_root=data_root)
         # Determine whether we're listing shows (default) or episodes.
         if args.mode == "debug":
             entities = collection.dump_all()
@@ -160,7 +178,7 @@ def main():
         updated_shows = collection.update(selection=args.shows)
         logger.info("Updated %s", updated_shows)
     elif args.command == "save":
-        collection.save()
+        collection.save(data_root=data_root)
     else:
         logger.error("Unknown command")
 
