@@ -33,8 +33,8 @@ class BasePersister(ABC):
 
 
 class Json(BasePersister):
-    def __init__(self, data_root: str, filename: str = FILENAME_JSON) -> None:
-        self.filename = os.path.join(data_root, filename)
+    def __init__(self, storage_root: str, filename: str = FILENAME_JSON) -> None:
+        self.filename = os.path.join(storage_root, filename)
         logger.debug("JSON file: %s", self.filename)
 
     # Serialization
@@ -134,19 +134,19 @@ class Json(BasePersister):
 
 
 class Rss(BasePersister):
-    def __init__(self, data_root: str, output_dir: str = FEED_DIRECTORY) -> None:
-        self.output_dir = os.path.join(data_root, output_dir)
-        logger.debug("RSS outpud directory: %s", self.output_dir)
+    def __init__(self, storage_root: str, feed_dir: str = FEED_DIRECTORY) -> None:
+        self.feed_dir = os.path.join(storage_root, feed_dir)
+        logger.debug("RSS output directory: %s", self.feed_dir)
 
-    def save(self, show_directory: ShowDirectory, output_dir: str | None = None) -> None:
+    def save(self, show_directory: ShowDirectory, feed_dir: str | None = None) -> None:
         """Generate an individual RSS feed XML file for each show in the state.
         Episodes are sorted in reverse chronological order (most recent first).
 
         Parameters:
           state: A ShowDirectory instance containing a list of shows.
           output_dir: The output directory where feed files will be written."""
-        output_dir = output_dir or self.output_dir
-        os.makedirs(output_dir, exist_ok=True)
+        feed_dir = feed_dir or self.feed_dir
+        os.makedirs(feed_dir, exist_ok=True)
         for show in show_directory.shows:
             # Create an RSS feed using Django's feed generator.
             feed = Rss201rev2Feed(
@@ -169,7 +169,7 @@ class Rss(BasePersister):
             feed_xml = feed.writeString("utf-8")
             # Use the show's UUID as the filename (or fallback to title).
             file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
-            output_path = os.path.join(output_dir, file_name)
+            output_path = os.path.join(feed_dir, file_name)
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(feed_xml)
 

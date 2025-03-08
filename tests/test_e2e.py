@@ -113,7 +113,7 @@ def test_save_command():
         cmd = [
             "poetry", "run", "kcrw-feed",
             f"--source_root={source_root}",
-            f"--data_root={tmpdirname}",
+            f"--storage_root={tmpdirname}",
             "save"
         ]
         result = subprocess.run(

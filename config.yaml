@@ -6,7 +6,7 @@
 source_root: "http://localhost:8888/"
 
 # The root data directory for persisting state and feeds
-data_root: "."
+storage_root: "."
 
 # The default HTTP timeout in seconds for requests
 http_timeout: 10

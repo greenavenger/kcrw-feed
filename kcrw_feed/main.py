@@ -29,8 +29,8 @@ def main():
         choices=["trace", "debug", "info", "warning", "error", "critical"],
         help="Override log level for stdout logging",
     )
-    parser.add_argument("-d",
-                        "--data_root",
+    parser.add_argument("-o",
+                        "--storage_root",
                         type=str,
                         help="Specify the root data directory for state and feed files",
                         )
@@ -116,17 +116,17 @@ def main():
         source = CacheSource(source_root)
     logger.info("Source root: %s", source_root)
 
-    data_root = args.data_root or CONFIG["data_root"]
-    # Use an absolute path for the data_root so it's unambiguous.
-    data_root = os.path.abspath(data_root)
-    logger.info("Data root: %s", data_root)
+    storage_root = args.storage_root or CONFIG["storage_root"]
+    # Use an absolute path for the storage_root so it's unambiguous.
+    storage_root = os.path.abspath(storage_root)
+    logger.info("Data root: %s", storage_root)
 
     collection = show_index.ShowIndex(source=source)
 
     if args.command == "list":
         # Populate collection.shows
         # _ = collection.update()
-        collection.load(data_root=data_root)
+        collection.load(storage_root=storage_root)
         # Determine whether we're listing shows (default) or episodes.
         if args.mode == "debug":
             entities = collection.dump_all()
@@ -178,7 +178,7 @@ def main():
         updated_shows = collection.update(selection=args.shows)
         logger.info("Updated %s", updated_shows)
     elif args.command == "save":
-        collection.save(data_root=data_root)
+        collection.save(storage_root=storage_root)
     else:
         logger.error("Unknown command")
 
