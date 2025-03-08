@@ -14,7 +14,7 @@ from typing import Dict, Optional
 import fsspec
 
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
 # Regex pattern to match the prefix of KCRW URLs (or a test URL)
 REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')

@@ -11,7 +11,7 @@ import uuid
 
 from django.utils.feedgenerator import Rss201rev2Feed
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Host, Show, Episode, ShowDirectory
 from kcrw_feed import utils
 
@@ -32,7 +32,7 @@ class BasePersister(ABC):
         pass
 
 
-class Json(BasePersister):
+class JsonPersister(BasePersister):
     def __init__(self, storage_root: str, filename: str = FILENAME_JSON) -> None:
         self.filename = os.path.join(storage_root, filename)
         logger.debug("JSON file: %s", self.filename)
@@ -133,7 +133,7 @@ class Json(BasePersister):
         return self.directory_from_dict(data)
 
 
-class Rss(BasePersister):
+class RssPersister(BasePersister):
     def __init__(self, storage_root: str, feed_dir: str = FEED_DIRECTORY) -> None:
         self.feed_dir = os.path.join(storage_root, feed_dir)
         logger.debug("RSS output directory: %s", self.feed_dir)

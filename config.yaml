@@ -23,7 +23,7 @@ logging:
       format: "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(module)s.%(funcName)s:%(lineno)d] %(message)s"
       datefmt: "%Y-%m-%dT%H:%M:%S%z"
     json:
-      "()": "kcrw_feed.persistent_logger.JSONFormatter"
+      "()": "kcrw_feed.persistence.logger.JSONFormatter"
       fmt_keys:
         level: "levelname"
         timestamp: "timestamp"

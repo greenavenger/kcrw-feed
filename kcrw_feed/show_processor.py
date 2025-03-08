@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from kcrw_feed.models import Show, Episode, Host
 from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
 SHOW_FILE = "/index.html"
 EPISODE_FILE = "/player.json"

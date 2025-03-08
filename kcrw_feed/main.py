@@ -9,7 +9,7 @@ import time
 from typing import Any, Dict
 
 from kcrw_feed.config import CONFIG
-from kcrw_feed.persistent_logger import LOGGING_LEVEL_MAP
+from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
 from kcrw_feed import show_index
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 

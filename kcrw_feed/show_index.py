@@ -7,13 +7,13 @@ from typing import Any, Dict, List, Optional
 import urllib.robotparser as urobot
 import uuid
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Show, Episode, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
-from kcrw_feed import state_manager
+from kcrw_feed.persistence.manager import JsonPersister, RssPersister
 from kcrw_feed import utils
 
 
@@ -123,7 +123,7 @@ class ShowIndex:
         """Load data from stable storage."""
         logger.info("Loading entities")
 
-        persister = state_manager.Json(storage_root)
+        persister = JsonPersister(storage_root)
         directory = persister.load()
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Loaded data: %s", pprint.pformat(directory))
@@ -139,7 +139,7 @@ class ShowIndex:
 
         logger.info("Saving entities")
 
-        persister = state_manager.Json(storage_root=storage_root)
+        persister = JsonPersister(storage_root=storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
@@ -150,7 +150,7 @@ class ShowIndex:
     def generate_feeds(self, storage_root: str) -> None:
         """Generate feed files"""
         logger.info("Writing feeds")
-        persister = state_manager.Rss(storage_root=storage_root)
+        persister = RssPersister(storage_root=storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
 

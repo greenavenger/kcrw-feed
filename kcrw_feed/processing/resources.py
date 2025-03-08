@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Set
 import urllib.robotparser as urobot
 import xmltodict
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed import source_manager
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 from kcrw_feed import utils
