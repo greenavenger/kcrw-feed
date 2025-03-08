@@ -298,6 +298,39 @@ Thinking about the high level structure, I think there are three major pieces.
 - `--match`
 
 ---
+# CLI
+
+```
+$ poetry run kcrw-feed --help
+usage: kcrw-feed [-h] [-v] [-n] [-m MATCH_LIST] [-s TIMESTAMP] [-u TIMESTAMP] [--loglevel {trace,debug,info,warning,error,critical}] [-o STORAGE_ROOT] [-r SOURCE_ROOT] {list,update} ...
+
+KCRW Feed Generator
+
+positional arguments:
+  {list,diff,update}
+    list                List resources, shows, episodes, or hosts in feeds (local state)
+    diff                Show differences between local state and the live site (kcrw.com)
+    update              Update show data from live site (kcrw.com)
+
+options:
+  -h, --help            Show this help message and exit
+  -v, --verbose         Increase verbosity of returned entities
+  -n, --dry-run         Do not perform any destructive actions. (ex. "update -n" provides a diff)
+  -m, --match MATCH_LIST
+                        A regex or substring to filter resource URLs (ex. "valida", "shows/valida", "valida.*-2023")
+  -s, --since ISO_8601_TIMESTAMP
+                        Reprocess since provided ISO 8601 timestamp (“YYYY-MM-DDTHH:MM:SS”)
+  -u, --until ISO_8601_TIMESTAMP
+                        Reprocess until provided ISO 8601 timestamp (“YYYY-MM-DDTHH:MM:SS”)
+  --loglevel {trace,debug,info,warning,error,critical}
+                        Override log level for stdout debug logging
+  -o, --storage_root STORAGE_ROOT
+                        Specify the root data directory for state and feed files
+  -r, --source_root SOURCE_ROOT
+                        Specify the source root (ex. "https://www.kcrw.com/", "./tests/data/")
+```
+
+---
 # Updated Component/Flow Diagram
 
 ```mermaid
@@ -338,6 +371,26 @@ flowchart TD
     LOG --- RS
     LOG --- MP
     LOG --- JP
+```
+
+---
+
+# Updated Directory Structure
+```
+kcrw_feed/
+├── __init__.py
+├── config.py
+├── models.py             # Show, Episode, Host, etc.
+├── persistence/
+│   ├── __init__.py
+│   ├── json_persister.py  # JSON persister
+│   ├── rss.py             # RSS feed persister (using Django's feedgenerator)
+├── processing/
+│   ├── __init__.py
+│   ├── resource_fetcher.py  # For fetching and filtering resources
+│   ├── enricher.py          # For enriching Show/Episode models
+├── source_manager.py     # BaseSource and concrete implementations
+└── cli.py                # Command-line interface
 ```
 
 ---

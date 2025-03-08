@@ -10,7 +10,7 @@ import uuid
 from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Show, Episode, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
-from kcrw_feed.sitemap_processor import SitemapProcessor
+from kcrw_feed.processing.resources import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
 from kcrw_feed import state_manager

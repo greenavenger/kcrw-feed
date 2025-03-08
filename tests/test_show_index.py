@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from kcrw_feed.models import Show, Episode
 from kcrw_feed.show_index import ShowIndex
-from kcrw_feed.sitemap_processor import MUSIC_FILTER_RE
+from kcrw_feed.processing.resources import MUSIC_FILTER_RE
 
 
 class DummySource:

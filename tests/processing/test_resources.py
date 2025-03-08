@@ -3,7 +3,7 @@
 import pytest
 from datetime import datetime
 from typing import Optional
-from kcrw_feed.sitemap_processor import SitemapProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
+from kcrw_feed.processing.resources import SitemapProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
 from kcrw_feed import source_manager
 
 
