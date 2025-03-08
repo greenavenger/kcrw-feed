@@ -45,8 +45,8 @@ logging:
       level: "DEBUG"
       formatter: "json"
       filename: "./logs/kcrw_feed.jsonl"
-      maxBytes: 10485760
-      backupCount: 3
+      maxBytes: 104857600
+      backupCount: 10
   loggers:
     root:
       level: "DEBUG"
