@@ -8,6 +8,21 @@ import json
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
+# Run test_udpate_command() first to ensure that kcrw_feed.json exists for list commands.
+# TODO: move list commands into a tempdir too!
+
+
+def test_update_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "update"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    assert "Updated 15" in result.stdout
+    pprint.pprint(result.stdout)
+
+
 RESOURCES = ["/music/shows/henry-rollins/kcrw-broadcast-825",
              "/music/shows/henry-rollins/kcrw-broadcast-824",
              "/music/shows/henry-rollins/kcrw-broadcast-822",
@@ -22,26 +37,15 @@ RESOURCES = ["/music/shows/henry-rollins/kcrw-broadcast-825",
              "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024"]
 
 
-def test_gather_command():
+def test_list_resources_command():
     # Use an absolute path for the source_root so it's unambiguous.
     source_root = os.path.abspath("./tests/data/")
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "gather"]
+           f"--source_root={source_root}", "list"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for resource in RESOURCES:
         assert resource in result.stdout
-    pprint.pprint(result.stdout)
-
-
-def test_update_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
-    cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "update"]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    assert result.returncode == 0
-    assert "Updated 15" in result.stdout
     pprint.pprint(result.stdout)
 
 
@@ -53,7 +57,7 @@ def test_list_shows_command():
     # Use an absolute path for the source_root so it's unambiguous.
     source_root = os.path.abspath("./tests/data/")
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "list"]
+           f"--source_root={source_root}", "list", "shows"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for show in SHOWS:
@@ -100,7 +104,7 @@ def test_list_episodes_command():
     pprint.pprint(result.stdout)
 
 
-def test_save_command():
+def test_save_functionality():
     # Use an absolute path for source_root.
     source_root = os.path.abspath("./tests/data/")
     # Use the project root as cwd so Poetry finds pyproject.toml.
@@ -114,7 +118,7 @@ def test_save_command():
             "poetry", "run", "kcrw-feed",
             f"--source_root={source_root}",
             f"--storage_root={tmpdirname}",
-            "save"
+            "update"
         ]
         result = subprocess.run(
             cmd, capture_output=True, text=True, cwd=project_root, check=True

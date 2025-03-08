@@ -21,12 +21,13 @@ logger = logging.getLogger("kcrw_feed")
 
 
 class ShowIndex:
-    def __init__(self, source: BaseSource) -> None:
+    def __init__(self, source: BaseSource, storage_root: str) -> None:
         """Parameters:
-            source (str): The base URL (or local base path) for the site.
-            extra_sitemaps (List[str], optional): Additional sitemap paths to include.
+            source: The BaseSource object for the site (http or file).
+            storage_root: The directory root for local storage (state, feeds).
         """
         self.source = source
+        self.storage_root = storage_root
         # Instantiate the helper components.
         self.sitemap_processor = SitemapProcessor(self.source)
         self.show_processor = ShowProcessor(self.source)
@@ -45,8 +46,8 @@ class ShowIndex:
             raise NotImplementedError
         return entries
 
-    def update(self, selection: List[str] = [], update_after: Optional[datetime] = None,
-               ) -> int:
+    def update(self, selection: List[str] = [],
+               update_after: Optional[datetime] = None) -> int:
         """Update the repository with enriched Show objects.
 
         Parameters:
@@ -91,6 +92,9 @@ class ShowIndex:
         self._associate()
 
         logger.info("Updated %d resources", len(updated_resources))
+
+        self.save()
+
         return len(updated_resources)
 
     def _associate(self) -> None:
@@ -119,11 +123,11 @@ class ShowIndex:
             selected), "Selection did not match resources!"
         return selected
 
-    def load(self, storage_root: str) -> None:
+    def load(self) -> None:
         """Load data from stable storage."""
         logger.info("Loading entities")
 
-        persister = JsonPersister(storage_root)
+        persister = JsonPersister(self.storage_root)
         directory = persister.load()
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Loaded data: %s", pprint.pformat(directory))
@@ -133,24 +137,21 @@ class ShowIndex:
             for episode in show.get_episodes():
                 self._entities[episode.uuid] = episode
 
-    def save(self, storage_root: str) -> None:
+    def save(self) -> None:
         """Persist data to stable storage."""
-        _: int = self.update()
-
         logger.info("Saving entities")
-
-        persister = JsonPersister(storage_root=storage_root)
+        persister = JsonPersister(storage_root=self.storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Saved data: %s", pprint.pformat(directory))
 
-        self.generate_feeds(storage_root)
+        self.generate_feeds()
 
-    def generate_feeds(self, storage_root: str) -> None:
+    def generate_feeds(self) -> None:
         """Generate feed files"""
         logger.info("Writing feeds")
-        persister = RssPersister(storage_root=storage_root)
+        persister = RssPersister(storage_root=self.storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
 

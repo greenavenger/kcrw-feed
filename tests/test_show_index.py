@@ -1,7 +1,8 @@
 """Module to test the collection of shows"""
 
-import pytest
 from datetime import datetime
+from pathlib import Path
+import pytest
 from typing import Any, Dict, List, Optional
 from kcrw_feed.models import Show, Episode
 from kcrw_feed.show_index import ShowIndex
@@ -122,7 +123,7 @@ class FakeShowProcessor:
             uuid=uid,
             description=f"Description for {title}",
             hosts=[],  # Empty list of hosts for simplicity.
-            episodes=[],  # Initially empty
+            episodes=[],  # Initially empty.
             last_updated=datetime(2025, 1, 1),
             source_metadata=source_metadata,
             metadata={}
@@ -131,12 +132,25 @@ class FakeShowProcessor:
     def get_episodes(self) -> List[Episode]:
         return []
 
+    def get_shows(self) -> List[Show]:
+        """Return a list of dummy Show objects based on fixed URLs."""
+        return [
+            self.fetch("https://www.testsite.com/music/shows/show1"),
+            self.fetch("https://www.testsite.com/music/shows/show2"),
+            self.fetch("https://www.testsite.com/music/shows/show3"),
+        ]
+
 
 @pytest.fixture(name="fake_show_index")
-def _fake_show_index() -> ShowIndex:
-    """Fixture that creates a ShowIndex with fake processors and a DummySource."""
+def _fake_show_index(tmp_path: Path) -> ShowIndex:
+    """Fixture that creates a ShowIndex with fake processors and a DummySource,
+    using a temporary directory for storage."""
     dummy_source = DummySource("https://www.testsite.com/")
-    si = ShowIndex(dummy_source)
+    # Use tmp_path (a Path object) for a temporary storage root.
+    storage_root = str(tmp_path / "state")
+    # Ensure the directory exists.
+    (tmp_path / "state").mkdir(parents=True, exist_ok=True)
+    si = ShowIndex(dummy_source, storage_root)
     # Replace the real processors with our fake ones.
     si.sitemap_processor = FakeSitemapProcessor(dummy_source)
     si.show_processor = FakeShowProcessor()

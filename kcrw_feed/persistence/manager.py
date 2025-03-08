@@ -126,6 +126,10 @@ class JsonPersister(BasePersister):
         """Load the state from a JSON file and return a ShowDirectory
         instance."""
         filename = filename or self.filename
+        if not os.path.exists(filename):
+            logger.debug(
+                "File %s does not exist. Returning empty ShowDirectory.", filename)
+            return ShowDirectory(shows=[])
         with open(filename, "rb") as f:
             raw = f.read()
             logger.debug("Read %d bytes from %s", len(raw), filename)
