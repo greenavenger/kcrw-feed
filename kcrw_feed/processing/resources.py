@@ -23,12 +23,6 @@ ROBOTS_FILE = "robots.txt"
 logger = logging.getLogger("kcrw_feed")
 
 
-class Resource:
-    def __init__(self, url: str, metadata: Dict[str, Any] = None):
-        self.url = url
-        self.metadata = metadata or {}
-
-
 class SitemapProcessor:
     def __init__(self, source: BaseSource) -> None:
         """Parameters:

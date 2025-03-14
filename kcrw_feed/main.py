@@ -10,6 +10,7 @@ from typing import Any, Dict
 
 from kcrw_feed.config import CONFIG
 from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
+from kcrw_feed import station_catalog
 from kcrw_feed import show_index
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
@@ -61,7 +62,7 @@ def main():
     )
 
     subparsers.add_parser("update",
-                          help="Update show data from live site (kcrw.com)")
+                          help="Update local show data from live site (kcrw.com)")
 
     args = parser.parse_args()
 
@@ -102,9 +103,11 @@ def main():
     storage_root = os.path.abspath(storage_root)
     logger.info("Data root: %s", storage_root)
 
+    catalog = station_catalog.StationCatalog(storage_root=storage_root)
+
     collection = show_index.ShowIndex(source=source, storage_root=storage_root)
     # Populate collection.shows
-    collection.load()
+    # collection.load()
 
     if args.command == "list":
         if args.mode == "resources":
@@ -115,22 +118,27 @@ def main():
                         pprint.pformat(sorted(list(entities.keys()))))
             logger.info("Gathered %s entities", len(entities))
         elif args.mode == "shows":
-            shows = collection.get_shows()
+            shows = catalog.list_shows()
             shows = sorted(shows, key=lambda s: s.url)
             if args.verbose:
                 print(pprint.pformat(shows))
             for show in shows:
                 print(show.url)
         elif args.mode == "episodes":
-            episodes = collection.get_episodes()
+            episodes = catalog.list_episodes()
             # Sort by airdate for now
             episodes = sorted(episodes)  # , key=lambda s: s.url)
             if args.verbose:
                 print(pprint.pformat(episodes))
-            for ep in episodes:
-                print(ep.url)
+            for episode in episodes:
+                print(episode.url)
         elif args.mode == "hosts":
-            raise NotImplementedError
+            hosts = catalog.list_hosts()
+            hosts = sorted(hosts, key=lambda h: h.name)
+            if args.verbose:
+                print(pprint.pformat(hosts))
+            for host in hosts:
+                print(host.name)
         # elif args.mode == "debug":
         #     entities = collection.dump_all()
         #     if args.detail:

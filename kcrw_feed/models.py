@@ -6,38 +6,38 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
 
-# TODO: Should I make the Show, Episode and Host dataclasses immutable?
+
+@dataclass
+class FilterOptions:
+    # e.g., a regex or substring to filter resource URLs
+    match: Optional[str] = None
+    # e.g., ["resource", "show", "episode", "host"]
+    resource_types: Optional[List[str]] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    dry_run: bool = False
 
 
 @dataclass
-class ShowDirectory:
-    # TODO: Add tests for this class
-    shows: List[Show] = field(default_factory=list)
-
-    def add_show(self, show: Show) -> None:
-        """Append a new show to the show directory."""
-        self.shows.append(show)
-
-    def get_show(self, uuid: str) -> Optional[Show]:
-        """Return the show with the given UUID, if it exists."""
-        for show in self.shows:
-            if show.uuid == uuid:
-                return show
-        return None
-
-    def get_shows(self, type: Optional[str] = None) -> List[Show]:
-        """Return a list of shows with the given type."""
-        if type:
-            return [show for show in self.shows if show.type == type]
-        return self.shows
+class Resource:
+    url: str  # canonical location of resource on kcrw.com
+    ref: str  # reference: URL or path to local file
+    # metadata example:
+    #   {'changefreq': 'yearly',
+    #    'image:image': {'image:loc': 'https://www.kcrw.com/music/shows/aaron-byrd/aaron-byrds-playlist-april-12-2021/@@images/image/page-header'},
+    #    'lastmod': datetime.datetime(2021, 4, 13, 8, 12, 57, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200))),
+    #    'loc': 'https://www.kcrw.com/music/shows/aaron-byrd/aaron-byrds-playlist-april-12-2021',
+    #    'priority': '0.8'}
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class Host:
     name: str
-    uuid: Optional[str] = None
+    # Transition: uuid str -> uuid.UUID
+    uuid: Optional[uuid.UUID | str] = None
     title: Optional[str] = None  # job title
-    url: Optional[str] = None      # host page
+    url: Optional[str] = None    # host page
     image_url: Optional[str] = None
     socials: List[Episode] = field(default_factory=list)
     description: Optional[str] = None
@@ -84,6 +84,9 @@ class Show:
         """Append a new host to the show's host list."""
         self.hosts.append(host)
 
+    def get_hosts(self) -> List[Host]:
+        return self.hosts
+
     def needs_update(self) -> bool:
         """
         Determine whether the show needs updating.
@@ -116,3 +119,30 @@ class Episode:
     def __post_init__(self):
         # Use the airdate as the sort index.
         self.sort_index = self.airdate
+
+    def get_hosts(self) -> List[Host] | None:
+        if self.hosts:
+            return self.hosts
+
+
+@dataclass
+class ShowDirectory:
+    # TODO: Add tests for this class
+    shows: List[Show] = field(default_factory=list)
+
+    def add_show(self, show: Show) -> None:
+        """Append a new show to the show directory."""
+        self.shows.append(show)
+
+    def get_show(self, uuid: str) -> Optional[Show]:
+        """Return the show with the given UUID, if it exists."""
+        for show in self.shows:
+            if show.uuid == uuid:
+                return show
+        return None
+
+    def get_shows(self, type: Optional[str] = None) -> List[Show]:
+        """Return a list of shows with the given type."""
+        if type:
+            return [show for show in self.shows if show.type == type]
+        return self.shows

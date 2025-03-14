@@ -104,6 +104,24 @@ def test_list_episodes_command():
     pprint.pprint(result.stdout)
 
 
+HOSTS = [
+    'Henry Rollins',
+    'Ro "Wyldeflower" Contreras'
+]
+
+
+def test_list_hosts_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "list", "hosts"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for host in HOSTS:
+        assert host in result.stdout
+    pprint.pprint(result.stdout)
+
+
 def test_save_functionality():
     # Use an absolute path for source_root.
     source_root = os.path.abspath("./tests/data/")
