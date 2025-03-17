@@ -102,7 +102,8 @@ class ShowIndex:
         with a Show."""
         for episode in self.show_processor.get_episodes():
             show = self.show_processor.get_show_by_uuid(episode.show_uuid)
-            show.add_episode(episode)
+            if episode.uuid not in [e.uuid for e in show.episodes]:
+                show.episodes.append(episode)
 
     def _filter_selected_by_name(self, entities: Dict[str, Any], selection: List[str] = []) -> Dict[str, Any]:
         """Filter resources based on selected_urls if necessary."""
@@ -123,19 +124,19 @@ class ShowIndex:
             selected), "Selection did not match resources!"
         return selected
 
-    def load(self) -> None:
-        """Load data from stable storage."""
-        logger.info("Loading entities")
+    # def load(self) -> None:
+    #     """Load data from stable storage."""
+    #     logger.info("Loading entities")
 
-        persister = JsonPersister(self.storage_root)
-        directory = persister.load()
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("Loaded data: %s", pprint.pformat(directory))
+    #     persister = JsonPersister(self.storage_root)
+    #     directory = persister.load()
+    #     if logger.isEnabledFor(TRACE_LEVEL_NUM):
+    #         logger.trace("Loaded data: %s", pprint.pformat(directory))
 
-        for show in directory.get_shows():
-            self._entities[show.uuid] = show
-            for episode in show.get_episodes():
-                self._entities[episode.uuid] = episode
+    #     for show in directory.get_shows():
+    #         self._entities[show.uuid] = show
+    #         for episode in show.get_episodes():
+    #             self._entities[episode.uuid] = episode
 
     def save(self) -> None:
         """Persist data to stable storage."""

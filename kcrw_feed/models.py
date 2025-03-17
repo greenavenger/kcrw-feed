@@ -63,37 +63,6 @@ class Show:
         # Use the URL as the key for ordering.
         self.sort_index = self.url
 
-    def update_info(self, new_data: Dict[str, Any]) -> None:
-        """
-        Update the show's information based on new data.
-        Expected keys might include 'description', 'metadata', etc.
-        """
-        self.description = new_data.get("description", self.description)
-        self.metadata.update(new_data.get("metadata", {}))
-        self.last_updated = datetime.now()
-
-    def add_episode(self, episode: Episode) -> None:
-        """Append a new episode to the show's episode list."""
-        if episode.uuid not in [e.uuid for e in self.episodes]:
-            self.episodes.append(episode)
-
-    def get_episodes(self) -> List[Episode]:
-        return self.episodes
-
-    def add_host(self, host: Host) -> None:
-        """Append a new host to the show's host list."""
-        self.hosts.append(host)
-
-    def get_hosts(self) -> List[Host]:
-        return self.hosts
-
-    def needs_update(self) -> bool:
-        """
-        Determine whether the show needs updating.
-        For example, if last_updated is None, or if a threshold has been exceeded.
-        """
-        return self.last_updated is None
-
 
 @dataclass(order=True)
 class Episode:
@@ -120,29 +89,8 @@ class Episode:
         # Use the airdate as the sort index.
         self.sort_index = self.airdate
 
-    def get_hosts(self) -> List[Host] | None:
-        if self.hosts:
-            return self.hosts
-
 
 @dataclass
 class ShowDirectory:
     # TODO: Add tests for this class
     shows: List[Show] = field(default_factory=list)
-
-    def add_show(self, show: Show) -> None:
-        """Append a new show to the show directory."""
-        self.shows.append(show)
-
-    def get_show(self, uuid: str) -> Optional[Show]:
-        """Return the show with the given UUID, if it exists."""
-        for show in self.shows:
-            if show.uuid == uuid:
-                return show
-        return None
-
-    def get_shows(self, type: Optional[str] = None) -> List[Show]:
-        """Return a list of shows with the given type."""
-        if type:
-            return [show for show in self.shows if show.type == type]
-        return self.shows

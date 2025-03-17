@@ -13,39 +13,11 @@ def test_show_add_host():
 
     # Create a Show instance and add the host
     show = Show(title="Test Show", url="http://example.com/show")
-    show.add_host(host)
+    show.hosts.append(host)
 
     # Verify that the host is added correctly.
     assert len(show.hosts) == 1
     assert show.hosts[0].name == "Test Host"
-
-
-def test_show_update_info():
-    """Test the update_info method of the Show."""
-    # Create a Show instance with an initial description and empty metadata.
-    show = Show(
-        title="Test Show",
-        url="http://example.com/show",
-        description="Old description",
-        metadata={}
-    )
-
-    # Prepare new data for updating.
-    new_data: Dict[str, Any] = {
-        "description": "New description",
-        "metadata": {"genre": "rock"}
-    }
-
-    # Update the show info.
-    show.update_info(new_data)
-
-    # Verify that the description and metadata are updated.
-    assert show.description == "New description"
-    assert show.metadata.get("genre") == "rock"
-
-    # Verify that last_updated is set and is a datetime close to now.
-    assert show.last_updated is not None
-    assert (datetime.now() - show.last_updated) < timedelta(seconds=1)
 
 
 def test_show_add_episode():
@@ -64,24 +36,11 @@ def test_show_add_episode():
     )
 
     # Add the episode to the show.
-    show.add_episode(episode)
+    show.episodes.append(episode)
 
     # Verify the episode is added correctly.
     assert len(show.episodes) == 1
     assert show.episodes[0].title == "Episode 1"
-
-
-def test_show_needs_update():
-    """Test the needs_update method of the Show."""
-    # Create a Show with no last_updated, so it should need an update.
-    show = Show(title="Test Show", url="http://example.com/show")
-    assert show.needs_update() is True
-
-    # Update the show info (which sets last_updated).
-    show.update_info({"description": "Updated description"})
-
-    # Now, needs_update should return False.
-    assert show.needs_update() is False
 
 
 def test_episode_creation():

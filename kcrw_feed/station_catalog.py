@@ -45,18 +45,18 @@ class StationCatalog:
             logger.trace("Loaded data: %s", pprint.pformat(directory))
 
         catalog = Catalog()
-        for show in directory.get_shows():
+        for show in directory.shows:
             if show.uuid:
                 catalog.shows[show.uuid] = show
-            for episode in show.get_episodes():
+            for episode in show.episodes:
                 if episode.uuid:
                     catalog.episodes[episode.uuid] = episode
-                for host in episode.get_hosts():
+                for host in episode.hosts:
                     # TODO: fix that hosts are a list of uuids here!
                     if not isinstance(host, uuid.UUID) and host.uuid:
                         catalog.hosts[host.uuid] = host
             # TODO: remove duplicative host population?
-            for host in show.get_hosts():
+            for host in show.hosts:
                 if host.uuid:
                     catalog.hosts[host.uuid] = host
         logger.info("Loaded: %d shows, %d episodes, %d, hosts",
