@@ -38,15 +38,18 @@ class DummySource(source_manager.BaseSource):
         self.uses_sitemap = True
 
     def get_resource(self, resource: str) -> Optional[bytes]:
-        # If resource is not absolute, prepend base_source.
-        if not resource.startswith("http"):
-            resource = self.base_source.rstrip(
-                "/") + "/" + resource.lstrip("/")
-        return fake_get_file(resource)
+        return fake_get_file(self.reference(resource))
 
     def relative_path(self, entity_reference: str) -> str:
         # For testing, just return the entity_reference as is.
         return entity_reference
+
+    def reference(self, entity_reference: str) -> str:
+        # If resource is not absolute, prepend base_source.
+        if not resource.startswith("http"):
+            resource = self.base_source.rstrip(
+                "/") + "/" + resource.lstrip("/")
+        return resource
 
 
 # ---- Updated Tests for _get_file (now a method) and related helpers ----

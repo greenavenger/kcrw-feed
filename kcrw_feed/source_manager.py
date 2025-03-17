@@ -19,7 +19,6 @@ from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 # Regex pattern to match the prefix of KCRW URLs (or a test URL)
 REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
 # REWRITE_RE = re.compile(r'^https://www\.kcrw\.com/')
-REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
 # REWRITE_RE = re.compile(r'^(https?://)(?:www\.)?[\w.-]+(?::\d+)?/$')
 # REPLACE_TEXT = ""  # ./tests/data/"
 
@@ -81,6 +80,11 @@ class BaseSource(ABC):
     @abstractmethod
     def relative_path(self, entity_reference: str) -> str:
         """Return the relative part of the entity path."""
+        pass
+
+    @abstractmethod
+    def reference(self, entity_reference: str) -> str:
+        """Return the fully qualified entity path used for access."""
         pass
 
     def validate_source_root(self, source_root: str) -> bool:
@@ -203,20 +207,24 @@ class HttpsSource(BaseSource):
         logger.debug(f"Fetching via HTTPS: {url}")
 
         # Rewrite URL if necessary
-        relative_path = self.relative_path(url)
-        full_normalized_url = normalize_location(
-            self.base_source, relative_path)
+        full_normalized_url = self.reference(url)
         return self._get_file(full_normalized_url)
 
-    def relative_path(self, entity_reference: str) -> str:
+    def relative_path(self, url: str) -> str:
         """Regular expression to return the relative part of the entity
         path."""
         # Also trim trailing slash for consistency
-        updated_path = REWRITE_RE.sub("/", entity_reference).rstrip("/")
+        updated_path = REWRITE_RE.sub("/", url).rstrip("/")
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("relative_path input url: %s", entity_reference)
+            logger.trace("relative_path input url: %s", url)
             logger.trace("relative_path output url: %s", updated_path)
         return updated_path
+
+    def reference(self, url: str) -> str:
+        relative_path = self.relative_path(url)
+        full_normalized_url = normalize_location(
+            self.base_source, relative_path)
+        return full_normalized_url
 
 
 class CacheSource(BaseSource):
@@ -230,16 +238,20 @@ class CacheSource(BaseSource):
         # Read from the local cache directory.
 
         # Rewrite path if necessary
-        relative_path = self.relative_path(resource)
-        full_normalized_path = normalize_location(
-            self.base_source, relative_path)
+        full_normalized_path = self.reference(resource)
         return self._get_file(full_normalized_path)
 
-    def relative_path(self, entity_reference: str) -> str:
+    def relative_path(self, path: str) -> str:
         """Regular expression to return the relative part of the entity
         path."""
         # Also trim trailing slash for consistency
-        return "./" + REWRITE_RE.sub("./", entity_reference).rstrip("/")
+        return "./" + REWRITE_RE.sub("./", path).rstrip("/")
+
+    def reference(self, resource: str) -> str:
+        relative_path = self.relative_path(resource)
+        full_normalized_path = normalize_location(
+            self.base_source, relative_path)
+        return full_normalized_path
 
 
 class RssFeedSource(BaseSource):
