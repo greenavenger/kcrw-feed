@@ -42,6 +42,8 @@ class Host:
     socials: List[Episode] = field(default_factory=list)
     description: Optional[str] = None
     type: Optional[str] = None
+    # host always comes with Show, and so does not have its own Resource
+    # resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -57,6 +59,7 @@ class Show:
     type: Optional[str] = None
     last_updated: Optional[datetime] = None
     source_metadata: Dict[str, Any] = field(default_factory=dict)
+    resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -83,6 +86,7 @@ class Episode:
     ending: Optional[datetime] = None
     last_updated: Optional[datetime] = None
     source_metadata: Dict[str, Any] = field(default_factory=dict)
+    resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):

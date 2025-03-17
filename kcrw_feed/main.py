@@ -111,11 +111,13 @@ def main():
 
     if args.command == "list":
         if args.mode == "resources":
+            # entities = catalog.list_resources()
             entities = collection.gather()
             if args.verbose:
                 logger.info("Gathered entities: %s", pprint.pformat(entities))
-            logger.info("Gathered resources: %s",
-                        pprint.pformat(sorted(list(entities.keys()))))
+            else:
+                logger.info("Gathered resources: %s",
+                            pprint.pformat(sorted(list(entities.keys()))))
             logger.info("Gathered %s entities", len(entities))
         elif args.mode == "shows":
             shows = catalog.list_shows()
