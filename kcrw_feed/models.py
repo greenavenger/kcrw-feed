@@ -3,7 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Pattern
 import uuid
 
 
@@ -11,8 +11,10 @@ import uuid
 class FilterOptions:
     # e.g., a regex or substring to filter resource URLs
     match: Optional[str] = None
+    compiled_match: Optional[Pattern] = None
+    # TODO: do we need to filter on resource types?
     # e.g., ["resource", "show", "episode", "host"]
-    resource_types: Optional[List[str]] = None
+    # resource_types: Optional[List[str]] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     dry_run: bool = False

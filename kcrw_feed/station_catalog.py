@@ -4,10 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 import logging
-from typing import List, Dict, Tuple, Any, Optional
+from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable
 import uuid
 
-from kcrw_feed.models import Show, Episode, ShowDirectory
+from kcrw_feed.models import Show, Episode, ShowDirectory, FilterOptions
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.persistence.manager import JsonPersister
 
@@ -65,32 +65,27 @@ class StationCatalog:
             if show.resource:
                 key = show.resource.url
                 catalog.resources[key] = show.resource
+        logger.info("Loaded: %d resources", len(catalog.resources))
         logger.info("Loaded: %d shows, %d episodes, %d, hosts",
                     len(catalog.shows), len(
                         catalog.episodes), len(catalog.hosts))
-        if len(catalog.resources):
-            logger.info("Loaded: %d resources", len(catalog.resources))
         return catalog
 
-    def list_resources(self, match: Optional[str] = None) -> List[Resource]:
-        return self.catalog.resources.values()
+    def list_resources(self, filter_opts: Optional[FilterOptions] = None) -> List[Resource]:
+        """Return a list of resources, filtered if necessary."""
+        return _filter_items(self.catalog.resources.values(), filter_opts, key=lambda r: r.url)
 
-    def list_shows(self, match: Optional[str] = None) -> List[Show]:
-        """Return all shows, optionally filtering by a substring or regex match."""
-        shows = self.catalog.shows.values()
-        if match:
-            # For simplicity, we'll do a case-insensitive substring match.
-            shows = [s for s in shows if s and match.lower()
-                     in s.title.lower()]
-        return shows
+    def list_shows(self, filter_opts: Optional[FilterOptions] = None) -> List[Show]:
+        """Return a list of shows, filtered if necessary."""
+        return _filter_items(self.catalog.shows.values(), filter_opts, key=lambda s: s.url)
 
-    def list_episodes(self, match: Optional[str] = None) -> List[Episode]:
-        """Return a combined list of all episodes, optionally filtered."""
-        return self.catalog.episodes.values()
+    def list_episodes(self, filter_opts: Optional[FilterOptions] = None) -> List[Episode]:
+        """Return a list of episodes, filtered if necessary."""
+        return _filter_items(self.catalog.episodes.values(), filter_opts, key=lambda e: e.url)
 
-    def list_hosts(self, match: Optional[str] = None) -> List[Host]:
-        """Return a combined list of all episodes, optionally filtered."""
-        return self.catalog.hosts.values()
+    def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
+        """Return a list of hosts, filtered if necessary."""
+        return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
 
     def diff(self, updated: ShowDirectory) -> Dict[str, List[Any]]:
         """
@@ -110,3 +105,29 @@ class StationCatalog:
             if current[uid] != new[uid]:
                 modified.append((current[uid], new[uid]))
         return {"added": added, "removed": removed, "modified": modified}
+
+
+def _filter_items(items: Iterable[Any],
+                  filter_opts: Optional[FilterOptions] = None,
+                  key: Optional[Callable[[Any], str]] = None) -> List[Any]:
+    """
+    Filter items using the compiled regex in filter_opts.
+
+    Parameters:
+    items: An iterable of items.
+    filter_opts: FilterOptions containing an optional compiled_match.
+    key: A callable that extracts a string from an item. If not provided,
+        str(item) is used.
+
+    Returns:
+    A list of items that match the compiled regex (if provided), or the original
+    items otherwise.
+    """
+    items = list(items)
+    if filter_opts and filter_opts.compiled_match:
+        pattern = filter_opts.compiled_match
+        if key is not None:
+            items = [item for item in items if pattern.search(key(item))]
+        else:
+            items = [item for item in items if pattern.search(str(item))]
+    return items

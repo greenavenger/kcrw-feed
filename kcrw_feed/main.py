@@ -8,13 +8,15 @@ import pprint
 import time
 from typing import Any, Dict
 
-from kcrw_feed.config import CONFIG
+from kcrw_feed import config
+from kcrw_feed.models import FilterOptions
 from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
 from kcrw_feed import station_catalog
 from kcrw_feed import show_index
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
 
+CONFIG = config.CONFIG
 logger = logging.getLogger("kcrw_feed")
 
 
@@ -88,6 +90,8 @@ def main():
 
     logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
+    filter_opts = config.get_filter_options(args)
+
     source: BaseSource
     source_root = args.source_root or CONFIG["source_root"]
     if source_root.startswith("http"):
@@ -111,7 +115,7 @@ def main():
 
     if args.command == "list":
         if args.mode == "resources":
-            resources = catalog.list_resources()
+            resources = catalog.list_resources(filter_opts=filter_opts)
             if args.verbose:
                 logger.info("Gathered entities: %s",
                             pprint.pformat(list(resources)))
@@ -120,14 +124,14 @@ def main():
                             pprint.pformat(sorted([e.url for e in resources])))
             logger.info("Gathered %s resources", len(resources))
         elif args.mode == "shows":
-            shows = catalog.list_shows()
+            shows = catalog.list_shows(filter_opts=filter_opts)
             shows = sorted(shows, key=lambda s: s.url)
             if args.verbose:
                 print(pprint.pformat(shows))
             for show in shows:
                 print(show.url)
         elif args.mode == "episodes":
-            episodes = catalog.list_episodes()
+            episodes = catalog.list_episodes(filter_opts=filter_opts)
             # Sort by airdate for now
             episodes = sorted(episodes)  # , key=lambda s: s.url)
             if args.verbose:
@@ -135,19 +139,12 @@ def main():
             for episode in episodes:
                 print(episode.url)
         elif args.mode == "hosts":
-            hosts = catalog.list_hosts()
+            hosts = catalog.list_hosts(filter_opts=filter_opts)
             hosts = sorted(hosts, key=lambda h: h.name)
             if args.verbose:
                 print(pprint.pformat(hosts))
             for host in hosts:
                 print(host.name)
-        # elif args.mode == "debug":
-        #     entities = collection.dump_all()
-        #     if args.detail:
-        #         pprint.pprint(entities)
-        #     else:
-        #         entities = sorted(list(entities.values()), key=lambda e: e.url)
-        #         pprint.pprint(entities)
     elif args.command == "diff":
         raise NotImplementedError
     elif args.command == "update":
