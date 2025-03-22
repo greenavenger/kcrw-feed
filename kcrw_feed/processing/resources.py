@@ -30,6 +30,7 @@ class SitemapProcessor:
             source: The base URL (or local base path) for the site.
         """
         self.source = source
+        # map: url -> Resource
         self._resources: Dict[str, Resource] = {}
 
     # Accessor Methods
@@ -235,7 +236,7 @@ class SitemapProcessor:
                     entry["lastmod"] = dt
                 resource = Resource(
                     url=url,
-                    ref=self.source.reference(url),
+                    source=self.source.reference(url),
                     metadata=entry
                 )
                 if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):

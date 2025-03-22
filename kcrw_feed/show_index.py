@@ -8,7 +8,7 @@ import urllib.robotparser as urobot
 import uuid
 
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
-from kcrw_feed.models import Show, Episode, ShowDirectory
+from kcrw_feed.models import Show, Episode, Resource, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
@@ -66,10 +66,10 @@ class ShowIndex:
         updated_resources: List[str] = []
 
         # Helper to fetch and store a resource.
-        def fetch_and_store(resource: str, metadata: Any) -> None:
-            relative = self.source.relative_path(resource)
+        def fetch_and_store(url: str, resource: Resource) -> None:
+            relative = self.source.relative_path(url)
             entity = self.show_processor.fetch(
-                relative, source_metadata=metadata)
+                relative, resource=resource)
             if not entity:
                 # Skip resource if fetch failed.
                 return
@@ -82,11 +82,11 @@ class ShowIndex:
             #     # If no UUID is provided, you might use the URL as a fallback key.
             #     key = show.url
             # self.shows[key] = show
-            updated_resources.append(resource)
+            updated_resources.append(url)
 
-        for resource, metadata in filtered_entries.items():
-            logger.debug("Processing resource: %s", resource)
-            fetch_and_store(resource, metadata)
+        for url, resource in filtered_entries.items():
+            logger.debug("Processing resource: %s", url)
+            fetch_and_store(url, resource)
 
         # Associate episodes with shows
         self._associate()

@@ -12,7 +12,7 @@ import uuid
 import extruct
 from bs4 import BeautifulSoup
 
-from kcrw_feed.models import Show, Episode, Host
+from kcrw_feed.models import Show, Episode, Host, Resource
 from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
@@ -65,17 +65,17 @@ class ShowProcessor:
 
     # Core methods
 
-    def fetch(self, resource: str, source_metadata: Optional[Dict[str, Any]]) -> Optional[Show | Episode]:
+    def fetch(self, url: str, resource: Optional[Resource]) -> Optional[Show | Episode]:
         """Dispatch show or episode processing and return the corresponding object."""
-        if self.source.is_show(resource):
-            logger.debug("Fetching show: %s", resource)
-            return self._fetch_show(resource, source_metadata=source_metadata)
-        logger.debug("Fetching episode: %s", resource)
-        return self._fetch_episode(resource, source_metadata=source_metadata)
+        if self.source.is_show(url):
+            logger.debug("Fetching show: %s", url)
+            return self._fetch_show(url, resource=resource)
+        logger.debug("Fetching episode: %s", url)
+        return self._fetch_episode(url, resource=resource)
 
-    def _fetch_show(self, resource: str, source_metadata: Optional[Dict[str, Any]]) -> Optional[Show]:
+    def _fetch_show(self, url: str, resource: Optional[Resource]) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
-        show_file = self.source.relative_path(resource + SHOW_FILE)
+        show_file = self.source.relative_path(url + SHOW_FILE)
         logger.debug("show_file: %s", show_file)
         html = self.source.get_resource(show_file)
         if html is None:
@@ -83,7 +83,7 @@ class ShowProcessor:
             return
 
         # Try to extract structured data using extruct (e.g., microdata).
-        data = extruct.extract(html, base_url=resource, syntaxes=["microdata"])
+        data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Extracted data: %s", pprint.pformat(data))
 
@@ -100,7 +100,7 @@ class ShowProcessor:
             logger.trace("show_data: %s", pprint.pformat(show_data))
 
         # TODO: Permanently remove Episode population in the Show context
-        # since we don't have source_metadata here.
+        # since we don't have a Resource here.
         # episode_data = None
         # # Look for an object that indicates it's an episode (or similar).
         # for item in data.get("microdata", []):
@@ -117,12 +117,19 @@ class ShowProcessor:
             assert show_html_id is not None, "Failed to extract UUID!"
             show_uuid = utils.extract_uuid(show_html_id)
             logger.debug("show_uuid: %s", show_uuid)
+
+            if resource:
+                last_updated = resource.metadata.get("lastmod")
+            else:
+                last_updated = datetime.now()
+            logger.trace("last_updated: %s", last_updated)
+
             if show_uuid in self._model_cache:
                 # Show has already been fetched, so return cached object
                 show = self._model_cache.get(show_uuid)
             else:
                 show = Show(
-                    title=show_data.get("name", resource.split("/")[-1]),
+                    title=show_data.get("name", url.split("/")[-1]),
                     url=show_data.get("properties", {}).get(
                         "mainEntityOfPage"),
                     uuid=show_uuid,
@@ -131,8 +138,8 @@ class ShowProcessor:
                     hosts=self._parse_hosts(show_data),
                     episodes=episodes,      # Episodes can be added later.
                     type=show_data.get("type"),
-                    source_metadata=source_metadata,
-                    last_updated=datetime.now()
+                    resource=resource,
+                    last_updated=last_updated
                 )
                 self._model_cache[show.uuid] = show
         else:
@@ -140,11 +147,11 @@ class ShowProcessor:
             soup = BeautifulSoup(html, "html.parser")
             title_tag = soup.find("title")
             title = title_tag.text.strip(
-            ) if title_tag else resource.split("/")[-1]
+            ) if title_tag else url.split("/")[-1]
             show = Show(
                 title=title,
-                url=resource,
-                last_updated=datetime.now(),
+                url=url,
+                last_updated=last_updated,
                 metadata={}
             )
             self._model_cache[show.url] = show
@@ -176,14 +183,14 @@ class ShowProcessor:
                     elif url and episode_uuid:
                         # Called from _fetch_show, we don't have Episode metadata
                         episode = self._fetch_episode(
-                            url, source_metadata={}, uuid=episode_uuid)
+                            url, resource={}, uuid=episode_uuid)
                     else:
-                        episode = self._fetch_episode(url, source_metadata={})
+                        episode = self._fetch_episode(url, resource={})
                     if episode:
                         episodes.append(episode)
         return utils.uniq_by_uuid(episodes)
 
-    def _fetch_episode(self, resource: str, source_metadata: Optional[Dict[str, Any]], uuid: Optional[str] = "") -> Optional[Episode]:
+    def _fetch_episode(self, url: str, resource: Optional[Resource], uuid: Optional[str] = "") -> Optional[Episode]:
         """Fetch the player for the Episode and extract details."""
 
         episode: Episode
@@ -192,7 +199,7 @@ class ShowProcessor:
             # Episode has been fetched, so return cached object
             return self._model_cache.get(uuid)
 
-        episode_file = self.source.relative_path(resource + EPISODE_FILE)
+        episode_file = self.source.relative_path(url + EPISODE_FILE)
         logger.debug("episode_file: %s", episode_file)
         episode_bytes = self.source.get_resource(episode_file)
         episode_data = None
@@ -223,7 +230,7 @@ class ShowProcessor:
                 duration=episode_data.get("duration"),
                 ending=utils.parse_date(episode_data.get("ending")),
                 last_updated=utils.parse_date(episode_data.get("modified")),
-                source_metadata=source_metadata
+                resource=resource
             )
             if episode.uuid:
                 self._model_cache[episode.uuid] = episode

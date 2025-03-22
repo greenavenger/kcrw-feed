@@ -20,14 +20,19 @@ class FilterOptions:
 
 @dataclass
 class Resource:
-    url: str  # canonical location of resource on kcrw.com
-    ref: str  # reference: URL or path to local file
-    # metadata example:
-    #   {'changefreq': 'yearly',
-    #    'image:image': {'image:loc': 'https://www.kcrw.com/music/shows/aaron-byrd/aaron-byrds-playlist-april-12-2021/@@images/image/page-header'},
-    #    'lastmod': datetime.datetime(2021, 4, 13, 8, 12, 57, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200))),
-    #    'loc': 'https://www.kcrw.com/music/shows/aaron-byrd/aaron-byrds-playlist-april-12-2021',
-    #    'priority': '0.8'}
+    """'metadata' is structured data extracted (and somewhat transformed)
+    from sitemap xml data:
+
+    metadata = {
+      'changefreq': 'yearly',
+      'image:image': {'image:loc': 'https://www.kcrw.com/music/shows/aaron-byrd/aaron-byrds-playlist-april-12-2021/@@images/image/page-header'},
+      'lastmod': datetime.datetime(2021, 4, 13, 8, 12, 57, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200))),
+      'loc': 'https://www.kcrw.com/music/shows/aaron-byrd/aaron-byrds-playlist-april-12-2021',
+      'priority': '0.8'
+    }
+    """
+    url: str     # canonical location of resource on kcrw.com
+    source: str  # source used: URL or path to local file
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -42,6 +47,9 @@ class Host:
     socials: List[Episode] = field(default_factory=list)
     description: Optional[str] = None
     type: Optional[str] = None
+    # TODO: should we include the Show resource here? Note that both
+    # a Show and an Episode have Host info (that could be conflicting
+    # due to guest hosting).
     # host always comes with Show, and so does not have its own Resource
     # resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -58,7 +66,6 @@ class Show:
     episodes: List[Episode] = field(default_factory=list)
     type: Optional[str] = None
     last_updated: Optional[datetime] = None
-    source_metadata: Dict[str, Any] = field(default_factory=dict)
     resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -85,7 +92,6 @@ class Episode:
     duration: Optional[float] = None
     ending: Optional[datetime] = None
     last_updated: Optional[datetime] = None
-    source_metadata: Dict[str, Any] = field(default_factory=dict)
     resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 

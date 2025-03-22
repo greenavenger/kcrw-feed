@@ -12,7 +12,7 @@ import uuid
 from django.utils.feedgenerator import Rss201rev2Feed
 
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
-from kcrw_feed.models import Host, Show, Episode, ShowDirectory
+from kcrw_feed.models import Host, Show, Episode, Resource, ShowDirectory
 from kcrw_feed import utils
 
 
@@ -63,6 +63,7 @@ class JsonPersister(BasePersister):
         return uuid.UUID(uuid_str)
 
     def episode_from_dict(self, data: Dict[Any, Any]) -> Episode:
+        resource = self.resource_from_dict(data.get("resource", {}))
         return Episode(
             title=data["title"],
             airdate=self._parse_datetime(
@@ -83,6 +84,7 @@ class JsonPersister(BasePersister):
                 data["ending"]) if data.get("ending") else None,
             last_updated=self._parse_datetime(
                 data["last_updated"]) if data.get("last_updated") else None,
+            resource=resource,
             metadata=data.get("metadata", {})
         )
 
@@ -103,6 +105,7 @@ class JsonPersister(BasePersister):
         episodes = [self.episode_from_dict(ep)
                     for ep in data.get("episodes", [])]
         hosts = [self.host_from_dict(h) for h in data.get("hosts", [])]
+        resource = self.resource_from_dict(data.get("resource", {}))
         last_updated = self._parse_datetime(
             data["last_updated"]) if data.get("last_updated") else None
         return Show(
@@ -114,8 +117,18 @@ class JsonPersister(BasePersister):
             episodes=episodes,
             type=data.get("type"),
             last_updated=last_updated,
+            resource=resource,
             metadata=data.get("metadata", {})
         )
+
+    def resource_from_dict(self, data: Dict[str, Any]) -> Resource:
+        if data:
+            return Resource(
+                url=data["url"],
+                source=data.get("source", ""),
+                metadata=data.get("metadata", {})
+            )
+        return Resource(url="", source="", metadata={})
 
     def directory_from_dict(self, data: Dict[Any, Any]) -> ShowDirectory:
         shows = [self.show_from_dict(show_data)

@@ -55,10 +55,16 @@ class StationCatalog:
                     # TODO: fix that hosts are a list of uuids here!
                     if not isinstance(host, uuid.UUID) and host.uuid:
                         catalog.hosts[host.uuid] = host
+                if episode.resource:
+                    key = episode.resource.url
+                    catalog.resources[key] = episode.resource
             # TODO: remove duplicative host population?
             for host in show.hosts:
                 if host.uuid:
                     catalog.hosts[host.uuid] = host
+            if show.resource:
+                key = show.resource.url
+                catalog.resources[key] = show.resource
         logger.info("Loaded: %d shows, %d episodes, %d, hosts",
                     len(catalog.shows), len(
                         catalog.episodes), len(catalog.hosts))

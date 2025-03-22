@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import pytest
 from typing import Any, Dict, List, Optional
-from kcrw_feed.models import Show, Episode
+from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed.show_index import ShowIndex
 from kcrw_feed.processing.resources import MUSIC_FILTER_RE
 
@@ -102,7 +102,7 @@ class FakeSitemapProcessor:
 class FakeShowProcessor:
     """A fake ShowProcessor that returns a dummy Show object for a given URL."""
 
-    def fetch(self, url: str, source_metadata: Optional[Dict[str, Any]] = {}) -> Show:
+    def fetch(self, url: str, resource: Optional[Resource] = None) -> Show:
         # For testing, derive a dummy uuid and title from the URL.
         if "show1" in url:
             uid = "uuid-show1"
@@ -125,7 +125,7 @@ class FakeShowProcessor:
             hosts=[],  # Empty list of hosts for simplicity.
             episodes=[],  # Initially empty.
             last_updated=datetime(2025, 1, 1),
-            source_metadata=source_metadata,
+            resource=resource,
             metadata={}
         )
 

@@ -101,7 +101,7 @@ def main():
     storage_root = args.storage_root or CONFIG["storage_root"]
     # Use an absolute path for the storage_root so it's unambiguous.
     storage_root = os.path.abspath(storage_root)
-    logger.info("Data root: %s", storage_root)
+    logger.info("Storage root: %s", storage_root)
 
     catalog = station_catalog.StationCatalog(storage_root=storage_root)
 
@@ -111,14 +111,14 @@ def main():
 
     if args.command == "list":
         if args.mode == "resources":
-            # entities = catalog.list_resources()
-            entities = collection.gather()
+            resources = catalog.list_resources()
             if args.verbose:
-                logger.info("Gathered entities: %s", pprint.pformat(entities))
+                logger.info("Gathered entities: %s",
+                            pprint.pformat(list(resources)))
             else:
                 logger.info("Gathered resources: %s",
-                            pprint.pformat(sorted(list(entities.keys()))))
-            logger.info("Gathered %s entities", len(entities))
+                            pprint.pformat(sorted([e.url for e in resources])))
+            logger.info("Gathered %s resources", len(resources))
         elif args.mode == "shows":
             shows = catalog.list_shows()
             shows = sorted(shows, key=lambda s: s.url)
