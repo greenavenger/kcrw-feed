@@ -192,8 +192,8 @@ class HttpsSource(BaseSource):
         self.uses_sitemap = True
         # Create a single cached session that will be reused for all HTTP requests.
         self._session = requests_cache.CachedSession(
-            'kcrw_cache',  # backend='sqlite', # stores data in kcrw_cache.sqlite
-            backend='filesystem',  # stores data in "./kcrw_cache"
+            'kcrw_cache',  backend='sqlite',  # stores data in kcrw_cache.sqlite
+            # backend='filesystem',  # stores data in "./kcrw_cache"
             # Use Cache-Control response headers for expiration, if available
             cache_control=True,
             # Otherwise expire responses after one day
