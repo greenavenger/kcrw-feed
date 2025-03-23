@@ -3,7 +3,7 @@
 import pytest
 from datetime import datetime
 from typing import Optional
-from kcrw_feed.sitemap_processor import SitemapProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
+from kcrw_feed.processing.resources import SitemapProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
 from kcrw_feed import source_manager
 
 
@@ -59,13 +59,16 @@ class DummySource:
         self.base_url = base_url
 
     def get_resource(self, path: str) -> Optional[bytes]:
-        # If the path isn't an absolute URL, prepend the base URL.
-        if not path.startswith("http"):
-            path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
-        return fake_get_file(path)
+        return fake_get_file(self.reference(path))
 
     def relative_path(self, url: str) -> str:
         return url
+
+    def reference(self, path: str) -> str:
+        # If the path isn't an absolute URL, prepend the base URL.
+        if not path.startswith("http"):
+            path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
+        return path
 
 
 @pytest.fixture
@@ -99,8 +102,8 @@ def test_read_sitemap_for_entries(dummy_source):
     processor._read_sitemap_for_entries(
         "https://www.testsite.com/sitemap1.xml")
     # From sitemap1.xml, only the URL containing "/music/shows/" should be stored.
-    assert "https://www.testsite.com/music/shows/show1" in processor._source_entities
-    assert "https://www.testsite.com/other/url" not in processor._source_entities
+    assert "https://www.testsite.com/music/shows/show1" in processor._resources
+    assert "https://www.testsite.com/other/url" not in processor._resources
 
 
 def test_read_sitemap_for_child_sitemaps(dummy_source):
@@ -161,82 +164,82 @@ def test_gather_entries(dummy_source, monkeypatch):
     assert set(urls) == expected
 
 
-def test_get_all_entries(dummy_source):
-    """Test that get_all_entries() returns all stored sitemap entry
-    dictionaries."""
-    processor = SitemapProcessor(dummy_source)
-    # Preload fake entries.
-    processor._source_entities = {
-        "https://www.testsite.com/music/shows/show1": {
-            "loc": "https://www.testsite.com/music/shows/show1",
-            "lastmod": "2025-01-01T00:00:00"
-        },
-        "https://www.testsite.com/music/shows/show2": {
-            "loc": "https://www.testsite.com/music/shows/show2",
-            "lastmod": "2025-02-01T00:00:00"
-        }
-    }
-    entries = processor.get_all_entries()
-    expected = [
-        {"loc": "https://www.testsite.com/music/shows/show1",
-            "lastmod": "2025-01-01T00:00:00"},
-        {"loc": "https://www.testsite.com/music/shows/show2",
-            "lastmod": "2025-02-01T00:00:00"},
-    ]
-    # Use frozenset for unordered comparison.
-    assert {frozenset(entry.items()) for entry in entries} == {
-        frozenset(entry.items()) for entry in expected}
+# def test_get_all_entries(dummy_source):
+#     """Test that get_all_entries() returns all stored sitemap entry
+#     dictionaries."""
+#     processor = SitemapProcessor(dummy_source)
+#     # Preload fake entries.
+#     processor._source_entities = {
+#         "https://www.testsite.com/music/shows/show1": {
+#             "loc": "https://www.testsite.com/music/shows/show1",
+#             "lastmod": "2025-01-01T00:00:00"
+#         },
+#         "https://www.testsite.com/music/shows/show2": {
+#             "loc": "https://www.testsite.com/music/shows/show2",
+#             "lastmod": "2025-02-01T00:00:00"
+#         }
+#     }
+#     entries = processor.get_all_entries()
+#     expected = [
+#         {"loc": "https://www.testsite.com/music/shows/show1",
+#             "lastmod": "2025-01-01T00:00:00"},
+#         {"loc": "https://www.testsite.com/music/shows/show2",
+#             "lastmod": "2025-02-01T00:00:00"},
+#     ]
+#     # Use frozenset for unordered comparison.
+#     assert {frozenset(entry.items()) for entry in entries} == {
+#         frozenset(entry.items()) for entry in expected}
 
 
-def test_get_entries_after(dummy_source):
-    """Test that get_entries_after() returns only entries with a lastmod date
-    after a given threshold."""
-    processor = SitemapProcessor(dummy_source)
-    processor._source_entities = {
-        "https://www.testsite.com/music/shows/show1": {
-            "loc": "https://www.testsite.com/music/shows/show1",
-            "lastmod": "2025-01-01T00:00:00"
-        },
-        "https://www.testsite.com/music/shows/show2": {
-            "loc": "https://www.testsite.com/music/shows/show2",
-            "lastmod": "2025-02-01T00:00:00"
-        },
-        "https://www.testsite.com/music/shows/show3": {
-            "loc": "https://www.testsite.com/music/shows/show3",
-            "lastmod": "2025-03-01T00:00:00"
-        }
-    }
-    threshold = datetime.fromisoformat("2025-01-15T00:00:00")
-    entries = processor.get_entries_after(threshold)
-    result_locs = {entry["loc"] for entry in entries}
-    expected_locs = {
-        "https://www.testsite.com/music/shows/show2",
-        "https://www.testsite.com/music/shows/show3",
-    }
-    assert result_locs == expected_locs
+# def test_get_entries_after(dummy_source):
+#     """Test that get_entries_after() returns only entries with a lastmod date
+#     after a given threshold."""
+#     processor = SitemapProcessor(dummy_source)
+#     processor._source_entities = {
+#         "https://www.testsite.com/music/shows/show1": {
+#             "loc": "https://www.testsite.com/music/shows/show1",
+#             "lastmod": "2025-01-01T00:00:00"
+#         },
+#         "https://www.testsite.com/music/shows/show2": {
+#             "loc": "https://www.testsite.com/music/shows/show2",
+#             "lastmod": "2025-02-01T00:00:00"
+#         },
+#         "https://www.testsite.com/music/shows/show3": {
+#             "loc": "https://www.testsite.com/music/shows/show3",
+#             "lastmod": "2025-03-01T00:00:00"
+#         }
+#     }
+#     threshold = datetime.fromisoformat("2025-01-15T00:00:00")
+#     entries = processor.get_entries_after(threshold)
+#     result_locs = {entry["loc"] for entry in entries}
+#     expected_locs = {
+#         "https://www.testsite.com/music/shows/show2",
+#         "https://www.testsite.com/music/shows/show3",
+#     }
+#     assert result_locs == expected_locs
 
 
-def test_get_entries_between(dummy_source):
-    """Test that get_entries_between() returns only entries with a lastmod
-    date between start and end."""
-    processor = SitemapProcessor(dummy_source)
-    processor._source_entities = {
-        "https://www.testsite.com/music/shows/show1": {
-            "loc": "https://www.testsite.com/music/shows/show1",
-            "lastmod": "2025-01-01T00:00:00"
-        },
-        "https://www.testsite.com/music/shows/show2": {
-            "loc": "https://www.testsite.com/music/shows/show2",
-            "lastmod": "2025-02-01T00:00:00"
-        },
-        "https://www.testsite.com/music/shows/show3": {
-            "loc": "https://www.testsite.com/music/shows/show3",
-            "lastmod": "2025-03-01T00:00:00"
-        }
-    }
-    start = datetime.fromisoformat("2025-01-15T00:00:00")
-    end = datetime.fromisoformat("2025-02-15T00:00:00")
-    entries = processor.get_entries_between(start, end)
-    result_locs = {entry["loc"] for entry in entries}
-    expected_locs = {"https://www.testsite.com/music/shows/show2"}
-    assert result_locs == expected_locs
+# def test_get_entries_between(dummy_source):
+#     """Test that get_entries_between() returns only entries with a lastmod
+#     date between start and end."""
+#     processor = SitemapProcessor(dummy_source)
+#     processor._source_entities = {
+#         "https://www.testsite.com/music/shows/show1": {
+#             "loc": "https://www.testsite.com/music/shows/show1",
+#             "lastmod": "2025-01-01T00:00:00"
+#         },
+#         "https://www.testsite.com/music/shows/show2": {
+#             "loc": "https://www.testsite.com/music/shows/show2",
+#             "lastmod": "2025-02-01T00:00:00"
+#         },
+#         "https://www.testsite.com/music/shows/show3": {
+#             "loc": "https://www.testsite.com/music/shows/show3",
+#             "lastmod": "2025-03-01T00:00:00"
+#         }
+#     }
+#     start = datetime.fromisoformat("2025-01-15T00:00:00")
+#     end = datetime.fromisoformat("2025-02-15T00:00:00")
+#     entries = processor.get_entries_between(start, end)
+#     result_locs = {entry["loc"] for entry in entries}
+#     expected_locs = {"https://www.testsite.com/music/shows/show2"}
+#     assert result_locs == expected_locs

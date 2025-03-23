@@ -8,30 +8,8 @@ import json
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
-RESOURCES = ["/music/shows/henry-rollins/kcrw-broadcast-825",
-             "/music/shows/henry-rollins/kcrw-broadcast-824",
-             "/music/shows/henry-rollins/kcrw-broadcast-822",
-             "/music/shows/henry-rollins/kcrw-broadcast-821",
-             "/music/shows/henry-rollins/kcrw-broadcast-820",
-             "/music/shows/henry-rollins/kcrw-broadcast-819",
-             "/music/shows/henry-rollins/kcrw-broadcast-818",
-             "/music/shows/henry-rollins/kcrw-broadcast-817",
-             "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
-             "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
-             "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
-             "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024"]
-
-
-def test_gather_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
-    cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "gather"]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    assert result.returncode == 0
-    for resource in RESOURCES:
-        assert resource in result.stdout
-    pprint.pprint(result.stdout)
+# Run test_udpate_command() first to ensure that kcrw_feed.json exists for list commands.
+# TODO: move list commands into a tempdir too!
 
 
 def test_update_command():
@@ -45,6 +23,57 @@ def test_update_command():
     pprint.pprint(result.stdout)
 
 
+RESOURCES_PRE_2025 = ["/music/shows/henry-rollins/kcrw-broadcast-820",
+                      "/music/shows/henry-rollins/kcrw-broadcast-819",
+                      "/music/shows/henry-rollins/kcrw-broadcast-818",
+                      "/music/shows/henry-rollins/kcrw-broadcast-817",
+                      "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024"]
+RESOURCES_POST_2025 = ["/music/shows/henry-rollins/kcrw-broadcast-825",
+                       "/music/shows/henry-rollins/kcrw-broadcast-824",
+                       "/music/shows/henry-rollins/kcrw-broadcast-822",
+                       "/music/shows/henry-rollins/kcrw-broadcast-821",
+                       "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
+                       "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+                       "/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025"]
+RESOURCES = RESOURCES_PRE_2025 + RESOURCES_POST_2025
+
+
+def test_list_resources_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "list"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for resource in RESOURCES:
+        assert resource in result.stdout
+    pprint.pprint(result.stdout)
+
+
+def test_list_resources_until_date_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "--until", "2025-01-01", "list"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for resource in RESOURCES_PRE_2025:
+        assert resource in result.stdout
+    pprint.pprint(result.stdout)
+
+
+def test_list_resources_since_date_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "--since", "2025-01-01", "list"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for resource in RESOURCES_POST_2025:
+        assert resource in result.stdout
+    pprint.pprint(result.stdout)
+
+
 SHOWS = ["https://www.kcrw.com/music/shows/henry-rollins",
          "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras"]
 
@@ -53,7 +82,7 @@ def test_list_shows_command():
     # Use an absolute path for the source_root so it's unambiguous.
     source_root = os.path.abspath("./tests/data/")
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "list"]
+           f"--source_root={source_root}", "list", "shows"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for show in SHOWS:
@@ -61,31 +90,31 @@ def test_list_shows_command():
     pprint.pprint(result.stdout)
 
 
-# TODO: Fix so filtering properly applies to list commands
-# def test_list_shows_match_command():
-#     # Use an absolute path for the source_root so it's unambiguous.
-#     source_root = os.path.abspath("./tests/data/")
-#     cmd = ["poetry", "run", "kcrw-feed",
-#            f"--source_root={source_root}", "list",
-#            f"--shows={SHOWS[0]}"]
-#     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-#     assert result.returncode == 0
-#     assert SHOWS[0] in result.stdout
-#     pprint.pprint(result.stdout)
+def test_list_shows_match_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "--match", "wylde", "list", "shows"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    assert SHOWS[1] in result.stdout
+    pprint.pprint(result.stdout)
 
 
-EPISODES = ["https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
-            "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
-            "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
-            "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
-            "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
-            "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025"]
+EPISODES_PRE_2025 = ["https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
+                     "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
+                     "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
+                     "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
+                     "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821",
+                     "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
+                     ]
+EPISODES_POST_2025 = ["https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
+                      "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
+                      "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
+                      "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
+                      "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+                      "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025"]
+EPISODES = EPISODES_PRE_2025 + EPISODES_POST_2025
 
 
 def test_list_episodes_command():
@@ -100,7 +129,49 @@ def test_list_episodes_command():
     pprint.pprint(result.stdout)
 
 
-def test_save_command():
+def test_list_episodes_filter_until_date_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "--until", "2025-01-01", "list", "episodes"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for episode in EPISODES_PRE_2025:
+        assert episode in result.stdout
+    pprint.pprint(result.stdout)
+
+
+def test_list_episodes_filter_since_date_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "--since", "2025-01-01", "list", "episodes"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for episode in EPISODES_POST_2025:
+        assert episode in result.stdout
+    pprint.pprint(result.stdout)
+
+
+HOSTS = [
+    'Henry Rollins',
+    'Ro "Wyldeflower" Contreras'
+]
+
+
+def test_list_hosts_command():
+    # Use an absolute path for the source_root so it's unambiguous.
+    source_root = os.path.abspath("./tests/data/")
+    cmd = ["poetry", "run", "kcrw-feed",
+           f"--source_root={source_root}", "list", "hosts"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    assert result.returncode == 0
+    for host in HOSTS:
+        assert host in result.stdout
+    pprint.pprint(result.stdout)
+
+
+def test_save_functionality():
     # Use an absolute path for source_root.
     source_root = os.path.abspath("./tests/data/")
     # Use the project root as cwd so Poetry finds pyproject.toml.
@@ -113,8 +184,8 @@ def test_save_command():
         cmd = [
             "poetry", "run", "kcrw-feed",
             f"--source_root={source_root}",
-            f"--data_root={tmpdirname}",
-            "save"
+            f"--storage_root={tmpdirname}",
+            "update"
         ]
         result = subprocess.run(
             cmd, capture_output=True, text=True, cwd=project_root, check=True

@@ -11,8 +11,8 @@ import uuid
 
 from django.utils.feedgenerator import Rss201rev2Feed
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
-from kcrw_feed.models import Host, Show, Episode, ShowDirectory
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
+from kcrw_feed.models import Host, Show, Episode, Resource, ShowDirectory
 from kcrw_feed import utils
 
 
@@ -32,9 +32,9 @@ class BasePersister(ABC):
         pass
 
 
-class Json(BasePersister):
-    def __init__(self, data_root: str, filename: str = FILENAME_JSON) -> None:
-        self.filename = os.path.join(data_root, filename)
+class JsonPersister(BasePersister):
+    def __init__(self, storage_root: str, filename: str = FILENAME_JSON) -> None:
+        self.filename = os.path.join(storage_root, filename)
         logger.debug("JSON file: %s", self.filename)
 
     # Serialization
@@ -63,6 +63,7 @@ class Json(BasePersister):
         return uuid.UUID(uuid_str)
 
     def episode_from_dict(self, data: Dict[Any, Any]) -> Episode:
+        resource = self.resource_from_dict(data.get("resource", {}))
         return Episode(
             title=data["title"],
             airdate=self._parse_datetime(
@@ -83,6 +84,7 @@ class Json(BasePersister):
                 data["ending"]) if data.get("ending") else None,
             last_updated=self._parse_datetime(
                 data["last_updated"]) if data.get("last_updated") else None,
+            resource=resource,
             metadata=data.get("metadata", {})
         )
 
@@ -103,6 +105,7 @@ class Json(BasePersister):
         episodes = [self.episode_from_dict(ep)
                     for ep in data.get("episodes", [])]
         hosts = [self.host_from_dict(h) for h in data.get("hosts", [])]
+        resource = self.resource_from_dict(data.get("resource", {}))
         last_updated = self._parse_datetime(
             data["last_updated"]) if data.get("last_updated") else None
         return Show(
@@ -114,8 +117,21 @@ class Json(BasePersister):
             episodes=episodes,
             type=data.get("type"),
             last_updated=last_updated,
+            resource=resource,
             metadata=data.get("metadata", {})
         )
+
+    def resource_from_dict(self, data: Dict[str, Any]) -> Resource:
+        if data:
+            lastmod = self._parse_datetime(data.get("metadata")["lastmod"])
+            resource = Resource(
+                url=data["url"],
+                source=data.get("source", ""),
+                metadata=data.get("metadata", {})
+            )
+            resource.metadata["lastmod"] = lastmod
+            return resource
+        return Resource(url="", source="", metadata={})
 
     def directory_from_dict(self, data: Dict[Any, Any]) -> ShowDirectory:
         shows = [self.show_from_dict(show_data)
@@ -126,6 +142,10 @@ class Json(BasePersister):
         """Load the state from a JSON file and return a ShowDirectory
         instance."""
         filename = filename or self.filename
+        if not os.path.exists(filename):
+            logger.debug(
+                "File %s does not exist. Returning empty ShowDirectory.", filename)
+            return ShowDirectory(shows=[])
         with open(filename, "rb") as f:
             raw = f.read()
             logger.debug("Read %d bytes from %s", len(raw), filename)
@@ -133,20 +153,20 @@ class Json(BasePersister):
         return self.directory_from_dict(data)
 
 
-class Rss(BasePersister):
-    def __init__(self, data_root: str, output_dir: str = FEED_DIRECTORY) -> None:
-        self.output_dir = os.path.join(data_root, output_dir)
-        logger.debug("RSS outpud directory: %s", self.output_dir)
+class RssPersister(BasePersister):
+    def __init__(self, storage_root: str, feed_dir: str = FEED_DIRECTORY) -> None:
+        self.feed_dir = os.path.join(storage_root, feed_dir)
+        logger.debug("RSS output directory: %s", self.feed_dir)
 
-    def save(self, show_directory: ShowDirectory, output_dir: str | None = None) -> None:
+    def save(self, show_directory: ShowDirectory, feed_dir: str | None = None) -> None:
         """Generate an individual RSS feed XML file for each show in the state.
         Episodes are sorted in reverse chronological order (most recent first).
 
         Parameters:
           state: A ShowDirectory instance containing a list of shows.
           output_dir: The output directory where feed files will be written."""
-        output_dir = output_dir or self.output_dir
-        os.makedirs(output_dir, exist_ok=True)
+        feed_dir = feed_dir or self.feed_dir
+        os.makedirs(feed_dir, exist_ok=True)
         for show in show_directory.shows:
             # Create an RSS feed using Django's feed generator.
             feed = Rss201rev2Feed(
@@ -169,7 +189,7 @@ class Rss(BasePersister):
             feed_xml = feed.writeString("utf-8")
             # Use the show's UUID as the filename (or fallback to title).
             file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
-            output_path = os.path.join(output_dir, file_name)
+            output_path = os.path.join(feed_dir, file_name)
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(feed_xml)
 

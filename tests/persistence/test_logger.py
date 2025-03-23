@@ -5,7 +5,7 @@ import json
 import datetime as dt
 import io
 
-from kcrw_feed.persistent_logger import JSONFormatter, NonErrorFilter, LOGGING_LEVEL_MAP
+from kcrw_feed.persistence.logger import JSONFormatter, NonErrorFilter, LOGGING_LEVEL_MAP
 
 
 def test_logger_trace_enabled():

@@ -7,13 +7,13 @@ from typing import Any, Dict, List, Optional
 import urllib.robotparser as urobot
 import uuid
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
-from kcrw_feed.models import Show, Episode, ShowDirectory
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
+from kcrw_feed.models import Show, Episode, Resource, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
-from kcrw_feed.sitemap_processor import SitemapProcessor
+from kcrw_feed.processing.resources import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
-from kcrw_feed import state_manager
+from kcrw_feed.persistence.manager import JsonPersister, RssPersister
 from kcrw_feed import utils
 
 
@@ -21,12 +21,13 @@ logger = logging.getLogger("kcrw_feed")
 
 
 class ShowIndex:
-    def __init__(self, source: BaseSource) -> None:
+    def __init__(self, source: BaseSource, storage_root: str) -> None:
         """Parameters:
-            source (str): The base URL (or local base path) for the site.
-            extra_sitemaps (List[str], optional): Additional sitemap paths to include.
+            source: The BaseSource object for the site (http or file).
+            storage_root: The directory root for local storage (state, feeds).
         """
         self.source = source
+        self.storage_root = storage_root
         # Instantiate the helper components.
         self.sitemap_processor = SitemapProcessor(self.source)
         self.show_processor = ShowProcessor(self.source)
@@ -45,8 +46,8 @@ class ShowIndex:
             raise NotImplementedError
         return entries
 
-    def update(self, selection: List[str] = [], update_after: Optional[datetime] = None,
-               ) -> int:
+    def update(self, selection: List[str] = [],
+               update_after: Optional[datetime] = None) -> int:
         """Update the repository with enriched Show objects.
 
         Parameters:
@@ -65,10 +66,10 @@ class ShowIndex:
         updated_resources: List[str] = []
 
         # Helper to fetch and store a resource.
-        def fetch_and_store(resource: str, metadata: Any) -> None:
-            relative = self.source.relative_path(resource)
+        def fetch_and_store(url: str, resource: Resource) -> None:
+            relative = self.source.relative_path(url)
             entity = self.show_processor.fetch(
-                relative, source_metadata=metadata)
+                relative, resource=resource)
             if not entity:
                 # Skip resource if fetch failed.
                 return
@@ -81,16 +82,19 @@ class ShowIndex:
             #     # If no UUID is provided, you might use the URL as a fallback key.
             #     key = show.url
             # self.shows[key] = show
-            updated_resources.append(resource)
+            updated_resources.append(url)
 
-        for resource, metadata in filtered_entries.items():
-            logger.debug("Processing resource: %s", resource)
-            fetch_and_store(resource, metadata)
+        for url, resource in filtered_entries.items():
+            logger.debug("Processing resource: %s", url)
+            fetch_and_store(url, resource)
 
         # Associate episodes with shows
         self._associate()
 
         logger.info("Updated %d resources", len(updated_resources))
+
+        self.save()
+
         return len(updated_resources)
 
     def _associate(self) -> None:
@@ -98,7 +102,8 @@ class ShowIndex:
         with a Show."""
         for episode in self.show_processor.get_episodes():
             show = self.show_processor.get_show_by_uuid(episode.show_uuid)
-            show.add_episode(episode)
+            if episode.uuid not in [e.uuid for e in show.episodes]:
+                show.episodes.append(episode)
 
     def _filter_selected_by_name(self, entities: Dict[str, Any], selection: List[str] = []) -> Dict[str, Any]:
         """Filter resources based on selected_urls if necessary."""
@@ -119,38 +124,35 @@ class ShowIndex:
             selected), "Selection did not match resources!"
         return selected
 
-    def load(self, data_root: str) -> None:
-        """Load data from stable storage."""
-        logger.info("Loading entities")
+    # def load(self) -> None:
+    #     """Load data from stable storage."""
+    #     logger.info("Loading entities")
 
-        persister = state_manager.Json(data_root)
-        directory = persister.load()
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("Loaded data: %s", pprint.pformat(directory))
+    #     persister = JsonPersister(self.storage_root)
+    #     directory = persister.load()
+    #     if logger.isEnabledFor(TRACE_LEVEL_NUM):
+    #         logger.trace("Loaded data: %s", pprint.pformat(directory))
 
-        for show in directory.get_shows():
-            self._entities[show.uuid] = show
-            for episode in show.get_episodes():
-                self._entities[episode.uuid] = episode
+    #     for show in directory.get_shows():
+    #         self._entities[show.uuid] = show
+    #         for episode in show.get_episodes():
+    #             self._entities[episode.uuid] = episode
 
-    def save(self, data_root: str) -> None:
+    def save(self) -> None:
         """Persist data to stable storage."""
-        _: int = self.update()
-
         logger.info("Saving entities")
-
-        persister = state_manager.Json(data_root=data_root)
+        persister = JsonPersister(storage_root=self.storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Saved data: %s", pprint.pformat(directory))
 
-        self.generate_feeds(data_root)
+        self.generate_feeds()
 
-    def generate_feeds(self, data_root: str) -> None:
+    def generate_feeds(self) -> None:
         """Generate feed files"""
         logger.info("Writing feeds")
-        persister = state_manager.Rss(data_root=data_root)
+        persister = RssPersister(storage_root=self.storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
 

@@ -8,9 +8,10 @@ from typing import Any, Dict, List, Set
 import urllib.robotparser as urobot
 import xmltodict
 
-from kcrw_feed.persistent_logger import TRACE_LEVEL_NUM
+from kcrw_feed.models import Resource
+from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed import source_manager
-from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
+from kcrw_feed.source_manager import BaseSource  # , HttpsSource, CacheSource
 from kcrw_feed import utils
 
 # Regular expression to match sitemap XML filenames.
@@ -29,63 +30,64 @@ class SitemapProcessor:
             source: The base URL (or local base path) for the site.
         """
         self.source = source
-        self._source_entities: Dict[str, Any] = {}
+        # map: url -> Resource
+        self._resources: Dict[str, Resource] = {}
 
     # Accessor Methods
-    def get_all_entries(self) -> List[dict]:
-        """
-        Return all sitemap entry dictionaries.
+    # def get_all_entries(self) -> List[dict]:
+    #     """
+    #     Return all sitemap entry dictionaries.
 
-        Returns:
-            List[dict]: A list of all entries stored in the processor.
-        """
-        return list(self._source_entities.values())
+    #     Returns:
+    #         List[dict]: A list of all entries stored in the processor.
+    #     """
+    #     return list(self._source_entities.values())
 
-    def get_entries_after(self, dt: datetime) -> List[dict]:
-        """
-        Return sitemap entries with a lastmod date later than dt.
+    # def get_entries_after(self, dt: datetime) -> List[dict]:
+    #     """
+    #     Return sitemap entries with a lastmod date later than dt.
 
-        Parameters:
-            dt (datetime): The threshold datetime.
+    #     Parameters:
+    #         dt (datetime): The threshold datetime.
 
-        Returns:
-            List[dict]: A list of entries updated after dt.
-        """
-        results = []
-        for entry in self._source_entities.values():
-            lastmod_str = entry.get("lastmod")
-            if lastmod_str:
-                try:
-                    lastmod_dt = datetime.fromisoformat(lastmod_str)
-                    if lastmod_dt > dt:
-                        results.append(entry)
-                except ValueError:
-                    # Skip entries with an unparsable date.
-                    continue
-        return results
+    #     Returns:
+    #         List[dict]: A list of entries updated after dt.
+    #     """
+    #     results = []
+    #     for entry in self._source_entities.values():
+    #         lastmod_str = entry.get("lastmod")
+    #         if lastmod_str:
+    #             try:
+    #                 lastmod_dt = datetime.fromisoformat(lastmod_str)
+    #                 if lastmod_dt > dt:
+    #                     results.append(entry)
+    #             except ValueError:
+    #                 # Skip entries with an unparsable date.
+    #                 continue
+    #     return results
 
-    def get_entries_between(self, start: datetime, end: datetime) -> List[dict]:
-        """
-        Return sitemap entries with a lastmod date between start and end (inclusive).
+    # def get_entries_between(self, start: datetime, end: datetime) -> List[dict]:
+    #     """
+    #     Return sitemap entries with a lastmod date between start and end (inclusive).
 
-        Parameters:
-            start (datetime): The start datetime.
-            end (datetime): The end datetime.
+    #     Parameters:
+    #         start (datetime): The start datetime.
+    #         end (datetime): The end datetime.
 
-        Returns:
-            List[dict]: A list of entries with lastmod between start and end.
-        """
-        results = []
-        for entry in self._source_entities.values():
-            lastmod_str = entry.get("lastmod")
-            if lastmod_str:
-                try:
-                    lastmod_dt = datetime.fromisoformat(lastmod_str)
-                    if start <= lastmod_dt <= end:
-                        results.append(entry)
-                except ValueError:
-                    continue
-        return results
+    #     Returns:
+    #         List[dict]: A list of entries with lastmod between start and end.
+    #     """
+    #     results = []
+    #     for entry in self._source_entities.values():
+    #         lastmod_str = entry.get("lastmod")
+    #         if lastmod_str:
+    #             try:
+    #                 lastmod_dt = datetime.fromisoformat(lastmod_str)
+    #                 if start <= lastmod_dt <= end:
+    #                     results.append(entry)
+    #             except ValueError:
+    #                 continue
+    #     return results
 
     # Populate Methods
     def gather_entries(self) -> Dict[str, Any]:
@@ -105,7 +107,7 @@ class SitemapProcessor:
         # Process each sitemap to extract show entries.
         for sitemap in all_sitemaps:
             self._read_sitemap_for_entries(sitemap)
-        return self._source_entities
+        return self._resources
 
     def _sitemaps_from_robots(self) -> List[str]:
         """Reads the robots.txt file and extracts root sitemap URLs.
@@ -226,13 +228,20 @@ class SitemapProcessor:
             logger.trace("Raw sitemap entries: %s", pprint.pformat(urls))
 
         for entry in urls:
-            loc = entry.get("loc")
+            url = entry.get("loc").strip()
             # Keep only music shows
-            if loc and MUSIC_FILTER_RE.search(loc):
+            if url and MUSIC_FILTER_RE.search(url):
                 if entry.get("lastmod", None):
                     dt = utils.parse_date(entry["lastmod"])
                     entry["lastmod"] = dt
-                self._source_entities[loc.strip()] = entry
+                resource = Resource(
+                    url=url,
+                    source=self.source.reference(url),
+                    metadata=entry
+                )
+                if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
+                    logger.trace(pprint.pformat(resource))
+                self._resources[url] = resource
 
     def parse_feeds(self, feed_path: str) -> List[str]:
         """Placeholder for gathering shows from RSS/Atom feeds.

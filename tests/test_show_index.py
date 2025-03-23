@@ -1,11 +1,12 @@
 """Module to test the collection of shows"""
 
-import pytest
 from datetime import datetime
+from pathlib import Path
+import pytest
 from typing import Any, Dict, List, Optional
-from kcrw_feed.models import Show, Episode
+from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed.show_index import ShowIndex
-from kcrw_feed.sitemap_processor import MUSIC_FILTER_RE
+from kcrw_feed.processing.resources import MUSIC_FILTER_RE
 
 
 class DummySource:
@@ -101,7 +102,7 @@ class FakeSitemapProcessor:
 class FakeShowProcessor:
     """A fake ShowProcessor that returns a dummy Show object for a given URL."""
 
-    def fetch(self, url: str, source_metadata: Optional[Dict[str, Any]] = {}) -> Show:
+    def fetch(self, url: str, resource: Optional[Resource] = None) -> Show:
         # For testing, derive a dummy uuid and title from the URL.
         if "show1" in url:
             uid = "uuid-show1"
@@ -122,21 +123,34 @@ class FakeShowProcessor:
             uuid=uid,
             description=f"Description for {title}",
             hosts=[],  # Empty list of hosts for simplicity.
-            episodes=[],  # Initially empty
+            episodes=[],  # Initially empty.
             last_updated=datetime(2025, 1, 1),
-            source_metadata=source_metadata,
+            resource=resource,
             metadata={}
         )
 
     def get_episodes(self) -> List[Episode]:
         return []
 
+    def get_shows(self) -> List[Show]:
+        """Return a list of dummy Show objects based on fixed URLs."""
+        return [
+            self.fetch("https://www.testsite.com/music/shows/show1"),
+            self.fetch("https://www.testsite.com/music/shows/show2"),
+            self.fetch("https://www.testsite.com/music/shows/show3"),
+        ]
+
 
 @pytest.fixture(name="fake_show_index")
-def _fake_show_index() -> ShowIndex:
-    """Fixture that creates a ShowIndex with fake processors and a DummySource."""
+def _fake_show_index(tmp_path: Path) -> ShowIndex:
+    """Fixture that creates a ShowIndex with fake processors and a DummySource,
+    using a temporary directory for storage."""
     dummy_source = DummySource("https://www.testsite.com/")
-    si = ShowIndex(dummy_source)
+    # Use tmp_path (a Path object) for a temporary storage root.
+    storage_root = str(tmp_path / "state")
+    # Ensure the directory exists.
+    (tmp_path / "state").mkdir(parents=True, exist_ok=True)
+    si = ShowIndex(dummy_source, storage_root)
     # Replace the real processors with our fake ones.
     si.sitemap_processor = FakeSitemapProcessor(dummy_source)
     si.show_processor = FakeShowProcessor()

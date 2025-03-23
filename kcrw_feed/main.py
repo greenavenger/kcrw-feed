@@ -8,79 +8,63 @@ import pprint
 import time
 from typing import Any, Dict
 
-from kcrw_feed.config import CONFIG
-from kcrw_feed.persistent_logger import LOGGING_LEVEL_MAP
+from kcrw_feed import config
+from kcrw_feed.models import FilterOptions
+from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
+from kcrw_feed import station_catalog
 from kcrw_feed import show_index
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 
-# Logging set up: Instantiate custom logger to use in code. Configure
-# handlers/filters/formatters/etc. at the root level. Depend on
-# default propagation to process the log messages centrally at the root
-# logger (messages from our customer logger and from 3rd party libs).
+
+CONFIG = config.CONFIG
 logger = logging.getLogger("kcrw_feed")
 
 
 def main():
     t0 = time.time()
     parser = argparse.ArgumentParser(description="KCRW Feed Generator")
-    parser.add_argument(
-        "--loglevel",
-        type=str,
-        choices=["trace", "debug", "info", "warning", "error", "critical"],
-        help="Override log level for stdout logging",
-    )
-    parser.add_argument("-d",
-                        "--data_root",
-                        type=str,
-                        help="Specify the root data directory for state and feed files",
-                        )
-    parser.add_argument("-r",
-                        "--source_root",
-                        type=str,
-                        help='Specify the source root (e.g. "https://www.kcrw.com/", "http://localhost:8888/", "./tests/data/")',
-                        )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    # Global options
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Increase verbosity of returned entities")
+    parser.add_argument("-n", "--dry-run", action="store_true",
+                        help='Do not perform any destructive actions. (ex. "update -n" provides a diff)')
+    parser.add_argument("-m", "--match", type=str,
+                        help='A regex or substring to filter resource URLs (ex. "valida", "shows/valida", "valida.*-2023")')
+    parser.add_argument("-s", "--since", type=str,
+                        help='Reprocess since provided ISO 8601 timestamp (“YYYY-MM-DDTHH:MM:SS”)')
+    parser.add_argument("-u", "--until", type=str,
+                        help='Reprocess until provided ISO 8601 timestamp (“YYYY-MM-DDTHH:MM:SS”)')
+    parser.add_argument("--loglevel", type=str,
+                        choices=["trace", "debug", "info",
+                                 "warning", "error", "critical"],
+                        help="Override log level for stdout debug logging")
+    parser.add_argument("-o", "--storage_root", type=str,
+                        help="Specify the root data directory for state and feed files")
+    parser.add_argument("-r", "--source_root", type=str,
+                        help='Specify the source root (ex. "https://www.kcrw.com/", "./tests/data/")')
+    # Subcommands
+    subparsers = parser.add_subparsers(dest="command", required=True,
+                                       help="Sub-commands: list, diff, update")
 
-    list_parser = subparsers.add_parser("list", help="List shows or episodes")
+    list_parser = subparsers.add_parser(
+        "list", help="List resources, shows, episodes, or hosts in feeds (local state)")
     list_parser.add_argument(
         "mode",
         nargs="?",
-        choices=["shows", "episodes", "debug"],
-        default="shows",
-        help="If specified as 'episodes', list episodes instead of shows. Default lists shows."
-    )
-    list_parser.add_argument(
-        "--shows",
-        type=str,
-        help="Comma-separated list of show names (or fragments) to filter by"
-    )
-    list_parser.add_argument(
-        "--detail",
-        action="store_true",
-        help="Display detailed output of each Show/Episode object"
+        choices=["resources", "shows", "episodes", "hosts"],  # "debug"],
+        default="resources",
+        help="Specify type of entity to list. Default lists resources."
     )
 
-    gather_parser = subparsers.add_parser("gather", help="Gather show URLs")
-    gather_parser.add_argument(
-        "--source", default="sitemap", choices=["sitemap", "feed"]
-    )
-    gather_parser.add_argument(
-        "--detail", action="store_true",
-        help="Print the entire gathered entities dictionary"
+    diff_parser = subparsers.add_parser(
+        "diff", help="Show differences between local state and live site (kcrw.com)")
+    diff_parser.add_argument(
+        "mode", nargs="?", choices=["resources", "shows", "episodes", "hosts"],
+        default=None, help="Specify type of entity to diff. Default lists all."
     )
 
-    update_parser = subparsers.add_parser("update", help="Update show data")
-    update_parser.add_argument(
-        "--source", default="sitemap", choices=["sitemap", "feed"]
-    )
-    update_parser.add_argument(
-        "--delay", type=float, default=5.0, help="Delay between requests"
-    )
-    update_parser.add_argument(
-        "--shows", nargs="*", help="List of show URLs to update"
-    )
-
-    save_parser = subparsers.add_parser("save", help="Save the state to disk")
+    subparsers.add_parser("update",
+                          help="Update local show data from live site (kcrw.com)")
 
     args = parser.parse_args()
 
@@ -106,6 +90,9 @@ def main():
 
     logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
+    filter_opts = config.get_filter_options(args)
+    logger.debug("filter_opts: %s", pprint.pformat(filter_opts))
+
     source: BaseSource
     source_root = args.source_root or CONFIG["source_root"]
     if source_root.startswith("http"):
@@ -116,69 +103,59 @@ def main():
         source = CacheSource(source_root)
     logger.info("Source root: %s", source_root)
 
-    data_root = args.data_root or CONFIG["data_root"]
-    # Use an absolute path for the data_root so it's unambiguous.
-    data_root = os.path.abspath(data_root)
-    logger.info("Data root: %s", data_root)
+    storage_root = args.storage_root or CONFIG["storage_root"]
+    # Use an absolute path for the storage_root so it's unambiguous.
+    storage_root = os.path.abspath(storage_root)
+    logger.info("Storage root: %s", storage_root)
 
-    collection = show_index.ShowIndex(source=source)
+    catalog = station_catalog.StationCatalog(storage_root=storage_root)
+
+    collection = show_index.ShowIndex(source=source, storage_root=storage_root)
+    # Populate collection.shows
+    # collection.load()
 
     if args.command == "list":
-        # Populate collection.shows
-        # _ = collection.update()
-        collection.load(data_root=data_root)
-        # Determine whether we're listing shows (default) or episodes.
-        if args.mode == "debug":
-            entities = collection.dump_all()
-            if args.detail:
-                pprint.pprint(entities)
+        if args.mode == "resources":
+            resources = catalog.list_resources(filter_opts=filter_opts)
+            if args.verbose:
+                pprint.pprint(list(resources))
             else:
-                entities = sorted(list(entities.values()), key=lambda e: e.url)
-                pprint.pprint(entities)
-        elif args.mode == "episodes":
-            # For episodes: by default list all episodes; if --shows is provided, filter to episodes
-            # belonging to shows whose title matches one of the provided fragments.
-            episodes = collection.get_episodes()
-            episodes = sorted(episodes, key=lambda s: s.url)
-            if args.shows:
-                filters = [f.strip().lower() for f in args.shows.split(",")]
-                # Filter shows first.
-                filtered_shows = [show for show in collection.get_shows()
-                                  if any(f in show.title.lower() for f in filters)]
-                # Then collect episodes from these shows.
-                episodes = []
-                for show in filtered_shows:
-                    episodes.extend(show.episodes)
-            if args.detail:
-                print(pprint.pformat(episodes))
-            else:
-                for ep in episodes:
-                    print(ep.url)
-        else:
-            # Listing shows (default).
-            shows = collection.get_shows()
+                for resource in sorted([e.url for e in resources]):
+                    print(resource)
+            logger.info("%s resources", len(resources))
+        elif args.mode == "shows":
+            shows = catalog.list_shows(filter_opts=filter_opts)
             shows = sorted(shows, key=lambda s: s.url)
-            if args.shows:
-                filters = [f.strip().lower() for f in args.shows.split(",")]
-                shows = [show for show in shows if any(
-                    f in show.title.lower() for f in filters)]
-            if args.detail:
+            if args.verbose:
                 print(pprint.pformat(shows))
             else:
                 for show in shows:
                     print(show.url)
-    elif args.command == "gather":
-        entities = collection.gather()
-        if args.detail:
-            logger.info("Gathered entities: %s", pprint.pformat(entities))
-        logger.info("Gathered resources: %s",
-                    pprint.pformat(sorted(list(entities.keys()))))
-        logger.info("Gathered %s entities", len(entities))
+            logger.info("%s shows", len(shows))
+        elif args.mode == "episodes":
+            episodes = catalog.list_episodes(filter_opts=filter_opts)
+            # Sort by airdate for now
+            episodes = sorted(episodes)  # , key=lambda s: s.url)
+            if args.verbose:
+                print(pprint.pformat(episodes))
+            else:
+                for episode in episodes:
+                    print(episode.url)
+            logger.info("%s episodes", len(episodes))
+        elif args.mode == "hosts":
+            hosts = catalog.list_hosts(filter_opts=filter_opts)
+            hosts = sorted(hosts, key=lambda h: h.name)
+            if args.verbose:
+                print(pprint.pformat(hosts))
+            else:
+                for host in hosts:
+                    print(host.name)
+            logger.info("%s hosts", len(hosts))
+    elif args.command == "diff":
+        raise NotImplementedError
     elif args.command == "update":
-        updated_shows = collection.update(selection=args.shows)
+        updated_shows = collection.update(selection=args.match)
         logger.info("Updated %s", updated_shows)
-    elif args.command == "save":
-        collection.save(data_root=data_root)
     else:
         logger.error("Unknown command")
 

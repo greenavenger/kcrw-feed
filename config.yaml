@@ -6,7 +6,7 @@
 source_root: "http://localhost:8888/"
 
 # The root data directory for persisting state and feeds
-data_root: "."
+storage_root: "."
 
 # The default HTTP timeout in seconds for requests
 http_timeout: 10
@@ -14,7 +14,10 @@ http_timeout: 10
 # The source for  shows (e.g., 'sitemap' or 'feed')
 source: "sitemap"
 
-# Logging configuration
+# Logging configuration: Instantiate custom logger to use in code.
+# Configure handlers/filters/formatters/etc. at the root level. Depend
+# on default propagation to process the log messages centrally at the
+# rootlogger (messages from our customer logger and from 3rd party libs).
 logging:
   version: 1
   disable_existing_loggers: False
@@ -23,7 +26,7 @@ logging:
       format: "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(module)s.%(funcName)s:%(lineno)d] %(message)s"
       datefmt: "%Y-%m-%dT%H:%M:%S%z"
     json:
-      "()": "kcrw_feed.persistent_logger.JSONFormatter"
+      "()": "kcrw_feed.persistence.logger.JSONFormatter"
       fmt_keys:
         level: "levelname"
         timestamp: "timestamp"

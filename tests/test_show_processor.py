@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 import pytest
 from kcrw_feed.show_processor import ShowProcessor
-from kcrw_feed.models import Show, Episode, Host
+from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed import source_manager
 
 # Fake microdata HTML for a Show page.
@@ -59,6 +59,14 @@ FAKE_EPISODE_JSON: Dict[str, Any] = {
     "ending": "2025-04-01T13:00:00",
     "modified": "2025-04-01T12:05:00"
 }
+
+FAKE_RESOURCE = Resource(
+    url="https://www.testsite.com/music/shows/test-show/foo",
+    source="https://www.testsite.com/music/shows/test-show/foo",
+    metadata={
+        "lastmod": datetime.now()
+    }
+)
 
 
 class DummySource:
@@ -120,8 +128,7 @@ def test_fetch_show(fake_processor: ShowProcessor):
     """Test that fetch() returns a Show object when given a URL that
     indicates a show."""
     url = "https://www.testsite.com/music/shows/test-show"
-    source_metadata = {"lastmod": datetime.now()}
-    fake_processor.fetch(url, source_metadata=source_metadata)
+    fake_processor.fetch(url, resource=FAKE_RESOURCE)
     result = fake_processor.get_show_by_url(url)
     assert isinstance(result, Show)
     # In our fake setup, the fallback extracts the title from the URL.
@@ -134,8 +141,7 @@ def test_fetch_episode(fake_processor: ShowProcessor):
     """Test that fetch() returns an Episode object when given a URL that
     indicates an episode."""
     url = "https://www.testsite.com/music/shows/test-show/test-episode"
-    source_metadata = {"lastmod": datetime.now()}
-    result = fake_processor.fetch(url, source_metadata=source_metadata)
+    result = fake_processor.fetch(url, resource=FAKE_RESOURCE)
     assert isinstance(result, Episode)
     assert result.title == "Test Episode Page"
     assert result.uuid == uuid.UUID(FAKE_EPISODE_UUID)
@@ -150,8 +156,7 @@ def test_fetch_invalid_structure_falls_back_to_show(fake_processor: ShowProcesso
     """Test that if the URL structure doesn't match the expected pattern,
     fetch() falls back to treating it as a Show."""
     url = "https://www.testsite.com/invalid/path"
-    source_metadata = {"lastmod": datetime.now()}
-    result = fake_processor.fetch(url, source_metadata=source_metadata)
+    result = fake_processor.fetch(url, resource=FAKE_RESOURCE)
     assert isinstance(result, Show)
     # Fallback should yield a Show object using fake show HTML.
     assert result.description == "A description of the test show."

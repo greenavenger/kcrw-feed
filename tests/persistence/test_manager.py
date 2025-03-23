@@ -13,25 +13,25 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from kcrw_feed.state_manager import Json, Rss
+from kcrw_feed.persistence.manager import JsonPersister, RssPersister
 from kcrw_feed.models import Host, Show, Episode, ShowDirectory
 
 
 def test_default_serializer_datetime():
-    js = Json(data_root=".")
+    js = JsonPersister(storage_root=".")
     dt = datetime(2025, 1, 1, 12, 30)
     result = js.default_serializer(dt)
     assert result == dt.isoformat()
 
 
 def test_default_serializer_invalid():
-    js = Json(data_root=".")
+    js = JsonPersister(storage_root=".")
     with pytest.raises(TypeError):
         js.default_serializer(123)  # An int should raise TypeError
 
 
 def test_parse_datetime():
-    js = Json(data_root=".")
+    js = JsonPersister(storage_root=".")
     dt_str = "2025-01-01T12:30:00"
     dt = js._parse_datetime(dt_str)
     expected = datetime(2025, 1, 1, 12, 30)
@@ -39,7 +39,7 @@ def test_parse_datetime():
 
 
 def test_host_from_dict():
-    js = Json(data_root=".")
+    js = JsonPersister(storage_root=".")
     host_data = {
         "name": "Host 1",
         "uuid": "a690aae0-c48d-4771-ac88-0fe13a730b7b"
@@ -51,7 +51,7 @@ def test_host_from_dict():
 
 
 def test_episode_from_dict():
-    js = Json(data_root=".")
+    js = JsonPersister(storage_root=".")
     dt_str = "2025-01-01T12:30:00"
     data = {
         "title": "Episode 1",
@@ -74,7 +74,7 @@ def test_episode_from_dict():
 
 
 def test_show_from_dict():
-    js = Json(data_root=".")
+    js = JsonPersister(storage_root=".")
     dt_str = "2025-01-02T13:45:00"
     show_data = {
         "title": "Show 1",
@@ -119,6 +119,7 @@ def fake_fs_fixture(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
     A fake file system that intercepts open calls.
     Files written in 'w' or 'wb' mode are stored in a dictionary.
     Reads return a StringIO or BytesIO initialized with the stored content.
+    Also patches os.path.exists to use this fake file system.
     """
     files: Dict[str, str] = {}
 
@@ -155,6 +156,8 @@ def fake_fs_fixture(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
             raise ValueError(f"Unsupported file mode: {mode}")
 
     monkeypatch.setattr("builtins.open", fake_open)
+    # Patch os.path.exists to check our fake_fs dict.
+    monkeypatch.setattr(os.path, "exists", lambda filename: filename in files)
     return files
 
 
@@ -190,7 +193,7 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
     )
     directory = ShowDirectory(shows=[show])
     fake_filename = "fake_state.json"
-    persister = Json(data_root=".", filename=fake_filename)
+    persister = JsonPersister(storage_root=".", filename=fake_filename)
 
     # Save state to the fake file system.
     persister.save(directory, fake_filename)
@@ -282,7 +285,7 @@ def dummy_directory() -> ShowDirectory:
 
 
 def test_rss_save_creates_files(dummy_directory):
-    rss_persister = Rss(data_root=".")
+    rss_persister = RssPersister(storage_root=".")
     with tempfile.TemporaryDirectory() as tmpdirname:
         rss_persister.save(dummy_directory, tmpdirname)
         # Expect one file per show (i.e. 2 files).
