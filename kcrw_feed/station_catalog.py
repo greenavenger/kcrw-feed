@@ -33,9 +33,9 @@ class StationCatalog:
 
     def __init__(self, storage_root: str) -> None:
         self.storage_root = storage_root
-        self.catalog = self._load()
+        self.catalog = self.load()
 
-    def _load(self) -> Catalog:
+    def load(self) -> Catalog:
         """Load data from stable storage."""
         logger.info("Loading entities")
 

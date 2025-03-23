@@ -191,17 +191,18 @@ class HttpsSource(BaseSource):
         self.rewrite_rule = rewrite_rule
         self.uses_sitemap = True
         # Create a single cached session that will be reused for all HTTP requests.
+        self.backend = 'sqlite'        # stores data in kcrw_cache.sqlite
+        # self.backend = 'filesystem'  # stores data in "./kcrw_cache"
         self._session = requests_cache.CachedSession(
-            'kcrw_cache',  backend='sqlite',  # stores data in kcrw_cache.sqlite
-            # backend='filesystem',  # stores data in "./kcrw_cache"
+            'kcrw_cache',  backend=self.backend,
             # Use Cache-Control response headers for expiration, if available
             cache_control=True,
             # Otherwise expire responses after one day
             expire_after=timedelta(days=1),
             # Cache 404 responses as a solemn reminder of your failures
             allowable_codes=[200, 404],
-
         )
+        logger.info("Cache backend: %s", self.backend)
 
     def get_resource(self, url: str) -> Optional[bytes]:
         logger.debug(f"Fetching via HTTPS: {url}")
