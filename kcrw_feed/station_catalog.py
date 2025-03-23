@@ -8,7 +8,7 @@ import logging
 from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable
 import uuid
 
-from kcrw_feed.models import Show, Episode, Host, Resource, ShowDirectory, FilterOptions
+from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
@@ -49,6 +49,24 @@ class BaseStationCatalog(ABC):
             key=lambda r: r.url,
             date_key=lambda r: r.metadata.get("lastmod", None)
         )
+
+    def diff(self, updated_catalog: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> Dict[str, List[Any]]:
+        """
+        Compare the current state (self.catalog) with an updated catalog,
+        returning a dictionary of differences.
+
+        Returns:
+            dict: with keys 'added', 'removed', and 'modified'.
+        """
+        current = {resource.url for resource in self.list_resources(
+            filter_opts=filter_opts)}
+        updated = {resource.url for resource in updated_catalog.list_resources(
+            filter_opts=filter_opts)}
+        added = updated - current
+        removed = current - updated
+        modified = set()
+
+        return {"added": list(added), "removed": list(removed), "modified": list(modified)}
 
 
 class LocalStationCatalog(BaseStationCatalog):
@@ -118,25 +136,6 @@ class LocalStationCatalog(BaseStationCatalog):
     def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
         """Return a list of hosts, filtered if necessary."""
         return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
-
-    def diff(self, updated: ShowDirectory) -> Dict[str, List[Any]]:
-        """
-        Compare the current state (self.directory) with an updated state,
-        returning a dictionary of differences.
-
-        Returns:
-            dict: with keys 'added', 'removed', and 'modified'.
-        """
-        current = {show.uuid: show for show in self.directory.shows if show.uuid}
-        new = {show.uuid: show for show in updated.shows if show.uuid}
-
-        added = [new[uid] for uid in new if uid not in current]
-        removed = [current[uid] for uid in current if uid not in new]
-        modified: List[Tuple[Show, Show]] = []
-        for uid in current.keys() & new.keys():
-            if current[uid] != new[uid]:
-                modified.append((current[uid], new[uid]))
-        return {"added": added, "removed": removed, "modified": modified}
 
 
 class LiveStationCatalog(BaseStationCatalog):

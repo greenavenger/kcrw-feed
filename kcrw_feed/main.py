@@ -157,12 +157,11 @@ def main():
         live_catalog = station_catalog.LiveStationCatalog(
             catalog_source=live_source)
         resources = live_catalog.list_resources(filter_opts=filter_opts)
-        if args.verbose:
-            pprint.pprint(list(resources))
-        else:
-            for resource in sorted([e.url for e in resources]):
-                print(resource)
-        logger.info("%s resources", len(resources))
+
+        diff = local_catalog.diff(live_catalog, filter_opts=filter_opts)
+        # diff = live_catalog.diff(local_catalog, filter_opts=filter_opts)
+        # diff = local_catalog.diff(local_catalog, filter_opts=filter_opts)
+        pprint.pprint(diff)
     elif args.command == "update":
         updated_shows = collection.update(selection=args.match)
         logger.info("Updated %s", updated_shows)
