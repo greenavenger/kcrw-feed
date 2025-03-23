@@ -9,7 +9,7 @@ import pytest
 from datetime import datetime
 from typing import Dict, Any
 
-from kcrw_feed.config import read_config, validate_config, get_filter_options, CONFIG_FILE
+from kcrw_feed.config import read_config, validate_config, get_filter_options, CONFIG_FILE, get_local_timezone
 from kcrw_feed.models import FilterOptions
 
 # --- Tests for read_config and validate_config ---
@@ -72,10 +72,14 @@ def test_get_filter_options_valid_substring() -> None:
     # it gets wrapped to ".*test.*"
     assert filter_opts.compiled_match is not None
     assert filter_opts.compiled_match.pattern == ".*test.*"
-    assert filter_opts.start_date == datetime.fromisoformat(
-        "2025-01-01T00:00:00")
-    assert filter_opts.end_date == datetime.fromisoformat(
-        "2025-01-02T00:00:00")
+    # Use the local timezone for expected datetimes.
+    local_tz = get_local_timezone()
+    expected_start = datetime.fromisoformat(
+        "2025-01-01T00:00:00").replace(tzinfo=local_tz)
+    expected_end = datetime.fromisoformat(
+        "2025-01-02T00:00:00").replace(tzinfo=local_tz)
+    assert filter_opts.start_date == expected_start
+    assert filter_opts.end_date == expected_end
     assert filter_opts.dry_run is True
 
 

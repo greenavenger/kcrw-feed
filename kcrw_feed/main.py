@@ -91,6 +91,7 @@ def main():
     logger.info("Command: %s", args.command, extra={"parsers": vars(args)})
 
     filter_opts = config.get_filter_options(args)
+    logger.debug("filter_opts: %s", pprint.pformat(filter_opts))
 
     source: BaseSource
     source_root = args.source_root or CONFIG["source_root"]

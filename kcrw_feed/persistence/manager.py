@@ -123,11 +123,14 @@ class JsonPersister(BasePersister):
 
     def resource_from_dict(self, data: Dict[str, Any]) -> Resource:
         if data:
-            return Resource(
+            lastmod = self._parse_datetime(data.get("metadata")["lastmod"])
+            resource = Resource(
                 url=data["url"],
                 source=data.get("source", ""),
                 metadata=data.get("metadata", {})
             )
+            resource.metadata["lastmod"] = lastmod
+            return resource
         return Resource(url="", source="", metadata={})
 
     def directory_from_dict(self, data: Dict[Any, Any]) -> ShowDirectory:

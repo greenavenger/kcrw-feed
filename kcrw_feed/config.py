@@ -1,9 +1,10 @@
 """Simple configuration reader and filter option parser"""
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import re
 import sys
+import time
 from typing import Any, Dict, Optional, Pattern
 import yaml
 
@@ -38,6 +39,23 @@ def validate_config(config: Dict[str, Any]) -> None:
 CONFIG = read_config(CONFIG_FILE)
 
 
+def get_local_timezone() -> timezone:
+    """Use local timezone for command line arguments."""
+    if time.daylight and time.localtime().tm_isdst:
+        offset = -time.altzone
+    else:
+        offset = -time.timezone
+    return timezone(timedelta(seconds=offset))
+
+
+def parse_datetime(dt_str: str) -> datetime:
+    """Append timezone info."""
+    dt = datetime.fromisoformat(dt_str)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=get_local_timezone())
+    return dt
+
+
 def get_filter_options(args: argparse.Namespace) -> FilterOptions:
     """
     Populate a FilterOptions instance based on parsed command-line arguments.
@@ -69,13 +87,13 @@ def get_filter_options(args: argparse.Namespace) -> FilterOptions:
 
     if getattr(args, "since", None):
         try:
-            start_date = datetime.fromisoformat(args.since)
+            start_date = parse_datetime(args.since)
         except ValueError:
             raise ValueError(f"Invalid 'since' timestamp: {args.since}")
 
     if getattr(args, "until", None):
         try:
-            end_date = datetime.fromisoformat(args.until)
+            end_date = parse_datetime(args.until)
         except ValueError:
             raise ValueError(f"Invalid 'until' timestamp: {args.until}")
 

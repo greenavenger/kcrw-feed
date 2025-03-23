@@ -73,15 +73,30 @@ class StationCatalog:
 
     def list_resources(self, filter_opts: Optional[FilterOptions] = None) -> List[Resource]:
         """Return a list of resources, filtered if necessary."""
-        return _filter_items(self.catalog.resources.values(), filter_opts, key=lambda r: r.url)
+        return _filter_items(
+            self.catalog.resources.values(),
+            filter_opts,
+            key=lambda r: r.url,
+            date_key=lambda r: r.metadata.get("lastmod", None)
+        )
 
     def list_shows(self, filter_opts: Optional[FilterOptions] = None) -> List[Show]:
         """Return a list of shows, filtered if necessary."""
-        return _filter_items(self.catalog.shows.values(), filter_opts, key=lambda s: s.url)
+        return _filter_items(
+            self.catalog.shows.values(),
+            filter_opts,
+            key=lambda s: s.url,
+            date_key=lambda s: s.last_updated
+        )
 
     def list_episodes(self, filter_opts: Optional[FilterOptions] = None) -> List[Episode]:
         """Return a list of episodes, filtered if necessary."""
-        return _filter_items(self.catalog.episodes.values(), filter_opts, key=lambda e: e.url)
+        return _filter_items(
+            self.catalog.episodes.values(),
+            filter_opts,
+            key=lambda e: e.url,
+            date_key=lambda e: e.last_updated  # or use e.airdate if that’s more appropriate
+        )
 
     def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
         """Return a list of hosts, filtered if necessary."""
@@ -107,27 +122,43 @@ class StationCatalog:
         return {"added": added, "removed": removed, "modified": modified}
 
 
-def _filter_items(items: Iterable[Any],
-                  filter_opts: Optional[FilterOptions] = None,
-                  key: Optional[Callable[[Any], str]] = None) -> List[Any]:
+def _filter_items(
+    items: Iterable[Any],
+    filter_opts: Optional[FilterOptions] = None,
+    key: Optional[Callable[[Any], str]] = None,
+    date_key: Optional[Callable[[Any], Optional[datetime]]] = None
+) -> List[Any]:
     """
-    Filter items using the compiled regex in filter_opts.
+    Filter an iterable of items based on two conditions:
+      1. A compiled regex (from filter_opts.compiled_match), applied to the string
+         extracted via key.
+      2. A date range, using filter_opts.start_date and filter_opts.end_date, compared
+         against the date returned by date_key.
 
     Parameters:
-    items: An iterable of items.
-    filter_opts: FilterOptions containing an optional compiled_match.
-    key: A callable that extracts a string from an item. If not provided,
-        str(item) is used.
+      items: An iterable of items.
+      filter_opts: A FilterOptions instance containing filtering criteria.
+      key: A callable to extract a string from an item (for regex filtering).
+      date_key: A callable to extract a datetime from an item (for date range filtering).
 
     Returns:
-    A list of items that match the compiled regex (if provided), or the original
-    items otherwise.
+      A list of items that match both criteria.
     """
     items = list(items)
-    if filter_opts and filter_opts.compiled_match:
-        pattern = filter_opts.compiled_match
-        if key is not None:
-            items = [item for item in items if pattern.search(key(item))]
-        else:
-            items = [item for item in items if pattern.search(str(item))]
+    if filter_opts:
+        # Apply regex filtering if a compiled regex exists.
+        if filter_opts.compiled_match:
+            pattern = filter_opts.compiled_match
+            if key:
+                items = [item for item in items if pattern.search(key(item))]
+            else:
+                items = [item for item in items if pattern.search(str(item))]
+        # Apply date filtering if a date_key is provided.
+        if date_key:
+            if filter_opts.start_date:
+                items = [item for item in items
+                         if (date_key(item) is not None and date_key(item) >= filter_opts.start_date)]
+            if filter_opts.end_date:
+                items = [item for item in items
+                         if (date_key(item) is not None and date_key(item) <= filter_opts.end_date)]
     return items
