@@ -38,13 +38,8 @@ class ShowIndex:
     def gather(self) -> Dict[str, Any]:
         """Gather a list of raw entries from the source."""
         logger.info("Gathering entries")
-        entries: Dict[str, Any] = {}
-        if self.source.uses_sitemap:
-            entries = self.sitemap_processor.gather_entries()
-        else:
-            # Placeholder for future feed processing.
-            raise NotImplementedError
-        return entries
+        resources = self.sitemap_processor.fetch_resources()
+        return resources
 
     def update(self, selection: List[str] = [],
                update_after: Optional[datetime] = None) -> int:

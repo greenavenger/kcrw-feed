@@ -8,8 +8,9 @@ import logging
 from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable
 import uuid
 
-from kcrw_feed.models import Show, Episode, ShowDirectory, FilterOptions
+from kcrw_feed.models import Show, Episode, Host, Resource, ShowDirectory, FilterOptions
 from kcrw_feed.source_manager import BaseSource
+from kcrw_feed.processing.resources import SitemapProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.persistence.manager import JsonPersister
 
@@ -49,30 +50,8 @@ class BaseStationCatalog(ABC):
             date_key=lambda r: r.metadata.get("lastmod", None)
         )
 
-    def list_shows(self, filter_opts: Optional[FilterOptions] = None) -> List[Show]:
-        """Return a list of shows, filtered if necessary."""
-        return _filter_items(
-            self.catalog.shows.values(),
-            filter_opts,
-            key=lambda s: s.url,
-            date_key=lambda s: s.last_updated
-        )
 
-    def list_episodes(self, filter_opts: Optional[FilterOptions] = None) -> List[Episode]:
-        """Return a list of episodes, filtered if necessary."""
-        return _filter_items(
-            self.catalog.episodes.values(),
-            filter_opts,
-            key=lambda e: e.url,
-            date_key=lambda e: e.last_updated  # or use e.airdate if that’s more appropriate
-        )
-
-    def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
-        """Return a list of hosts, filtered if necessary."""
-        return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
-
-
-class StationCatalog(BaseStationCatalog):
+class LocalStationCatalog(BaseStationCatalog):
     """
     StationCatalog represents the complete collection of shows, episodes,
     and hosts from the local persisted state.
@@ -118,6 +97,28 @@ class StationCatalog(BaseStationCatalog):
                         catalog.episodes), len(catalog.hosts))
         return catalog
 
+    def list_shows(self, filter_opts: Optional[FilterOptions] = None) -> List[Show]:
+        """Return a list of shows, filtered if necessary."""
+        return _filter_items(
+            self.catalog.shows.values(),
+            filter_opts,
+            key=lambda s: s.url,
+            date_key=lambda s: s.last_updated
+        )
+
+    def list_episodes(self, filter_opts: Optional[FilterOptions] = None) -> List[Episode]:
+        """Return a list of episodes, filtered if necessary."""
+        return _filter_items(
+            self.catalog.episodes.values(),
+            filter_opts,
+            key=lambda e: e.url,
+            date_key=lambda e: e.last_updated  # or use e.airdate if that’s more appropriate
+        )
+
+    def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
+        """Return a list of hosts, filtered if necessary."""
+        return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
+
     def diff(self, updated: ShowDirectory) -> Dict[str, List[Any]]:
         """
         Compare the current state (self.directory) with an updated state,
@@ -136,6 +137,22 @@ class StationCatalog(BaseStationCatalog):
             if current[uid] != new[uid]:
                 modified.append((current[uid], new[uid]))
         return {"added": added, "removed": removed, "modified": modified}
+
+
+class LiveStationCatalog(BaseStationCatalog):
+    def __init__(self, catalog_source: BaseSource) -> None:
+        self.catalog_source = catalog_source
+        self.sitemap_processor = SitemapProcessor(self.catalog_source)
+        self.catalog = self.load()
+
+    def load(self) -> Catalog:
+        """Load data from live site."""
+        logger.info("Loading entities")
+
+        catalog = Catalog(
+            resources=self.sitemap_processor.fetch_resources()
+        )
+        return catalog
 
 
 def _filter_items(

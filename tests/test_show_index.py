@@ -88,7 +88,7 @@ class FakeSitemapProcessor:
     def __init__(self, source: DummySource) -> None:
         self.source = source
 
-    def gather_entries(self) -> Dict[str, Any]:
+    def fetch_resources(self) -> Dict[str, Any]:
         # Return a fixed dict of resource URLs with some metadata.
         now = datetime.now()
         return {

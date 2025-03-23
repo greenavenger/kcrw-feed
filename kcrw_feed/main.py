@@ -93,14 +93,14 @@ def main():
     filter_opts = config.get_filter_options(args)
     logger.debug("filter_opts: %s", pprint.pformat(filter_opts))
 
-    source: BaseSource
+    live_source: BaseSource
     source_root = args.source_root or CONFIG["source_root"]
     if source_root.startswith("http"):
-        source = HttpsSource(source_root)
+        live_source = HttpsSource(source_root)
     else:
         # Use an absolute path for the source_root so it's unambiguous.
         source_root = os.path.abspath(source_root)
-        source = CacheSource(source_root)
+        live_source = CacheSource(source_root)
     logger.info("Source root: %s", source_root)
 
     storage_root = args.storage_root or CONFIG["storage_root"]
@@ -108,15 +108,17 @@ def main():
     storage_root = os.path.abspath(storage_root)
     logger.info("Storage root: %s", storage_root)
 
-    catalog = station_catalog.StationCatalog(catalog_source=storage_root)
+    local_catalog = station_catalog.LocalStationCatalog(
+        catalog_source=storage_root)
 
-    collection = show_index.ShowIndex(source=source, storage_root=storage_root)
+    collection = show_index.ShowIndex(
+        source=live_source, storage_root=storage_root)
     # Populate collection.shows
     # collection.load()
 
     if args.command == "list":
         if args.mode == "resources":
-            resources = catalog.list_resources(filter_opts=filter_opts)
+            resources = local_catalog.list_resources(filter_opts=filter_opts)
             if args.verbose:
                 pprint.pprint(list(resources))
             else:
@@ -124,7 +126,7 @@ def main():
                     print(resource)
             logger.info("%s resources", len(resources))
         elif args.mode == "shows":
-            shows = catalog.list_shows(filter_opts=filter_opts)
+            shows = local_catalog.list_shows(filter_opts=filter_opts)
             shows = sorted(shows, key=lambda s: s.url)
             if args.verbose:
                 print(pprint.pformat(shows))
@@ -133,7 +135,7 @@ def main():
                     print(show.url)
             logger.info("%s shows", len(shows))
         elif args.mode == "episodes":
-            episodes = catalog.list_episodes(filter_opts=filter_opts)
+            episodes = local_catalog.list_episodes(filter_opts=filter_opts)
             # Sort by airdate for now
             episodes = sorted(episodes)  # , key=lambda s: s.url)
             if args.verbose:
@@ -143,7 +145,7 @@ def main():
                     print(episode.url)
             logger.info("%s episodes", len(episodes))
         elif args.mode == "hosts":
-            hosts = catalog.list_hosts(filter_opts=filter_opts)
+            hosts = local_catalog.list_hosts(filter_opts=filter_opts)
             hosts = sorted(hosts, key=lambda h: h.name)
             if args.verbose:
                 print(pprint.pformat(hosts))
@@ -152,7 +154,15 @@ def main():
                     print(host.name)
             logger.info("%s hosts", len(hosts))
     elif args.command == "diff":
-        raise NotImplementedError
+        live_catalog = station_catalog.LiveStationCatalog(
+            catalog_source=live_source)
+        resources = live_catalog.list_resources(filter_opts=filter_opts)
+        if args.verbose:
+            pprint.pprint(list(resources))
+        else:
+            for resource in sorted([e.url for e in resources]):
+                print(resource)
+        logger.info("%s resources", len(resources))
     elif args.command == "update":
         updated_shows = collection.update(selection=args.match)
         logger.info("Updated %s", updated_shows)

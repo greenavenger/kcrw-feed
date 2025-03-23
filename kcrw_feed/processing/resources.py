@@ -33,64 +33,8 @@ class SitemapProcessor:
         # map: url -> Resource
         self._resources: Dict[str, Resource] = {}
 
-    # Accessor Methods
-    # def get_all_entries(self) -> List[dict]:
-    #     """
-    #     Return all sitemap entry dictionaries.
-
-    #     Returns:
-    #         List[dict]: A list of all entries stored in the processor.
-    #     """
-    #     return list(self._source_entities.values())
-
-    # def get_entries_after(self, dt: datetime) -> List[dict]:
-    #     """
-    #     Return sitemap entries with a lastmod date later than dt.
-
-    #     Parameters:
-    #         dt (datetime): The threshold datetime.
-
-    #     Returns:
-    #         List[dict]: A list of entries updated after dt.
-    #     """
-    #     results = []
-    #     for entry in self._source_entities.values():
-    #         lastmod_str = entry.get("lastmod")
-    #         if lastmod_str:
-    #             try:
-    #                 lastmod_dt = datetime.fromisoformat(lastmod_str)
-    #                 if lastmod_dt > dt:
-    #                     results.append(entry)
-    #             except ValueError:
-    #                 # Skip entries with an unparsable date.
-    #                 continue
-    #     return results
-
-    # def get_entries_between(self, start: datetime, end: datetime) -> List[dict]:
-    #     """
-    #     Return sitemap entries with a lastmod date between start and end (inclusive).
-
-    #     Parameters:
-    #         start (datetime): The start datetime.
-    #         end (datetime): The end datetime.
-
-    #     Returns:
-    #         List[dict]: A list of entries with lastmod between start and end.
-    #     """
-    #     results = []
-    #     for entry in self._source_entities.values():
-    #         lastmod_str = entry.get("lastmod")
-    #         if lastmod_str:
-    #             try:
-    #                 lastmod_dt = datetime.fromisoformat(lastmod_str)
-    #                 if start <= lastmod_dt <= end:
-    #                     results.append(entry)
-    #             except ValueError:
-    #                 continue
-    #     return results
-
     # Populate Methods
-    def gather_entries(self) -> Dict[str, Any]:
+    def fetch_resources(self) -> Dict[str, Any]:
         """Gather show references by recursively reading sitemaps.
         Returns:
             List[str]: A sorted list of show references.

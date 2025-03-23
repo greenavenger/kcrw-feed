@@ -155,7 +155,7 @@ def test_gather_entries(dummy_source, monkeypatch):
         ]
     monkeypatch.setattr(processor, "_sitemaps_from_robots",
                         fake_sitemaps_from_robots)
-    urls = processor.gather_entries()
+    urls = processor.fetch_resources()
     expected = {
         "https://www.testsite.com/music/shows/show1",
         "https://www.testsite.com/music/shows/show2",
