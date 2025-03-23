@@ -1,6 +1,7 @@
 """Central "card catalog" for shows, episodes and hosts"""
 
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 import logging
@@ -8,6 +9,7 @@ from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable
 import uuid
 
 from kcrw_feed.models import Show, Episode, ShowDirectory, FilterOptions
+from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.persistence.manager import JsonPersister
 
@@ -24,52 +26,19 @@ class Catalog:
     resources: Dict[str, Any] = field(default_factory=dict)
 
 
-class StationCatalog:
+class BaseStationCatalog(ABC):
+    """Abstract base class for catalogs. A StationCatalog represents a
+    collection of shows, episodes, hosts and resources. It provides methods
+    for listing and comparing (diffing) the current state with an updated
+    state.
     """
-    StationCatalog represents the complete collection of shows, episodes,
-    and hosts from the local persisted state. It provides methods for
-    listing and comparing (diffing) the current state with an updated state.
-    """
+    catalog_source: str | BaseSource
+    catalog: Catalog
 
-    def __init__(self, storage_root: str) -> None:
-        self.storage_root = storage_root
-        self.catalog = self.load()
-
+    @abstractmethod
     def load(self) -> Catalog:
-        """Load data from stable storage."""
-        logger.info("Loading entities")
-
-        persister = JsonPersister(self.storage_root)
-        directory = persister.load()
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("Loaded data: %s", pprint.pformat(directory))
-
-        catalog = Catalog()
-        for show in directory.shows:
-            if show.uuid:
-                catalog.shows[show.uuid] = show
-            for episode in show.episodes:
-                if episode.uuid:
-                    catalog.episodes[episode.uuid] = episode
-                for host in episode.hosts:
-                    # TODO: fix that hosts are a list of uuids here!
-                    if not isinstance(host, uuid.UUID) and host.uuid:
-                        catalog.hosts[host.uuid] = host
-                if episode.resource:
-                    key = episode.resource.url
-                    catalog.resources[key] = episode.resource
-            # TODO: remove duplicative host population?
-            for host in show.hosts:
-                if host.uuid:
-                    catalog.hosts[host.uuid] = host
-            if show.resource:
-                key = show.resource.url
-                catalog.resources[key] = show.resource
-        logger.info("Loaded: %d resources", len(catalog.resources))
-        logger.info("Loaded: %d shows, %d episodes, %d, hosts",
-                    len(catalog.shows), len(
-                        catalog.episodes), len(catalog.hosts))
-        return catalog
+        """Load the catalog."""
+        pass
 
     def list_resources(self, filter_opts: Optional[FilterOptions] = None) -> List[Resource]:
         """Return a list of resources, filtered if necessary."""
@@ -101,6 +70,53 @@ class StationCatalog:
     def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
         """Return a list of hosts, filtered if necessary."""
         return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
+
+
+class StationCatalog(BaseStationCatalog):
+    """
+    StationCatalog represents the complete collection of shows, episodes,
+    and hosts from the local persisted state.
+    """
+
+    def __init__(self, catalog_source: str) -> None:
+        self.catalog_source = catalog_source
+        self.catalog = self.load()
+
+    def load(self) -> Catalog:
+        """Load data from stable storage."""
+        logger.info("Loading entities")
+
+        persister = JsonPersister(self.catalog_source)
+        directory = persister.load()
+        if logger.isEnabledFor(TRACE_LEVEL_NUM):
+            logger.trace("Loaded data: %s", pprint.pformat(directory))
+
+        catalog = Catalog()
+        for show in directory.shows:
+            if show.uuid:
+                catalog.shows[show.uuid] = show
+            for episode in show.episodes:
+                if episode.uuid:
+                    catalog.episodes[episode.uuid] = episode
+                for host in episode.hosts:
+                    # TODO: fix that hosts are a list of uuids here!
+                    if not isinstance(host, uuid.UUID) and host.uuid:
+                        catalog.hosts[host.uuid] = host
+                if episode.resource:
+                    key = episode.resource.url
+                    catalog.resources[key] = episode.resource
+            # TODO: remove duplicative host population?
+            for host in show.hosts:
+                if host.uuid:
+                    catalog.hosts[host.uuid] = host
+            if show.resource:
+                key = show.resource.url
+                catalog.resources[key] = show.resource
+        logger.info("Loaded: %d resources", len(catalog.resources))
+        logger.info("Loaded: %d shows, %d episodes, %d, hosts",
+                    len(catalog.shows), len(
+                        catalog.episodes), len(catalog.hosts))
+        return catalog
 
     def diff(self, updated: ShowDirectory) -> Dict[str, List[Any]]:
         """

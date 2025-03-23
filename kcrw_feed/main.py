@@ -108,7 +108,7 @@ def main():
     storage_root = os.path.abspath(storage_root)
     logger.info("Storage root: %s", storage_root)
 
-    catalog = station_catalog.StationCatalog(storage_root=storage_root)
+    catalog = station_catalog.StationCatalog(catalog_source=storage_root)
 
     collection = show_index.ShowIndex(source=source, storage_root=storage_root)
     # Populate collection.shows
