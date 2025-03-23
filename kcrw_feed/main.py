@@ -118,34 +118,39 @@ def main():
         if args.mode == "resources":
             resources = catalog.list_resources(filter_opts=filter_opts)
             if args.verbose:
-                logger.info("Gathered entities: %s",
-                            pprint.pformat(list(resources)))
+                pprint.pprint(list(resources))
             else:
-                logger.info("Gathered resources: %s",
-                            pprint.pformat(sorted([e.url for e in resources])))
-            logger.info("Gathered %s resources", len(resources))
+                for resource in sorted([e.url for e in resources]):
+                    print(resource)
+            logger.info("%s resources", len(resources))
         elif args.mode == "shows":
             shows = catalog.list_shows(filter_opts=filter_opts)
             shows = sorted(shows, key=lambda s: s.url)
             if args.verbose:
                 print(pprint.pformat(shows))
-            for show in shows:
-                print(show.url)
+            else:
+                for show in shows:
+                    print(show.url)
+            logger.info("%s shows", len(shows))
         elif args.mode == "episodes":
             episodes = catalog.list_episodes(filter_opts=filter_opts)
             # Sort by airdate for now
             episodes = sorted(episodes)  # , key=lambda s: s.url)
             if args.verbose:
                 print(pprint.pformat(episodes))
-            for episode in episodes:
-                print(episode.url)
+            else:
+                for episode in episodes:
+                    print(episode.url)
+            logger.info("%s episodes", len(episodes))
         elif args.mode == "hosts":
             hosts = catalog.list_hosts(filter_opts=filter_opts)
             hosts = sorted(hosts, key=lambda h: h.name)
             if args.verbose:
                 print(pprint.pformat(hosts))
-            for host in hosts:
-                print(host.name)
+            else:
+                for host in hosts:
+                    print(host.name)
+            logger.info("%s hosts", len(hosts))
     elif args.command == "diff":
         raise NotImplementedError
     elif args.command == "update":
