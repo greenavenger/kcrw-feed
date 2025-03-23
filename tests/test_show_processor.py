@@ -63,6 +63,7 @@ FAKE_EPISODE_JSON: Dict[str, Any] = {
 FAKE_RESOURCE = Resource(
     url="https://www.testsite.com/music/shows/test-show/foo",
     source="https://www.testsite.com/music/shows/test-show/foo",
+    last_updated=datetime.now(),
     metadata={
         "lastmod": datetime.now()
     }

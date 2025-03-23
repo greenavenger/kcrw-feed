@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 import logging
-from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable
+from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable, Set
 import uuid
 
 from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
@@ -50,7 +50,7 @@ class BaseStationCatalog(ABC):
             date_key=lambda r: r.metadata.get("lastmod", None)
         )
 
-    def diff(self, updated_catalog: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> Dict[str, List[Any]]:
+    def diff(self, other: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> Dict[str, List[Any]]:
         """
         Compare the current state (self.catalog) with an updated catalog,
         returning a dictionary of differences.
@@ -58,13 +58,18 @@ class BaseStationCatalog(ABC):
         Returns:
             dict: with keys 'added', 'removed', and 'modified'.
         """
-        current = {resource.url for resource in self.list_resources(
-            filter_opts=filter_opts)}
-        updated = {resource.url for resource in updated_catalog.list_resources(
-            filter_opts=filter_opts)}
+        current = set(self.list_resources(filter_opts=filter_opts))
+        updated = set(other.list_resources(filter_opts=filter_opts))
         added = updated - current
         removed = current - updated
-        modified = set()
+        modified = current & updated
+        if modified:
+            for resource in modified:
+                url = resource.url
+                current_resource = self.catalog.resources.get(url)
+                other_resource = other.catalog.resources.get(url)
+                if current_resource.last_updated != other_resource.last_updated:
+                    modified.add(other_resource)
 
         return {"added": list(added), "removed": list(removed), "modified": list(modified)}
 

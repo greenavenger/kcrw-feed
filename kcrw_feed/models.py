@@ -35,7 +35,14 @@ class Resource:
     """
     url: str     # canonical location of resource on kcrw.com
     source: str  # source used: URL or path to local file
+    last_updated: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __hash__(self):
+        return hash(self.url)
+
+    def __eq__(self, other: Resource):
+        return self.url == other.url
 
 
 @dataclass

@@ -123,10 +123,12 @@ class JsonPersister(BasePersister):
 
     def resource_from_dict(self, data: Dict[str, Any]) -> Resource:
         if data:
+            last_updated = self._parse_datetime(data.get("last_updated"))
             lastmod = self._parse_datetime(data.get("metadata")["lastmod"])
             resource = Resource(
                 url=data["url"],
                 source=data.get("source", ""),
+                last_updated=last_updated,
                 metadata=data.get("metadata", {})
             )
             resource.metadata["lastmod"] = lastmod

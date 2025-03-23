@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from kcrw_feed.persistence.manager import JsonPersister, RssPersister
-from kcrw_feed.models import Host, Show, Episode, ShowDirectory
+from kcrw_feed.models import Host, Show, Episode, Resource, ShowDirectory
 
 
 def test_default_serializer_datetime():
@@ -53,14 +53,22 @@ def test_host_from_dict():
 def test_episode_from_dict():
     js = JsonPersister(storage_root=".")
     dt_str = "2025-01-01T12:30:00"
+    url = "http://example.com/episode1"
     data = {
         "title": "Episode 1",
         "airdate": dt_str,
+        "last_updated": dt_str,
         "uuid": "2709247f-7bb7-4af9-a6c0-b2632e009e9b",
         "show_uuid": "d4e287b6-2340-41fb-99c3-9bdbac22fd1f",
-        "url": "http://example.com/episode1",
+        "url": url,
         "media_url": "http://example.com/episode1.mp3",
-        "description": "Test episode"
+        "description": "Test episode",
+        "resource": {
+            "url": url,
+            "metadata": {
+                "lastmod": dt_str
+            }
+        }
     }
     episode = js.episode_from_dict(data)
     assert episode.title == "Episode 1"
@@ -68,6 +76,7 @@ def test_episode_from_dict():
     assert episode.media_url == "http://example.com/episode1.mp3"
     assert episode.description == "Test episode"
     assert episode.airdate == datetime.fromisoformat(dt_str)
+    assert episode.last_updated == datetime.fromisoformat(dt_str)
     assert episode.uuid == uuid.UUID("2709247f-7bb7-4af9-a6c0-b2632e009e9b")
     assert episode.show_uuid == uuid.UUID(
         "d4e287b6-2340-41fb-99c3-9bdbac22fd1f")
@@ -76,9 +85,12 @@ def test_episode_from_dict():
 def test_show_from_dict():
     js = JsonPersister(storage_root=".")
     dt_str = "2025-01-02T13:45:00"
+    airdate = "2025-01-01T12:30:00"
+    show_url = "http://example.com/show1"
+    episode_url = "http://example.com/episodeA"
     show_data = {
         "title": "Show 1",
-        "url": "http://example.com/show1",
+        "url": show_url,
         "uuid": "d4e287b6-2340-41fb-99c3-9bdbac22fd1f",
         "description": "Test show",
         "last_updated": dt_str,
@@ -92,14 +104,27 @@ def test_show_from_dict():
         "episodes": [
             {
                 "title": "Episode A",
-                "airdate": "2025-01-01T12:30:00",
+                "airdate": airdate,
+                "last_updated": airdate,
                 "uuid": "2709247f-7bb7-4af9-a6c0-b2632e009e9b",
                 "show_uuid": "d4e287b6-2340-41fb-99c3-9bdbac22fd1f",
-                "url": "http://example.com/episodeA",
+                "url": episode_url,
                 "media_url": "http://example.com/episodeA.mp3",
-                "description": "Episode A desc"
+                "description": "Episode A desc",
+                "resource": {
+                    "url": show_url,
+                    "metadata": {
+                        "lastmod": dt_str
+                    }
+                }
             }
-        ]
+        ],
+        "resource": {
+            "url": show_url,
+            "metadata": {
+                "lastmod": dt_str
+            }
+        }
     }
     show = js.show_from_dict(show_data)
     assert show.title == "Show 1"
@@ -175,11 +200,20 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
     episode = Episode(
         title="Episode A",
         airdate=dt1,
+        last_updated=dt1,
         uuid=uuid.UUID("2709247f-7bb7-4af9-a6c0-b2632e009e9b"),
         show_uuid=uuid.UUID("d4e287b6-2340-41fb-99c3-9bdbac22fd1f"),
         url="http://example.com/episodeA",
         media_url="http://example.com/episodeA.mp3",
-        description="Episode A desc"
+        description="Episode A desc",
+        resource=Resource(
+            url="http://example.com/episodeA",
+            source="http://example.com/episodeA",
+            last_updated=dt1,
+            metadata={
+                "lastmod": dt1
+            }
+        )
     )
     show = Show(
         title="Show 1",
@@ -189,6 +223,14 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
         hosts=[host],
         episodes=[episode],
         last_updated=dt2,
+        resource=Resource(
+            url="http://example.com/show1",
+            source="http://example.com/show1",
+            last_updated=dt2,
+            metadata={
+                "lastmod": dt2
+            }
+        ),
         metadata={"genre": "rock"}
     )
     directory = ShowDirectory(shows=[show])
@@ -239,6 +281,7 @@ def dummy_directory() -> ShowDirectory:
             Episode(
                 title="Episode 1",
                 airdate=now - timedelta(days=1),
+                last_updated=now - timedelta(days=1),
                 url="https://example.com/show1/ep1",
                 media_url="https://example.com/show1/ep1.mp3",
                 uuid="a1111111-1111-1111-1111-111111111111",
@@ -247,6 +290,7 @@ def dummy_directory() -> ShowDirectory:
             Episode(
                 title="Episode 2",
                 airdate=now,
+                last_updated=now,
                 url="https://example.com/show1/ep2",
                 media_url="https://example.com/show1/ep2.mp3",
                 uuid="a2222222-2222-2222-2222-222222222222",
@@ -265,6 +309,7 @@ def dummy_directory() -> ShowDirectory:
             Episode(
                 title="Episode A",
                 airdate=now - timedelta(days=2),
+                last_updated=now - timedelta(days=2),
                 url="https://example.com/show2/epa",
                 media_url="https://example.com/show2/epa.mp3",
                 uuid="b1111111-1111-1111-1111-111111111111",
@@ -273,6 +318,7 @@ def dummy_directory() -> ShowDirectory:
             Episode(
                 title="Episode B",
                 airdate=now - timedelta(days=1),
+                last_updated=now - timedelta(days=1),
                 url="https://example.com/show2/epb",
                 media_url="https://example.com/show2/epb.mp3",
                 uuid="b2222222-2222-2222-2222-222222222222",

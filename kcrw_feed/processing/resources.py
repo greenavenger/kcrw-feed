@@ -175,12 +175,14 @@ class SitemapProcessor:
             url = entry.get("loc").strip()
             # Keep only music shows
             if url and MUSIC_FILTER_RE.search(url):
+                dt = None
                 if entry.get("lastmod", None):
                     dt = utils.parse_date(entry["lastmod"])
                     entry["lastmod"] = dt
                 resource = Resource(
                     url=url,
                     source=self.source.reference(url),
+                    last_updated=dt,
                     metadata=entry
                 )
                 if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):

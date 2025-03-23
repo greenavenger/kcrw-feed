@@ -140,8 +140,8 @@ def test_read_sitemap_for_child_sitemaps(dummy_source):
     assert set(child_sitemaps) == expected
 
 
-def test_gather_entries(dummy_source, monkeypatch):
-    """Test that gather_entries() returns all music show URLs by processing
+def test_fetch_resources(dummy_source, monkeypatch):
+    """Test that fetch_resources() returns all music show URLs by processing
     sitemaps recursively. In this test we simulate extra sitemaps by monkeypatching
     _sitemaps_from_robots() to return an extra sitemap URL."""
     processor = SitemapProcessor(dummy_source)
