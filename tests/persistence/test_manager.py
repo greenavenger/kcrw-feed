@@ -13,33 +13,35 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from kcrw_feed.persistence.manager import JsonPersister, RssPersister
+from kcrw_feed.persistence.manager import StatePersister, FeedPersister
 from kcrw_feed.models import Host, Show, Episode, Resource, ShowDirectory
 
+TEST_FILE = "test_kcrw_feed.json"
 
-def test_default_serializer_datetime():
-    js = JsonPersister(storage_root=".")
+
+def test_default_serializer_datetime(tmp_path):
+    js = StatePersister(storage_root=tmp_path, state_file=TEST_FILE)
     dt = datetime(2025, 1, 1, 12, 30)
     result = js.default_serializer(dt)
     assert result == dt.isoformat()
 
 
-def test_default_serializer_invalid():
-    js = JsonPersister(storage_root=".")
+def test_default_serializer_invalid(tmp_path):
+    js = StatePersister(storage_root=tmp_path, state_file=TEST_FILE)
     with pytest.raises(TypeError):
         js.default_serializer(123)  # An int should raise TypeError
 
 
-def test_parse_datetime():
-    js = JsonPersister(storage_root=".")
+def test_parse_datetime(tmp_path):
+    js = StatePersister(storage_root=tmp_path, state_file=TEST_FILE)
     dt_str = "2025-01-01T12:30:00"
     dt = js._parse_datetime(dt_str)
     expected = datetime(2025, 1, 1, 12, 30)
     assert dt == expected
 
 
-def test_host_from_dict():
-    js = JsonPersister(storage_root=".")
+def test_host_from_dict(tmp_path):
+    js = StatePersister(storage_root=tmp_path, state_file=TEST_FILE)
     host_data = {
         "name": "Host 1",
         "uuid": "a690aae0-c48d-4771-ac88-0fe13a730b7b"
@@ -50,8 +52,8 @@ def test_host_from_dict():
     assert host.uuid == uuid.UUID("a690aae0-c48d-4771-ac88-0fe13a730b7b")
 
 
-def test_episode_from_dict():
-    js = JsonPersister(storage_root=".")
+def test_episode_from_dict(tmp_path):
+    js = StatePersister(storage_root=tmp_path, state_file=TEST_FILE)
     dt_str = "2025-01-01T12:30:00"
     url = "http://example.com/episode1"
     data = {
@@ -82,8 +84,8 @@ def test_episode_from_dict():
         "d4e287b6-2340-41fb-99c3-9bdbac22fd1f")
 
 
-def test_show_from_dict():
-    js = JsonPersister(storage_root=".")
+def test_show_from_dict(tmp_path):
+    js = StatePersister(storage_root=tmp_path, state_file=TEST_FILE)
     dt_str = "2025-01-02T13:45:00"
     airdate = "2025-01-01T12:30:00"
     show_url = "http://example.com/show1"
@@ -235,7 +237,7 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
     )
     directory = ShowDirectory(shows=[show])
     fake_filename = "fake_state.json"
-    persister = JsonPersister(storage_root=".", filename=fake_filename)
+    persister = StatePersister(storage_root=".", state_file=fake_filename)
 
     # Save state to the fake file system.
     persister.save(directory, fake_filename)
@@ -331,7 +333,7 @@ def dummy_directory() -> ShowDirectory:
 
 
 def test_rss_save_creates_files(dummy_directory):
-    rss_persister = RssPersister(storage_root=".")
+    rss_persister = FeedPersister(storage_root=".")
     with tempfile.TemporaryDirectory() as tmpdirname:
         rss_persister.save(dummy_directory, tmpdirname)
         # Expect one file per show (i.e. 2 files).

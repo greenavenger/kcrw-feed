@@ -13,7 +13,7 @@ from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
-from kcrw_feed.persistence.manager import JsonPersister, RssPersister
+from kcrw_feed.persistence.manager import StatePersister, FeedPersister
 from kcrw_feed import utils
 
 
@@ -21,13 +21,14 @@ logger = logging.getLogger("kcrw_feed")
 
 
 class ShowIndex:
-    def __init__(self, source: BaseSource, storage_root: str) -> None:
+    def __init__(self, source: BaseSource, storage_root: str, state_file: str) -> None:
         """Parameters:
             source: The BaseSource object for the site (http or file).
             storage_root: The directory root for local storage (state, feeds).
         """
         self.source = source
         self.storage_root = storage_root
+        self.state_file = state_file
         # Instantiate the helper components.
         self.sitemap_processor = SitemapProcessor(self.source)
         self.show_processor = ShowProcessor(self.source)
@@ -136,7 +137,8 @@ class ShowIndex:
     def save(self) -> None:
         """Persist data to stable storage."""
         logger.info("Saving entities")
-        persister = JsonPersister(storage_root=self.storage_root)
+        persister = StatePersister(
+            storage_root=self.storage_root, state_file=self.state_file)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
@@ -147,7 +149,7 @@ class ShowIndex:
     def generate_feeds(self) -> None:
         """Generate feed files"""
         logger.info("Writing feeds")
-        persister = RssPersister(storage_root=self.storage_root)
+        persister = FeedPersister(storage_root=self.storage_root)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
 

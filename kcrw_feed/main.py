@@ -107,12 +107,13 @@ def main():
     # Use an absolute path for the storage_root so it's unambiguous.
     storage_root = os.path.abspath(storage_root)
     logger.info("Storage root: %s", storage_root)
+    state_file = CONFIG["state_file"]
 
     local_catalog = station_catalog.LocalStationCatalog(
-        catalog_source=storage_root)
+        catalog_source=storage_root, state_file=state_file)
 
     collection = show_index.ShowIndex(
-        source=live_source, storage_root=storage_root)
+        source=live_source, storage_root=storage_root, state_file=state_file)
     # Populate collection.shows
     # collection.load()
 

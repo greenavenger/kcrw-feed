@@ -16,7 +16,6 @@ from kcrw_feed.models import Host, Show, Episode, Resource, ShowDirectory
 from kcrw_feed import utils
 
 
-FILENAME_JSON: str = "kcrw_feed.json"
 FEED_DIRECTORY: str = "feeds/"
 
 logger = logging.getLogger("kcrw_feed")
@@ -32,9 +31,9 @@ class BasePersister(ABC):
         pass
 
 
-class JsonPersister(BasePersister):
-    def __init__(self, storage_root: str, filename: str = FILENAME_JSON) -> None:
-        self.filename = os.path.join(storage_root, filename)
+class StatePersister(BasePersister):
+    def __init__(self, storage_root: str, state_file: str) -> None:
+        self.filename = os.path.join(storage_root, state_file)
         logger.debug("JSON file: %s", self.filename)
 
     # Serialization
@@ -144,6 +143,8 @@ class JsonPersister(BasePersister):
         """Load the state from a JSON file and return a ShowDirectory
         instance."""
         filename = filename or self.filename
+        assert filename.endswith(
+            ".json"), "State file must be JSON: {filename}"
         if not os.path.exists(filename):
             logger.debug(
                 "File %s does not exist. Returning empty ShowDirectory.", filename)
@@ -155,7 +156,7 @@ class JsonPersister(BasePersister):
         return self.directory_from_dict(data)
 
 
-class RssPersister(BasePersister):
+class FeedPersister(BasePersister):
     def __init__(self, storage_root: str, feed_dir: str = FEED_DIRECTORY) -> None:
         self.feed_dir = os.path.join(storage_root, feed_dir)
         logger.debug("RSS output directory: %s", self.feed_dir)

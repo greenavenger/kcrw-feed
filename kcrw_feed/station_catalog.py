@@ -12,7 +12,7 @@ from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
-from kcrw_feed.persistence.manager import JsonPersister
+from kcrw_feed.persistence.manager import StatePersister
 
 
 logger = logging.getLogger("kcrw_feed")
@@ -80,15 +80,16 @@ class LocalStationCatalog(BaseStationCatalog):
     and hosts from the local persisted state.
     """
 
-    def __init__(self, catalog_source: str) -> None:
+    def __init__(self, catalog_source: str, state_file: str) -> None:
         self.catalog_source = catalog_source
+        self.state_file = state_file
         self.catalog = self.load()
 
     def load(self) -> Catalog:
         """Load data from stable storage."""
         logger.info("Loading entities")
 
-        persister = JsonPersister(self.catalog_source)
+        persister = StatePersister(self.catalog_source, self.state_file)
         directory = persister.load()
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Loaded data: %s", pprint.pformat(directory))

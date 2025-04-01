@@ -148,9 +148,10 @@ def _fake_show_index(tmp_path: Path) -> ShowIndex:
     dummy_source = DummySource("https://www.testsite.com/")
     # Use tmp_path (a Path object) for a temporary storage root.
     storage_root = str(tmp_path / "state")
+    state_file = "test_kcrw_feed.json"
     # Ensure the directory exists.
     (tmp_path / "state").mkdir(parents=True, exist_ok=True)
-    si = ShowIndex(dummy_source, storage_root)
+    si = ShowIndex(dummy_source, storage_root, state_file)
     # Replace the real processors with our fake ones.
     si.sitemap_processor = FakeSitemapProcessor(dummy_source)
     si.show_processor = FakeShowProcessor()
