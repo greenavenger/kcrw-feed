@@ -12,7 +12,7 @@ from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
-from kcrw_feed.persistence.manager import StatePersister
+from kcrw_feed.persistence.state import StatePersister
 
 
 logger = logging.getLogger("kcrw_feed")

@@ -13,7 +13,8 @@ from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import SitemapProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.show_processor import ShowProcessor
-from kcrw_feed.persistence.manager import StatePersister, FeedPersister
+from kcrw_feed.persistence.state import StatePersister
+from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed import utils
 
 
