@@ -1,9 +1,10 @@
 """Module to test the feed generation component."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 import os
 import tempfile
+import uuid
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -11,14 +12,21 @@ import pytest
 from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed.models import Show, Episode, ShowDirectory
 
+UUID_SHOW1 = uuid.uuid4()
+UUID_SHOW1_EP1 = uuid.uuid4()
+UUID_SHOW1_EP2 = uuid.uuid4()
+UUID_SHOW2 = uuid.uuid4()
+UUID_SHOW2_EP1 = uuid.uuid4()
+UUID_SHOW2_EP2 = uuid.uuid4()
+
 
 @pytest.fixture
 def dummy_directory() -> ShowDirectory:
-    now = datetime.now()
+    now = datetime.now().replace(tzinfo=timezone.utc)
     show1 = Show(
         title="Show One",
         url="https://example.com/show1",
-        uuid="11111111-1111-1111-1111-111111111111",
+        uuid=UUID_SHOW1,
         description="Description for Show One",
         hosts=[],
         episodes=[
@@ -28,7 +36,8 @@ def dummy_directory() -> ShowDirectory:
                 last_updated=now - timedelta(days=1),
                 url="https://example.com/show1/ep1",
                 media_url="https://example.com/show1/ep1.mp3",
-                uuid="a1111111-1111-1111-1111-111111111111",
+                duration=0,
+                uuid=UUID_SHOW1_EP1,
                 description="Episode 1 description"
             ),
             Episode(
@@ -37,7 +46,8 @@ def dummy_directory() -> ShowDirectory:
                 last_updated=now,
                 url="https://example.com/show1/ep2",
                 media_url="https://example.com/show1/ep2.mp3",
-                uuid="a2222222-2222-2222-2222-222222222222",
+                duration=0,
+                uuid=UUID_SHOW1_EP2,
                 description="Episode 2 description"
             )
         ],
@@ -46,7 +56,7 @@ def dummy_directory() -> ShowDirectory:
     show2 = Show(
         title="Show Two",
         url="https://example.com/show2",
-        uuid="22222222-2222-2222-2222-222222222222",
+        uuid=UUID_SHOW2,
         description="Description for Show Two",
         hosts=[],
         episodes=[
@@ -56,7 +66,8 @@ def dummy_directory() -> ShowDirectory:
                 last_updated=now - timedelta(days=2),
                 url="https://example.com/show2/epa",
                 media_url="https://example.com/show2/epa.mp3",
-                uuid="b1111111-1111-1111-1111-111111111111",
+                duration=0,
+                uuid=UUID_SHOW2_EP1,
                 description="Episode A description"
             ),
             Episode(
@@ -65,7 +76,8 @@ def dummy_directory() -> ShowDirectory:
                 last_updated=now - timedelta(days=1),
                 url="https://example.com/show2/epb",
                 media_url="https://example.com/show2/epb.mp3",
-                uuid="b2222222-2222-2222-2222-222222222222",
+                duration=0,
+                uuid=UUID_SHOW2_EP2,
                 description="Episode B description"
             )
         ],
@@ -75,7 +87,7 @@ def dummy_directory() -> ShowDirectory:
 
 
 def test_rss_save_creates_files(dummy_directory: ShowDirectory):
-    rss_persister = FeedPersister(storage_root=".")
+    rss_persister = FeedPersister(storage_root=".", feed_directory="feeds")
     with tempfile.TemporaryDirectory() as tmpdirname:
         rss_persister.save(dummy_directory, tmpdirname)
         # Expect one file per show (i.e. 2 files).

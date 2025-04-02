@@ -108,12 +108,13 @@ def main():
     storage_root = os.path.abspath(storage_root)
     logger.info("Storage root: %s", storage_root)
     state_file = CONFIG["state_file"]
+    feed_directory = CONFIG["feed_directory"]
 
     local_catalog = station_catalog.LocalStationCatalog(
         catalog_source=storage_root, state_file=state_file)
 
     collection = show_index.ShowIndex(
-        source=live_source, storage_root=storage_root, state_file=state_file)
+        source=live_source, storage_root=storage_root, state_file=state_file, feed_directory=feed_directory)
     # Populate collection.shows
     # collection.load()
 

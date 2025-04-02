@@ -21,7 +21,7 @@ class StatePersister(BasePersister):
     """Concrete implementation for storing and retrieving state."""
 
     def __init__(self, storage_root: str, state_file: str) -> None:
-        self.filename = os.path.join(storage_root, state_file)
+        self.filename = os.path.abspath(os.path.join(storage_root, state_file))
         logger.debug("JSON file: %s", self.filename)
 
     # Serialization

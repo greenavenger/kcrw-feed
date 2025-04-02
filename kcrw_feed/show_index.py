@@ -22,7 +22,7 @@ logger = logging.getLogger("kcrw_feed")
 
 
 class ShowIndex:
-    def __init__(self, source: BaseSource, storage_root: str, state_file: str) -> None:
+    def __init__(self, source: BaseSource, storage_root: str, state_file: str, feed_directory: str) -> None:
         """Parameters:
             source: The BaseSource object for the site (http or file).
             storage_root: The directory root for local storage (state, feeds).
@@ -30,6 +30,7 @@ class ShowIndex:
         self.source = source
         self.storage_root = storage_root
         self.state_file = state_file
+        self.feed_directory = feed_directory
         # Instantiate the helper components.
         self.sitemap_processor = SitemapProcessor(self.source)
         self.show_processor = ShowProcessor(self.source)
@@ -150,7 +151,8 @@ class ShowIndex:
     def generate_feeds(self) -> None:
         """Generate feed files"""
         logger.info("Writing feeds")
-        persister = FeedPersister(storage_root=self.storage_root)
+        persister = FeedPersister(
+            storage_root=self.storage_root, feed_directory=self.feed_directory)
         directory = ShowDirectory(self.show_processor.get_shows())
         persister.save(directory)
 

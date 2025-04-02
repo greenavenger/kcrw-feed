@@ -69,6 +69,7 @@ class Show:
     sort_index: str = field(init=False, repr=False)  # used for ordering
     title: str
     url: str
+    image: Optional[str] = None
     uuid: Optional[str] = None
     description: Optional[str] = None
     hosts: List[Host] = field(default_factory=list)

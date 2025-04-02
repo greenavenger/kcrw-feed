@@ -120,8 +120,11 @@ class ShowProcessor:
 
             if resource:
                 last_updated = resource.metadata.get("lastmod")
+                image = resource.metadata.get(
+                    "image:image", {}).get("image:loc")
             else:
                 last_updated = datetime.now()
+                image = ""
             logger.trace("last_updated: %s", last_updated)
 
             if show_uuid in self._model_cache:
@@ -132,6 +135,7 @@ class ShowProcessor:
                     title=show_data.get("name", url.split("/")[-1]),
                     url=show_data.get("properties", {}).get(
                         "mainEntityOfPage"),
+                    image=image,
                     uuid=show_uuid,
                     description=show_data.get(
                         "properties", {}).get("description"),

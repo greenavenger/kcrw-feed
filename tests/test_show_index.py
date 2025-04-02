@@ -1,12 +1,19 @@
 """Module to test the collection of shows"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import pytest
+import uuid
 from typing import Any, Dict, List, Optional
 from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed.show_index import ShowIndex
 from kcrw_feed.processing.resources import MUSIC_FILTER_RE
+
+UUID_EP1 = uuid.uuid4()
+UUID_EP2 = uuid.uuid4()
+UUID_SHOW1 = uuid.uuid4()
+UUID_SHOW2 = uuid.uuid4()
+UUID_SHOW3 = uuid.uuid4()
 
 
 class DummySource:
@@ -105,13 +112,13 @@ class FakeShowProcessor:
     def fetch(self, url: str, resource: Optional[Resource] = None) -> Show:
         # For testing, derive a dummy uuid and title from the URL.
         if "show1" in url:
-            uid = "uuid-show1"
+            uid = UUID_SHOW1
             title = "Show One"
         elif "show2" in url:
-            uid = "uuid-show2"
+            uid = UUID_SHOW2
             title = "Show Two"
         elif "show3" in url:
-            uid = "uuid-show3"
+            uid = UUID_SHOW3
             title = "Show Three"
         else:
             uid = None
@@ -124,7 +131,7 @@ class FakeShowProcessor:
             description=f"Description for {title}",
             hosts=[],  # Empty list of hosts for simplicity.
             episodes=[],  # Initially empty.
-            last_updated=datetime(2025, 1, 1),
+            last_updated=datetime(2025, 1, 1, tzinfo=timezone.utc),
             resource=resource,
             metadata={}
         )
@@ -149,9 +156,10 @@ def _fake_show_index(tmp_path: Path) -> ShowIndex:
     # Use tmp_path (a Path object) for a temporary storage root.
     storage_root = str(tmp_path / "state")
     state_file = "test_kcrw_feed.json"
+    feed_directory = "feeds"
     # Ensure the directory exists.
     (tmp_path / "state").mkdir(parents=True, exist_ok=True)
-    si = ShowIndex(dummy_source, storage_root, state_file)
+    si = ShowIndex(dummy_source, storage_root, state_file, feed_directory)
     # Replace the real processors with our fake ones.
     si.sitemap_processor = FakeSitemapProcessor(dummy_source)
     si.show_processor = FakeShowProcessor()
@@ -178,9 +186,9 @@ def test_update(fake_show_index: ShowIndex) -> None:
     shows = fake_show_index.get_shows()
     print("shows:", shows)
     assert len(shows) == 3
-    show1 = fake_show_index.get_show_by_uuid("uuid-show1")
-    show2 = fake_show_index.get_show_by_uuid("uuid-show2")
-    show3 = fake_show_index.get_show_by_uuid("uuid-show3")
+    show1 = fake_show_index.get_show_by_uuid(UUID_SHOW1)
+    show2 = fake_show_index.get_show_by_uuid(UUID_SHOW2)
+    show3 = fake_show_index.get_show_by_uuid(UUID_SHOW3)
     assert show1 is not None and show1.title == "Show One"
     assert show2 is not None and show2.title == "Show Two"
     assert show3 is not None and show3.title == "Show Three"
@@ -200,7 +208,7 @@ def test_get_episodes(fake_show_index: ShowIndex) -> None:
     """Test that get_episodes() returns a combined list of episodes from all shows."""
     fake_show_index.update()
     # For show1, add an episode.
-    show1 = fake_show_index.get_show_by_uuid("uuid-show1")
+    show1 = fake_show_index.get_show_by_uuid(UUID_SHOW1)
     # Make sure show1 exists.
     assert show1 is not None
     # Initialize its episodes list if not already.
@@ -208,10 +216,10 @@ def test_get_episodes(fake_show_index: ShowIndex) -> None:
         show1.episodes = []
     ep = Episode(
         title="Episode 1",
-        airdate=datetime(2025, 1, 2),
+        airdate=datetime(2025, 1, 2, tzinfo=timezone.utc),
         url="https://www.testsite.com/music/shows/show1/ep1",
         media_url="https://www.testsite.com/audio/1.mp3",
-        uuid="ep1",
+        uuid=UUID_EP1,
         description="Episode 1 description"
     )
     show1.episodes.append(ep)
@@ -226,19 +234,19 @@ def test_get_episode_by_uuid(fake_show_index: ShowIndex) -> None:
     """Test that get_episode_by_uuid() returns the correct episode."""
     fake_show_index.update()
     # For show2, add an episode.
-    show2 = fake_show_index.get_show_by_uuid("uuid-show2")
+    show2 = fake_show_index.get_show_by_uuid(UUID_SHOW2)
     assert show2 is not None
     if show2.episodes is None:
         show2.episodes = []
     ep = Episode(
         title="Episode X",
-        airdate=datetime(2025, 1, 3),
+        airdate=datetime(2025, 1, 3, tzinfo=timezone.utc),
         url="https://www.testsite.com/music/shows/show2/ep-x",
         media_url="https://www.testsite.com/audio/x.mp3",
-        uuid="ep-x",
+        uuid=UUID_EP2,
         description="Test episode X"
     )
     show2.episodes.append(ep)
-    found_ep = fake_show_index.get_episode_by_uuid("ep-x")
+    found_ep = fake_show_index.get_episode_by_uuid(UUID_EP2)
     assert found_ep is not None
     assert found_ep.title == "Episode X"

@@ -4,6 +4,7 @@
       "sort_index": "https://www.kcrw.com/music/shows/henry-rollins",
       "title": "henry-rollins",
       "url": "https://www.kcrw.com/music/shows/henry-rollins",
+      "image": "https://www.kcrw.com/music/shows/henry-rollins/@@images/square_image/giant-square",
       "uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
       "description": "Henry Rollins hosts a mix of all kinds, from all over and all time.",
       "hosts": [
@@ -318,6 +319,7 @@
       "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
       "title": "ro-wyldeflower-contreras",
       "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
+      "image": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/@@images/square_image/giant-square",
       "uuid": "9b97069f-e538-46b7-93f6-cbccc058af81",
       "description": "Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.",
       "hosts": [
