@@ -24,10 +24,10 @@ logger = logging.getLogger("kcrw_feed")
 @dataclass
 class Catalog:
     """Catalog of shows, episodes, hosts, resources"""
-    shows: Dict[uuid.UUID | str, Any] = field(default_factory=dict)
-    episodes: Dict[uuid.UUID | str, Any] = field(default_factory=dict)
-    hosts: Dict[uuid.UUID | str, Any] = field(default_factory=dict)
-    resources: Dict[str, Any] = field(default_factory=dict)
+    shows: Dict[uuid.UUID | str, Show] = field(default_factory=dict)
+    episodes: Dict[uuid.UUID | str, Episode] = field(default_factory=dict)
+    hosts: Dict[uuid.UUID | str, Host] = field(default_factory=dict)
+    resources: Dict[str, Resource] = field(default_factory=dict)
 
 
 @dataclass
@@ -68,6 +68,9 @@ class BaseStationCatalog(ABC):
             key=lambda r: r.url,
             date_key=lambda r: r.metadata.get("lastmod", None)
         )
+
+    def has_show(self, show_id: uuid.UUID | str) -> bool:
+        return show_id in self.catalog.shows
 
     def diff(self, other: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> CatalogDiff:
         """
@@ -171,6 +174,30 @@ class LocalStationCatalog(BaseStationCatalog):
     def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
         """Return a list of hosts, filtered if necessary."""
         return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
+
+    def add_show(self, show: Show) -> None:
+        """Add a show to the catalog."""
+        if show.uuid is None:
+            raise ValueError("Show must have a uuid")
+        self.catalog.shows[show.uuid] = show
+
+    def add_episode(self, episode: Episode) -> None:
+        """Add an episode to the catalog."""
+        if episode.uuid is None:
+            raise ValueError("Episode must have a uuid")
+        self.catalog.episodes[episode.uuid] = episode
+
+    def add_host(self, host: Host) -> None:
+        """Add a host to the catalog."""
+        if host.uuid is None:
+            raise ValueError("Host must have a uuid")
+        self.catalog.hosts[host.uuid] = host
+
+    def add_resource(self, resource: Resource) -> None:
+        """Add a resource to the catalog."""
+        if not resource.url:
+            raise ValueError("Resource must have a url")
+        self.catalog.resources[resource.url] = resource
 
 
 class LiveStationCatalog(BaseStationCatalog):

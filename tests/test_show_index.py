@@ -33,15 +33,6 @@ class DummySource:
         # For our tests, assume the URL is already correct.
         return url
 
-    def is_show(self, resource: str) -> bool:
-        # For testing, if "episode" is in the URL, then it's not a show.
-        if "episode" in resource:
-            return False
-        return True
-
-    def is_episode(self, resource: str) -> bool:
-        return not self.is_show(resource)
-
 
 def fake_get_file(path: str, timeout: int = 10) -> Optional[bytes]:
     """Fake get_file function to simulate file retrieval."""
@@ -135,6 +126,15 @@ class FakeShowProcessor:
             resource=resource,
             metadata={}
         )
+
+    def is_show_resource(self, resource: str) -> bool:
+        # For testing, if "episode" is in the URL, then it's not a show.
+        if "episode" in resource:
+            return False
+        return True
+
+    def is_episode_resouce(self, resource: str) -> bool:
+        return not self.is_show_resource(resource)
 
     def get_episodes(self) -> List[Episode]:
         return []

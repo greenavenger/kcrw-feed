@@ -122,20 +122,6 @@ class ShowIndex:
             selected), "Selection did not match resources!"
         return selected
 
-    # def load(self) -> None:
-    #     """Load data from stable storage."""
-    #     logger.info("Loading entities")
-
-    #     persister = JsonPersister(self.storage_root)
-    #     directory = persister.load()
-    #     if logger.isEnabledFor(TRACE_LEVEL_NUM):
-    #         logger.trace("Loaded data: %s", pprint.pformat(directory))
-
-    #     for show in directory.get_shows():
-    #         self._entities[show.uuid] = show
-    #         for episode in show.get_episodes():
-    #             self._entities[episode.uuid] = episode
-
     def save(self) -> None:
         """Persist data to stable storage."""
         logger.info("Saving entities")
@@ -161,7 +147,7 @@ class ShowIndex:
     def get_shows(self) -> List[Show]:
         """Return a list of all Show objects."""
         shows = (show for show in self._entities.values()
-                 if self.source.is_show(show.url))
+                 if self.station_processor.is_show_resource(show.resource))
         # logger.debug("%s", pprint.pformat(shows))
         return list(shows)
 
@@ -180,7 +166,7 @@ class ShowIndex:
         """Return a combined list of episodes from all shows."""
         episodes: List[Episode] = []
         for entity in self._entities.values():
-            if self.source.is_episode(entity.url):
+            if self.station_processor.is_episode_resouce(entity.resource):
                 episodes.append(entity)
             else:
                 # Show objects have a list of Episodes

@@ -106,46 +106,6 @@ class BaseSource(ABC):
             )
         return False
 
-    # TODO: Should this be here or in show_processor?
-    def is_show(self, resource: str) -> bool:
-        """Parse the path to determine if the resource is a show."""
-        # Parse the resource to determine its structure.
-        parsed = urlparse(resource)
-        # Remove leading slashes and split path into segments.
-        path_parts = parsed.path.strip("/").split("/")
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("path_parts: %s", path_parts)
-        # We're expecting a structure like: music/shows/<show>[/<episode>]
-        music_idx = path_parts.index("music")
-        shows_idx = path_parts.index("shows")
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
-        # TODO: add try/except once we're more confident with our parsing
-        # try:
-        #     music_idx = path_parts.index("music")
-        #     shows_idx = path_parts.index("shows")
-        #     logger.debug("music_idx: %d, shows_idx: %d", music_idx, shows_idx)
-        # except ValueError:
-        #     # If the URL doesn't match our expected structure, assume it's a Show.
-        #     return self._fetch_show(resource)
-
-        # Determine how many segments come after "shows" in the path
-        after = path_parts[shows_idx + 1:]
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("after: %s", after)
-        if len(after) == 0:
-            # No show identifier found; fallback.
-            assert False, f"No show identifier found! {resource}"
-        elif len(after) == 1:
-            # Found show
-            return True
-        # Did not find show
-        return False
-
-    def is_episode(self, resource: str) -> bool:
-        """If it's not a show, assume it's an episode."""
-        return not self.is_show(resource)
-
     def _get_file(self, path: str, timeout: int = REQUEST_TIMEOUT) -> Optional[bytes]:
         """Retrieve a file as bytes.
 

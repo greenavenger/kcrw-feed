@@ -1,48 +1,72 @@
 """Module to enrich resource data and populate the core model objects"""
 
 from __future__ import annotations
-from abc import ABC, abstractmethod
 from datetime import datetime
 import json
 import logging
 import pprint
-from typing import List, Dict, Optional
+import re
+from typing import List, Dict, Optional, Union
+from urllib.parse import urljoin, urlparse, urlunparse
 import uuid
 import extruct
 from bs4 import BeautifulSoup
 
 from kcrw_feed.models import Show, Episode, Host, Resource
+from kcrw_feed.station_catalog import BaseStationCatalog
 from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
 SHOW_FILE = "/index.html"
 EPISODE_FILE = "/player.json"
+# Match show URLs, paths that end with "/music/shows/<something>" (and an
+# optional trailing slash)
+SHOW_URL_REGEX = re.compile(r"/music/shows/[^/]+/?$")
+# This regex matches URLs whose path contains at least two segments
+# after "/music/shows/"
+EPISODE_URL_REGEX = re.compile(r"/music/shows/[^/]+/[^/]+")
 
 logger = logging.getLogger("kcrw_feed")
-
-
-class BaseStationProcessor(ABC):
-    """Abstract base class for processors that fetch and enrich domain
-    model objects: Show, Episode, and Host."""
-
-    @abstractmethod
-    def process_resource(self, resource: Resource) -> None:
-        """Fetch and enrich objects referenced by a Resource."""
-        pass
 
 
 class StationProcessor:
     """ShowProcessor fetches a show or an episode page and extracts details
     to enrich a raw URL into a full domain model object."""
 
-    def __init__(self, source: BaseSource, timeout: int = 10):
+    def __init__(self, source: BaseSource):
         self.source = source
-        self.timeout = timeout
         # This will hold a dict of Show objects keyed by UUID.
         self._model_cache: Dict[uuid.UUID, Show | Episode] = {}
 
+    def is_episode_resource(self, resource: Resource) -> bool:
+        """Determine if the resource URL represents an episode (and not a show).
+        A show URL should have two segments after '/music/shows/'."""
+        parsed = urlparse(resource.url)
+        # Use the regex on the path portion.
+        return bool(EPISODE_URL_REGEX.search(parsed.path))
+
+    def is_show_resource(self, resource: Resource) -> bool:
+        """If it's not an episode, assume it's a show."""
+        return not self.is_episode_resource(resource)
+
+    def process_resource(self, resource: Resource, station_catalog: Optional(BaseStationCatalog)) -> Union[Show, Episode]:
+        """Determine the type of the resource (Show or Episode) and fetch and
+        enrich it accordingly (treat as Show by default). If it’s an Episode,
+        ensure that its parent Show is also processed."""
+        if self.is_episode_resource(resource):
+            # Process the episode, and check if its parent show exists in the catalog.
+            episode = self._process_episode(resource)
+            if station_catalog and not station_catalog.has_show(episode.show_uuid):
+                # If the parent show is missing, fetch it.
+                parent_resource = self._derive_parent_resource(resource)
+                parent_show = self._process_show(parent_resource)
+                station_catalog.add_show(parent_show)
+            return episode
+        return self._process_show(resource)
+
     # Accessors
+
     def get_show_by_url(self, url: str) -> Optional[Show]:
         """Return a Show from the internal cache matching the given
         URL, if available."""
@@ -76,11 +100,11 @@ class StationProcessor:
 
     def fetch(self, url: str, resource: Optional[Resource]) -> Optional[Show | Episode]:
         """Dispatch show or episode processing and return the corresponding object."""
-        if self.source.is_show(url):
-            logger.debug("Fetching show: %s", url)
-            return self._fetch_show(url, resource=resource)
-        logger.debug("Fetching episode: %s", url)
-        return self._fetch_episode(url, resource=resource)
+        if self.is_episode_resource(Resource(url=url, source="", last_updated=datetime.now(), metadata={})):
+            logger.debug("Fetching episode: %s", url)
+            return self._fetch_episode(url, resource=resource)
+        logger.debug("Fetching show: %s", url)
+        return self._fetch_show(url, resource=resource)
 
     def _fetch_show(self, url: str, resource: Optional[Resource]) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""

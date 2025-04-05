@@ -88,16 +88,8 @@ class DummySource:
         # For testing, return the URL unchanged.
         return url
 
-    def is_show(self, resource: str) -> bool:
-        if "episode" in resource:
-            return False
-        return True
 
-    def is_episode(self, resource: str) -> bool:
-        return not self.is_show(resource)
-
-
-def fake_get_file(url: str, timeout: int = 10) -> Any:
+def fake_get_file(url: str) -> Any:
     """Return content based on resource signature."""
     # If the URL indicates a player JSON file for an episode.
     if url.endswith("player.json"):
@@ -120,7 +112,7 @@ def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> StationProcessor:
     source_manager.BaseSource._get_file() to return predetermined content
     based on the URL."""
     dummy_source = DummySource("https://www.testsite.com/")
-    sp = StationProcessor(dummy_source, timeout=5)
+    sp = StationProcessor(dummy_source)
     monkeypatch.setattr(source_manager.BaseSource, "_get_file", fake_get_file)
     return sp
 
