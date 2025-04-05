@@ -32,7 +32,7 @@ class BaseStationProcessor(ABC):
         pass
 
 
-class ShowProcessor:
+class StationProcessor:
     """ShowProcessor fetches a show or an episode page and extracts details
     to enrich a raw URL into a full domain model object."""
 

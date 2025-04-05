@@ -6,7 +6,7 @@ import uuid
 from typing import Any, Dict
 
 import pytest
-from kcrw_feed.processing.station import ShowProcessor
+from kcrw_feed.processing.station import StationProcessor
 from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed import source_manager
 
@@ -115,17 +115,17 @@ def fake_get_file(url: str, timeout: int = 10) -> Any:
 
 
 @pytest.fixture(name="fake_processor")
-def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> ShowProcessor:
+def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> StationProcessor:
     """Return a ShowProcessor instance with DummySource and a monkeypatched
     source_manager.BaseSource._get_file() to return predetermined content
     based on the URL."""
     dummy_source = DummySource("https://www.testsite.com/")
-    sp = ShowProcessor(dummy_source, timeout=5)
+    sp = StationProcessor(dummy_source, timeout=5)
     monkeypatch.setattr(source_manager.BaseSource, "_get_file", fake_get_file)
     return sp
 
 
-def test_fetch_show(fake_processor: ShowProcessor):
+def test_fetch_show(fake_processor: StationProcessor):
     """Test that fetch() returns a Show object when given a URL that
     indicates a show."""
     url = "https://www.testsite.com/music/shows/test-show"
@@ -138,7 +138,7 @@ def test_fetch_show(fake_processor: ShowProcessor):
     assert result.description == "A description of the test show."
 
 
-def test_fetch_episode(fake_processor: ShowProcessor):
+def test_fetch_episode(fake_processor: StationProcessor):
     """Test that fetch() returns an Episode object when given a URL that
     indicates an episode."""
     url = "https://www.testsite.com/music/shows/test-show/test-episode"
@@ -153,7 +153,7 @@ def test_fetch_episode(fake_processor: ShowProcessor):
     assert result.airdate == expected_date
 
 
-def test_fetch_invalid_structure_falls_back_to_show(fake_processor: ShowProcessor):
+def test_fetch_invalid_structure_falls_back_to_show(fake_processor: StationProcessor):
     """Test that if the URL structure doesn't match the expected pattern,
     fetch() falls back to treating it as a Show."""
     url = "https://www.testsite.com/invalid/path"

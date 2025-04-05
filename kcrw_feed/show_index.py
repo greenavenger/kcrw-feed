@@ -12,7 +12,7 @@ from kcrw_feed.models import Show, Episode, Resource, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import ResourceProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
-from kcrw_feed.processing.station import ShowProcessor
+from kcrw_feed.processing.station import StationProcessor
 from kcrw_feed.persistence.state import StatePersister
 from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed import utils
@@ -33,7 +33,7 @@ class ShowIndex:
         self.feed_directory = feed_directory
         # Instantiate the helper components.
         self.resource_processor = ResourceProcessor(self.source)
-        self.show_processor = ShowProcessor(self.source)
+        self.station_processor = StationProcessor(self.source)
         # This will hold fully enriched Show objects.
         # TODO: Should I split out Shows and Episodes?
         self._entities: Dict[str | uuid.UUID, Show | Episode] = {}
@@ -66,7 +66,7 @@ class ShowIndex:
         # Helper to fetch and store a resource.
         def fetch_and_store(url: str, resource: Resource) -> None:
             relative = self.source.relative_path(url)
-            entity = self.show_processor.fetch(
+            entity = self.station_processor.fetch(
                 relative, resource=resource)
             if not entity:
                 # Skip resource if fetch failed.
@@ -98,8 +98,8 @@ class ShowIndex:
     def _associate(self) -> None:
         """Scan all entities and ensure each Episode is associated
         with a Show."""
-        for episode in self.show_processor.get_episodes():
-            show = self.show_processor.get_show_by_uuid(episode.show_uuid)
+        for episode in self.station_processor.get_episodes():
+            show = self.station_processor.get_show_by_uuid(episode.show_uuid)
             if episode.uuid not in [e.uuid for e in show.episodes]:
                 show.episodes.append(episode)
 
@@ -141,7 +141,7 @@ class ShowIndex:
         logger.info("Saving entities")
         persister = StatePersister(
             storage_root=self.storage_root, state_file=self.state_file)
-        directory = ShowDirectory(self.show_processor.get_shows())
+        directory = ShowDirectory(self.station_processor.get_shows())
         persister.save(directory)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Saved data: %s", pprint.pformat(directory))
@@ -153,7 +153,7 @@ class ShowIndex:
         logger.info("Writing feeds")
         persister = FeedPersister(
             storage_root=self.storage_root, feed_directory=self.feed_directory)
-        directory = ShowDirectory(self.show_processor.get_shows())
+        directory = ShowDirectory(self.station_processor.get_shows())
         persister.save(directory)
 
     # Accessor Methods

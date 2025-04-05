@@ -162,7 +162,7 @@ def _fake_show_index(tmp_path: Path) -> ShowIndex:
     si = ShowIndex(dummy_source, storage_root, state_file, feed_directory)
     # Replace the real processors with our fake ones.
     si.resource_processor = FakeSitemapProcessor(dummy_source)
-    si.show_processor = FakeShowProcessor()
+    si.station_processor = FakeShowProcessor()
     si._entities = {}
     return si
 
