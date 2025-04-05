@@ -106,10 +106,8 @@ class BaseStationCatalog(ABC):
 
 
 class LocalStationCatalog(BaseStationCatalog):
-    """
-    StationCatalog represents the complete collection of shows, episodes,
-    and hosts from the local persisted state.
-    """
+    """LocalStationCatalog represents the complete collection of shows,
+    episodes, and hosts from the local persisted state."""
 
     def __init__(self, catalog_source: str, state_file: str) -> None:
         self.catalog_source = catalog_source
@@ -176,6 +174,9 @@ class LocalStationCatalog(BaseStationCatalog):
 
 
 class LiveStationCatalog(BaseStationCatalog):
+    """LiveStationCatalog represents the complete read-only collection of
+    shows, episodes, and hosts from the live state (kcrw.com)."""
+
     def __init__(self, catalog_source: BaseSource) -> None:
         self.catalog_source = catalog_source
         self.sitemap_processor = SitemapProcessor(self.catalog_source)
@@ -185,6 +186,8 @@ class LiveStationCatalog(BaseStationCatalog):
         """Load data from live site."""
         logger.info("Loading entities")
 
+        # TODO: Should we be working with the full set of dataclasses or just
+        # resources?
         catalog = Catalog(
             resources=self.sitemap_processor.fetch_resources()
         )

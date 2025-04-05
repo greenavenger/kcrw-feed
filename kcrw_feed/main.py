@@ -166,6 +166,11 @@ def main():
     elif args.command == "update":
         updated_shows = collection.update(selection=args.match)
         logger.info("Updated %s", updated_shows)
+        # live_catalog = station_catalog.LiveStationCatalog(
+        #     catalog_source=live_source)
+        # updates = local_catalog.update(live_catalog, filter_opts=filter_opts)
+        # pprint.pprint(updates)
+        # logger.info("Updated %s", len(updateds))
     else:
         logger.error("Unknown command")
 
