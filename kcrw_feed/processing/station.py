@@ -1,13 +1,12 @@
-"""Module to enrich sitemap data and populate the core model objects"""
+"""Module to enrich resource data and populate the core model objects"""
 
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from datetime import datetime
 import json
 import logging
 import pprint
-# TODO: Add requests when we're ready to test things against the live site.
-# import requests
-from typing import Any, List, Dict, Optional
+from typing import List, Dict, Optional
 import uuid
 import extruct
 from bs4 import BeautifulSoup
@@ -21,6 +20,16 @@ SHOW_FILE = "/index.html"
 EPISODE_FILE = "/player.json"
 
 logger = logging.getLogger("kcrw_feed")
+
+
+class BaseStationProcessor(ABC):
+    """Abstract base class for processors that fetch and enrich domain
+    model objects: Show, Episode, and Host."""
+
+    @abstractmethod
+    def process_resource(self, resource: Resource) -> None:
+        """Fetch and enrich objects referenced by a Resource."""
+        pass
 
 
 class ShowProcessor:

@@ -23,7 +23,7 @@ class FilterOptions:
 @dataclass
 class Resource:
     """'metadata' is structured data extracted (and somewhat transformed)
-    from sitemap xml data:
+    from xml data:
 
     metadata = {
       'changefreq': 'yearly',

@@ -13,7 +13,7 @@ from deepdiff import DeepDiff
 
 from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
 from kcrw_feed.source_manager import BaseSource
-from kcrw_feed.processing.resources import SitemapProcessor
+from kcrw_feed.processing.resources import ResourceProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.persistence.state import StatePersister
 
@@ -179,7 +179,7 @@ class LiveStationCatalog(BaseStationCatalog):
 
     def __init__(self, catalog_source: BaseSource) -> None:
         self.catalog_source = catalog_source
-        self.sitemap_processor = SitemapProcessor(self.catalog_source)
+        self.resource_processor = ResourceProcessor(self.catalog_source)
         self.catalog = self.load()
 
     def load(self) -> Catalog:
@@ -189,7 +189,7 @@ class LiveStationCatalog(BaseStationCatalog):
         # TODO: Should we be working with the full set of dataclasses or just
         # resources?
         catalog = Catalog(
-            resources=self.sitemap_processor.fetch_resources()
+            resources=self.resource_processor.fetch_resources()
         )
         return catalog
 

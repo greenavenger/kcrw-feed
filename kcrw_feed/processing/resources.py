@@ -1,6 +1,5 @@
 """Module to gather the urls of shows and episodes"""
 
-from datetime import datetime
 import logging
 import pprint
 import re
@@ -10,8 +9,7 @@ import xmltodict
 
 from kcrw_feed.models import Resource
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
-from kcrw_feed import source_manager
-from kcrw_feed.source_manager import BaseSource  # , HttpsSource, CacheSource
+from kcrw_feed.source_manager import BaseSource
 from kcrw_feed import utils
 
 # Regular expression to match sitemap XML filenames.
@@ -24,7 +22,7 @@ ROBOTS_FILE = "robots.txt"
 logger = logging.getLogger("kcrw_feed")
 
 
-class SitemapProcessor:
+class ResourceProcessor:
     def __init__(self, source: BaseSource) -> None:
         """Parameters:
             source: The base URL (or local base path) for the site.
@@ -188,15 +186,3 @@ class SitemapProcessor:
                 if logger.isEnabledFor(getattr(logging, "TRACE", TRACE_LEVEL_NUM)):
                     logger.trace(pprint.pformat(resource))
                 self._resources[url] = resource
-
-    def parse_feeds(self, feed_path: str) -> List[str]:
-        """Placeholder for gathering shows from RSS/Atom feeds.
-
-        Parameters:
-            feed_path (str): The directory or file containing feed data.
-
-        Returns:
-            List[str]: A list of show URLs."""
-        logger.info("parse_feeds() is not yet implemented.")
-        # Implementation to be added later.
-        return []

@@ -3,7 +3,7 @@
 import pytest
 from datetime import datetime
 from typing import Optional
-from kcrw_feed.processing.resources import SitemapProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
+from kcrw_feed.processing.resources import ResourceProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
 from kcrw_feed import source_manager
 
 
@@ -86,7 +86,7 @@ def test_sitemaps_from_robots(dummy_source):
     """
     Test that _sitemaps_from_robots() correctly reads robots.txt.
     """
-    processor = SitemapProcessor(dummy_source)
+    processor = ResourceProcessor(dummy_source)
     sitemap_urls = processor._sitemaps_from_robots()
     expected = {"https://www.testsite.com/sitemap1.xml",
                 "https://www.testsite.com/sitemap2.xml"}
@@ -98,7 +98,7 @@ def test_read_sitemap_for_entries(dummy_source):
     Test that _read_sitemap_for_entries() parses a sitemap XML file and stores
     only music show entries in _sitemap_entities.
     """
-    processor = SitemapProcessor(dummy_source)
+    processor = ResourceProcessor(dummy_source)
     processor._read_sitemap_for_entries(
         "https://www.testsite.com/sitemap1.xml")
     # From sitemap1.xml, only the URL containing "/music/shows/" should be stored.
@@ -128,7 +128,7 @@ def test_read_sitemap_for_child_sitemaps(dummy_source):
         return None
     # Override get_resource for this test.
     dummy_source.get_resource = fake_get_resource
-    processor = SitemapProcessor(dummy_source)
+    processor = ResourceProcessor(dummy_source)
     child_sitemaps = processor._read_sitemap_for_child_sitemaps(
         "https://www.testsite.com/sitemap-index.xml")
     # Additionally, the processor filters child sitemaps with MUSIC_FILTER_RE.
@@ -144,7 +144,7 @@ def test_fetch_resources(dummy_source, monkeypatch):
     """Test that fetch_resources() returns all music show URLs by processing
     sitemaps recursively. In this test we simulate extra sitemaps by monkeypatching
     _sitemaps_from_robots() to return an extra sitemap URL."""
-    processor = SitemapProcessor(dummy_source)
+    processor = ResourceProcessor(dummy_source)
     # For this test, override _sitemaps_from_robots to include an extra sitemap.
 
     def fake_sitemaps_from_robots():

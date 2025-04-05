@@ -6,7 +6,7 @@ import uuid
 from typing import Any, Dict
 
 import pytest
-from kcrw_feed.show_processor import ShowProcessor
+from kcrw_feed.processing.station import ShowProcessor
 from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed import source_manager
 

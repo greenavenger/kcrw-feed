@@ -10,9 +10,9 @@ import uuid
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Show, Episode, Resource, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
-from kcrw_feed.processing.resources import SitemapProcessor
+from kcrw_feed.processing.resources import ResourceProcessor
 # from kcrw_feed.feed_processor import FeedProcessor
-from kcrw_feed.show_processor import ShowProcessor
+from kcrw_feed.processing.station import ShowProcessor
 from kcrw_feed.persistence.state import StatePersister
 from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed import utils
@@ -32,7 +32,7 @@ class ShowIndex:
         self.state_file = state_file
         self.feed_directory = feed_directory
         # Instantiate the helper components.
-        self.sitemap_processor = SitemapProcessor(self.source)
+        self.resource_processor = ResourceProcessor(self.source)
         self.show_processor = ShowProcessor(self.source)
         # This will hold fully enriched Show objects.
         # TODO: Should I split out Shows and Episodes?
@@ -41,7 +41,7 @@ class ShowIndex:
     def gather(self) -> Dict[str, Any]:
         """Gather a list of raw entries from the source."""
         logger.info("Gathering entries")
-        resources = self.sitemap_processor.fetch_resources()
+        resources = self.resource_processor.fetch_resources()
         return resources
 
     def update(self, selection: List[str] = [],
