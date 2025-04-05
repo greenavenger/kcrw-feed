@@ -57,7 +57,7 @@ def main():
     )
 
     diff_parser = subparsers.add_parser(
-        "diff", help="Show differences between local state and live site (kcrw.com)")
+        "diff", help="Show differences between local state and live site (kcrw.com) resources")
     diff_parser.add_argument(
         "mode", nargs="?", choices=["resources", "shows", "episodes", "hosts"],
         default=None, help="Specify type of entity to diff. Default lists all."
@@ -158,12 +158,11 @@ def main():
     elif args.command == "diff":
         live_catalog = station_catalog.LiveStationCatalog(
             catalog_source=live_source)
-        resources = live_catalog.list_resources(filter_opts=filter_opts)
-
         diff = local_catalog.diff(live_catalog, filter_opts=filter_opts)
         # diff = live_catalog.diff(local_catalog, filter_opts=filter_opts)
         # diff = local_catalog.diff(local_catalog, filter_opts=filter_opts)
-        pprint.pprint(diff)
+        if args.verbose:
+            pprint.pprint(diff)
     elif args.command == "update":
         updated_shows = collection.update(selection=args.match)
         logger.info("Updated %s", updated_shows)

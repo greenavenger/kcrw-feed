@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import logging
-from typing import List, Dict, Tuple, Any, Optional, Iterable, Callable, Set
+from typing import List, Dict, Any, Optional, Iterable, Callable
 import uuid
+
+from deepdiff import DeepDiff
+
 
 from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
 from kcrw_feed.source_manager import BaseSource
@@ -20,11 +23,27 @@ logger = logging.getLogger("kcrw_feed")
 
 @dataclass
 class Catalog:
-    """Catalog of shows, episodes, hosts"""
+    """Catalog of shows, episodes, hosts, resources"""
     shows: Dict[uuid.UUID | str, Any] = field(default_factory=dict)
     episodes: Dict[uuid.UUID | str, Any] = field(default_factory=dict)
     hosts: Dict[uuid.UUID | str, Any] = field(default_factory=dict)
     resources: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class CatalogDiff:
+    """Capture changes between two Catalogs"""
+    added: List[Any] = field(default_factory=list)
+    removed: List[Any] = field(default_factory=list)
+    modified: List[ModifiedEntry] = field(default_factory=list)
+
+
+@dataclass
+class ModifiedEntry:
+    """Capture the diff that we detected"""
+    current: Any
+    new: Any
+    diff: Dict[str, Any]
 
 
 class BaseStationCatalog(ABC):
@@ -50,28 +69,40 @@ class BaseStationCatalog(ABC):
             date_key=lambda r: r.metadata.get("lastmod", None)
         )
 
-    def diff(self, other: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> Dict[str, List[Any]]:
+    def diff(self, other: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> CatalogDiff:
         """
         Compare the current state (self.catalog) with an updated catalog,
         returning a dictionary of differences.
 
         Returns:
-            dict: with keys 'added', 'removed', and 'modified'.
+            CatalogDiff object
         """
-        current = set(self.list_resources(filter_opts=filter_opts))
-        updated = set(other.list_resources(filter_opts=filter_opts))
-        added = updated - current
-        removed = current - updated
-        modified = current & updated
-        if modified:
-            for resource in modified:
+        # TODO: Generalize this so it works for all of our dataclasses.
+        self_set = set(self.list_resources(filter_opts=filter_opts))
+        other_set = set(other.list_resources(filter_opts=filter_opts))
+        added = other_set - self_set
+        removed = self_set - other_set
+        intersection = self_set & other_set
+
+        modified: List[ModifiedEntry] = []
+        if intersection:
+            for resource in intersection:
                 url = resource.url
                 current_resource = self.catalog.resources.get(url)
                 other_resource = other.catalog.resources.get(url)
-                if current_resource.last_updated != other_resource.last_updated:
-                    modified.add(other_resource)
+                # other_resource.last_updated = datetime.now()
+                # other_resource.source = "foo"
+                ddiff = DeepDiff(asdict(current_resource),
+                                 asdict(other_resource), ignore_order=True)
+                if ddiff:
+                    modified.append(ModifiedEntry(
+                        current_resource, other_resource, ddiff))
 
-        return {"added": list(added), "removed": list(removed), "modified": list(modified)}
+        return CatalogDiff(
+            added=list(added),
+            removed=list(removed),
+            modified=modified
+        )
 
 
 class LocalStationCatalog(BaseStationCatalog):
