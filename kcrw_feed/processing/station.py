@@ -26,6 +26,9 @@ SHOW_URL_REGEX = re.compile(r"/music/shows/[^/]+/?$")
 # This regex matches URLs whose path contains at least two segments
 # after "/music/shows/"
 EPISODE_URL_REGEX = re.compile(r"/music/shows/[^/]+/[^/]+")
+# This regex captures the protocol, domain, and the first segment after "/music/shows/"
+SHOW_FROM_EPISODE = re.compile(r'^(https?://[^/]+/music/shows/[^/]+)(/.*)?$')
+
 
 logger = logging.getLogger("kcrw_feed")
 
@@ -57,14 +60,44 @@ class StationProcessor:
             return self._process_episode(resource)
         return self._process_show(resource)
 
-    def _resolve_parent(self, episode: Episode) -> Show:
-        """Process the episode, and check if its parent show exists in the catalog."""
-        if not self.catalog.has_show(episode.show_uuid):
-            # If the parent show is missing, fetch it.
-            parent_resource = self._derive_parent_resource(resource)
-            parent_show = self._process_show(parent_resource)
-            self.catalog.add_show(parent_show)
-        return show
+    def associate_entity(self, entity: Union[Show, Episode]) -> List[Union[Show, Episode]]:
+        """Make sure each entity is associated with a Show."""
+        associated: Set[Union[Show, Episode]] = set()
+        if isinstance(entity, Show):
+            associated.add(entity)
+        else:
+            # pprint.pprint(entity)
+            assert isinstance(
+                entity, Episode), "We only serve Episodes in this here bar."
+            show_id = entity.show_uuid
+            show = self.catalog.get_show(show_id)
+            if not show:
+                show_resource = self._resolve_parent(entity.resource)
+                show = self.process_resource(show_resource)
+                assert isinstance(
+                    show, Show), "We got something other than a Show!?"
+            episodes = show.episodes
+            if entity not in episodes:
+                episodes = show.episodes
+                episodes.append(entity)
+                show.episodes = sorted(episodes)
+                associated.add(entity)
+        return list(associated)
+
+    def _resolve_parent(self, resource: Resource) -> Resource:
+        """A show is its own parent. An episode has exactly one show as its
+        parent."""
+        if self.is_show_resource(resource):
+            return resource
+        return self._episode_to_show_resource(resource)
+
+    def _episode_to_show_resource(self, resource: Resource) -> Optional[Resource]:
+        assert self.is_episode_resource(
+            resource), "Failing to find a show from a show..."
+        match = SHOW_FROM_EPISODE.match(resource.url)
+        if match:
+            return self.catalog.get_resource(match.group(1))
+        return None
 
     def _process_show(self, resource: Resource) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
@@ -151,6 +184,8 @@ class StationProcessor:
                 metadata={}
             )
             raise NotImplementedError
+        if show:
+            self.catalog.add_show(show)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Final show object: %s", pprint.pformat(show))
         return show
@@ -228,6 +263,8 @@ class StationProcessor:
             )
             if episode.uuid:
                 self.catalog.add_episode(episode)
+        if episode:
+            self.catalog.add_episode(episode)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Final episode object: %s",
                          pprint.pformat(episode_data))
@@ -255,6 +292,9 @@ class StationProcessor:
                 type=author_data.get("type"),
             ))
         hosts = utils.uniq_by_uuid(hosts)
+        for host in hosts:
+            if host not in self.catalog.list_hosts():
+                self.catalog.add_host(host)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("hosts: %s", pprint.pformat(hosts))
         return hosts

@@ -166,8 +166,13 @@ def main():
             catalog_source=live_source)
         catalog_updater = updater.CatalogUpdater(
             local_catalog, live_catalog, filter_opts)
-        updated_shows = catalog_updater.update()
-        logger.info("Updated %s", updated_shows)
+        enriched_resources = catalog_updater.update()
+        if args.verbose:
+            pprint.pprint(enriched_resources)
+        applied = 0
+        if not filter_opts.dry_run:
+            applied += len(enriched_resources)
+        logger.info("Updates applied: %d", applied)
     else:
         logger.error("Unknown command")
 

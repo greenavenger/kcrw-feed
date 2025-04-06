@@ -8,7 +8,7 @@ import json
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
-# Run test_udpate_command() first to ensure that kcrw_feed.json exists for list commands.
+# Run test_update_command() first to ensure that kcrw_feed.json exists for list commands.
 # TODO: move list commands into a tempdir too!
 
 
@@ -19,7 +19,7 @@ def test_update_command():
            f"--source_root={source_root}", "update"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
-    assert "Updated 15" in result.stdout
+    assert "Updates applied: 14" in result.stdout
     pprint.pprint(result.stdout)
 
 
@@ -193,7 +193,7 @@ def test_save_functionality():
         # Check that the command exited successfully.
         assert result.returncode == 0
         # Check that expected log messages are present.
-        assert "Saving entities" in result.stdout
+        assert "Saving state" in result.stdout
         assert "Writing feeds" in result.stdout
 
         # Check that the JSON file was written.

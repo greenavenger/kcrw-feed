@@ -12,7 +12,7 @@
       <link>https://www.kcrw.com/music/shows/ro-wyldeflower-contreras</link>
     </image>
     <language>en</language>
-    <lastBuildDate>Sun, 06 Apr 2025 07:54:05 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 06 Apr 2025 21:34:34 +0000</lastBuildDate>
     <pubDate>Thu, 27 Feb 2025 10:46:02 -0800</pubDate>
     <itunes:author>Ro "Wyldeflower" Contreras</itunes:author>
     <itunes:category text="Music"/>
@@ -35,6 +35,26 @@
       <guid isPermaLink="false">e2c5c6354aac454cb72610133c939242</guid>
       <enclosure url="https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/rc/KCRW-ro_wyldeflower_contreras-ro_wyldeflower_contreras_playlist_january_22_2025-250122.mp3" length="7163" type="audio/mpeg"/>
       <pubDate>Wed, 22 Jan 2025 22:00:00 -0800</pubDate>
+    </item>
+    <item>
+      <title>Ro "Wyldeflower" Contreras' playlist, January 15, 2025</title>
+      <link>https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025</link>
+      <description>&lt;div class="description" itemprop="description"&gt;&#13;
+&lt;p&gt;Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.&lt;/p&gt;&#13;
+&lt;/div&gt;</description>
+      <guid isPermaLink="false">4fbd6aecca3a4d75a4002e9b5143fd2d</guid>
+      <enclosure url="https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/rc/KCRW-ro_wyldeflower_contreras-ro_wyldeflower_contreras_playlist_january_15_2025-250115.mp3" length="7173" type="audio/mpeg"/>
+      <pubDate>Wed, 15 Jan 2025 22:00:00 -0800</pubDate>
+    </item>
+    <item>
+      <title>Ro "Wyldeflower" Contreras' playlist, December 18, 2024</title>
+      <link>https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024</link>
+      <description>&lt;div class="description" itemprop="description"&gt;&#13;
+&lt;p&gt;Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.&lt;/p&gt;&#13;
+&lt;/div&gt;</description>
+      <guid isPermaLink="false">aac0a1559b124947b54b89233cb021ad</guid>
+      <enclosure url="https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/rc/KCRW-ro_wyldeflower_contreras-ro_wyldeflower_contreras_playlist_december_18_2024-241218.mp3" length="7173" type="audio/mpeg"/>
+      <pubDate>Wed, 18 Dec 2024 22:00:00 -0800</pubDate>
     </item>
   </channel>
 </rss>

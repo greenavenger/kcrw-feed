@@ -107,6 +107,9 @@ class BaseStationCatalog(ABC):
     def get_resource(self, url: str) -> Optional[Resource]:
         return self.catalog.resources.get(url, None)
 
+    def get_show(self, show_id: uuid.UUID | str) -> Optional[Show]:
+        return self.catalog.shows.get(show_id, None)
+
     def add_resource(self, resource: Resource) -> None:
         """Add a resource to the catalog."""
         if not resource.url:
@@ -180,7 +183,7 @@ class LocalStationCatalog(BaseStationCatalog):
 
     def load(self) -> Catalog:
         """Load data from stable storage."""
-        logger.info("Loading entities")
+        logger.info("Loading local state")
 
         self.state_persister = StatePersister(
             self.catalog_source, self.state_file)
@@ -210,7 +213,7 @@ class LocalStationCatalog(BaseStationCatalog):
                 key = show.resource.url
                 catalog.resources[key] = show.resource
         logger.info("Loaded: %d resources", len(catalog.resources))
-        logger.info("Loaded: %d shows, %d episodes, %d, hosts",
+        logger.info("Loaded: %d shows, %d episodes (+%d hosts)",
                     len(catalog.shows), len(
                         catalog.episodes), len(catalog.hosts))
         return catalog
@@ -235,7 +238,7 @@ class LiveStationCatalog(BaseStationCatalog):
 
     def load(self) -> Catalog:
         """Load data from live site."""
-        logger.info("Loading entities")
+        logger.info("Fetching live entities")
 
         # TODO: Should we be working with the full set of dataclasses or just
         # resources?

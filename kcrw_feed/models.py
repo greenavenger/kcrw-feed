@@ -19,8 +19,18 @@ class FilterOptions:
     end_date: Optional[datetime] = None
     dry_run: bool = False
 
+    def __hash__(self) -> int:
+        if self.uuid is None:
+            raise ValueError("Host must have a uuid to be hashable")
+        return hash(self.uuid)
 
-@dataclass
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Host):
+            return NotImplemented
+        return self.uuid == other.uuid
+
+
+@dataclass(order=True)
 class Resource:
     """'metadata' is structured data extracted (and somewhat transformed)
     from xml data:
@@ -33,10 +43,15 @@ class Resource:
       'priority': '0.8'
     }
     """
+    sort_index: str = field(init=False, repr=False)  # used for ordering
     url: str     # canonical location of resource on kcrw.com
     source: str  # source used: URL or path to local file
     last_updated: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # Use the URL as the key for ordering.
+        self.sort_index = self.url
 
     def __hash__(self):
         return hash(self.url)
@@ -45,8 +60,9 @@ class Resource:
         return self.url == other.url
 
 
-@dataclass
+@dataclass(order=True)
 class Host:
+    sort_index: str = field(init=False, repr=False)  # used for ordering
     name: str
     # Transition: uuid str -> uuid.UUID
     uuid: Optional[uuid.UUID | str] = None
@@ -62,6 +78,20 @@ class Host:
     # host always comes with Show, and so does not have its own Resource
     # resource: Optional[Resource] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # Use the URL as the key for ordering.
+        self.sort_index = self.url
+
+    def __hash__(self) -> int:
+        if self.uuid is None:
+            raise ValueError("Host must have a uuid to be hashable")
+        return hash(self.uuid)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Host):
+            return NotImplemented
+        return self.uuid == other.uuid
 
 
 @dataclass(order=True)
@@ -82,6 +112,16 @@ class Show:
     def __post_init__(self):
         # Use the URL as the key for ordering.
         self.sort_index = self.url
+
+    def __hash__(self) -> int:
+        if self.uuid is None:
+            raise ValueError("Show must have a uuid to be hashable")
+        return hash(self.uuid)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Show):
+            return NotImplemented
+        return self.uuid == other.uuid
 
 
 @dataclass(order=True)
@@ -108,6 +148,16 @@ class Episode:
     def __post_init__(self):
         # Use the airdate as the sort index.
         self.sort_index = self.airdate
+
+    def __hash__(self) -> int:
+        if self.uuid is None:
+            raise ValueError("Episode must have a uuid to be hashable")
+        return hash(self.uuid)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Episode):
+            return NotImplemented
+        return self.uuid == other.uuid
 
 
 @dataclass
