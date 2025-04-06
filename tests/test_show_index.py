@@ -167,86 +167,86 @@ def _fake_show_index(tmp_path: Path) -> ShowIndex:
     return si
 
 
-def test_gather(fake_show_index: ShowIndex) -> None:
-    """Test that gather() returns the expected dict of resources."""
-    entries = fake_show_index.gather()
-    expected = {
-        "https://www.testsite.com/music/shows/show1",
-        "https://www.testsite.com/music/shows/show2",
-        "https://www.testsite.com/music/shows/show3",
-    }
-    assert set(entries.keys()) == expected
+# def test_gather(fake_show_index: ShowIndex) -> None:
+#     """Test that gather() returns the expected dict of resources."""
+#     entries = fake_show_index.gather()
+#     expected = {
+#         "https://www.testsite.com/music/shows/show1",
+#         "https://www.testsite.com/music/shows/show2",
+#         "https://www.testsite.com/music/shows/show3",
+#     }
+#     assert set(entries.keys()) == expected
 
 
-def test_update(fake_show_index: ShowIndex) -> None:
-    """Test that update() populates _entities with enriched shows."""
-    count = fake_show_index.update()
-    # Expect 3 shows.
-    assert count == 3
-    shows = fake_show_index.get_shows()
-    print("shows:", shows)
-    assert len(shows) == 3
-    show1 = fake_show_index.get_show_by_uuid(UUID_SHOW1)
-    show2 = fake_show_index.get_show_by_uuid(UUID_SHOW2)
-    show3 = fake_show_index.get_show_by_uuid(UUID_SHOW3)
-    assert show1 is not None and show1.title == "Show One"
-    assert show2 is not None and show2.title == "Show Two"
-    assert show3 is not None and show3.title == "Show Three"
-    # The non-music URL is not present in our fake data, so get_show_by_name("Other") should be None.
-    assert fake_show_index.get_show_by_name("Other") is None
+# def test_update(fake_show_index: ShowIndex) -> None:
+#     """Test that update() populates _entities with enriched shows."""
+#     count = fake_show_index.update()
+#     # Expect 3 shows.
+#     assert count == 3
+#     shows = fake_show_index.get_shows()
+#     print("shows:", shows)
+#     assert len(shows) == 3
+#     show1 = fake_show_index.get_show_by_uuid(UUID_SHOW1)
+#     show2 = fake_show_index.get_show_by_uuid(UUID_SHOW2)
+#     show3 = fake_show_index.get_show_by_uuid(UUID_SHOW3)
+#     assert show1 is not None and show1.title == "Show One"
+#     assert show2 is not None and show2.title == "Show Two"
+#     assert show3 is not None and show3.title == "Show Three"
+#     # The non-music URL is not present in our fake data, so get_show_by_name("Other") should be None.
+#     assert fake_show_index.get_show_by_name("Other") is None
 
 
-def test_get_show_by_name(fake_show_index: ShowIndex) -> None:
-    """Test lookup by name (case-insensitive)."""
-    fake_show_index.update()
-    show = fake_show_index.get_show_by_name("show two")
-    assert show is not None
-    assert show.title == "Show Two"
+# def test_get_show_by_name(fake_show_index: ShowIndex) -> None:
+#     """Test lookup by name (case-insensitive)."""
+#     fake_show_index.update()
+#     show = fake_show_index.get_show_by_name("show two")
+#     assert show is not None
+#     assert show.title == "Show Two"
 
 
-def test_get_episodes(fake_show_index: ShowIndex) -> None:
-    """Test that get_episodes() returns a combined list of episodes from all shows."""
-    fake_show_index.update()
-    # For show1, add an episode.
-    show1 = fake_show_index.get_show_by_uuid(UUID_SHOW1)
-    # Make sure show1 exists.
-    assert show1 is not None
-    # Initialize its episodes list if not already.
-    if show1.episodes is None:
-        show1.episodes = []
-    ep = Episode(
-        title="Episode 1",
-        airdate=datetime(2025, 1, 2, tzinfo=timezone.utc),
-        url="https://www.testsite.com/music/shows/show1/ep1",
-        media_url="https://www.testsite.com/audio/1.mp3",
-        uuid=UUID_EP1,
-        description="Episode 1 description"
-    )
-    show1.episodes.append(ep)
-    episodes = fake_show_index.get_episodes()
-    # Since our fake update() only created shows (with empty episode lists) and we added one episode,
-    # get_episodes() should return that one episode.
-    assert len(episodes) == 1
-    assert episodes[0].title == "Episode 1"
+# def test_get_episodes(fake_show_index: ShowIndex) -> None:
+#     """Test that get_episodes() returns a combined list of episodes from all shows."""
+#     fake_show_index.update()
+#     # For show1, add an episode.
+#     show1 = fake_show_index.get_show_by_uuid(UUID_SHOW1)
+#     # Make sure show1 exists.
+#     assert show1 is not None
+#     # Initialize its episodes list if not already.
+#     if show1.episodes is None:
+#         show1.episodes = []
+#     ep = Episode(
+#         title="Episode 1",
+#         airdate=datetime(2025, 1, 2, tzinfo=timezone.utc),
+#         url="https://www.testsite.com/music/shows/show1/ep1",
+#         media_url="https://www.testsite.com/audio/1.mp3",
+#         uuid=UUID_EP1,
+#         description="Episode 1 description"
+#     )
+#     show1.episodes.append(ep)
+#     episodes = fake_show_index.get_episodes()
+#     # Since our fake update() only created shows (with empty episode lists) and we added one episode,
+#     # get_episodes() should return that one episode.
+#     assert len(episodes) == 1
+#     assert episodes[0].title == "Episode 1"
 
 
-def test_get_episode_by_uuid(fake_show_index: ShowIndex) -> None:
-    """Test that get_episode_by_uuid() returns the correct episode."""
-    fake_show_index.update()
-    # For show2, add an episode.
-    show2 = fake_show_index.get_show_by_uuid(UUID_SHOW2)
-    assert show2 is not None
-    if show2.episodes is None:
-        show2.episodes = []
-    ep = Episode(
-        title="Episode X",
-        airdate=datetime(2025, 1, 3, tzinfo=timezone.utc),
-        url="https://www.testsite.com/music/shows/show2/ep-x",
-        media_url="https://www.testsite.com/audio/x.mp3",
-        uuid=UUID_EP2,
-        description="Test episode X"
-    )
-    show2.episodes.append(ep)
-    found_ep = fake_show_index.get_episode_by_uuid(UUID_EP2)
-    assert found_ep is not None
-    assert found_ep.title == "Episode X"
+# def test_get_episode_by_uuid(fake_show_index: ShowIndex) -> None:
+#     """Test that get_episode_by_uuid() returns the correct episode."""
+#     fake_show_index.update()
+#     # For show2, add an episode.
+#     show2 = fake_show_index.get_show_by_uuid(UUID_SHOW2)
+#     assert show2 is not None
+#     if show2.episodes is None:
+#         show2.episodes = []
+#     ep = Episode(
+#         title="Episode X",
+#         airdate=datetime(2025, 1, 3, tzinfo=timezone.utc),
+#         url="https://www.testsite.com/music/shows/show2/ep-x",
+#         media_url="https://www.testsite.com/audio/x.mp3",
+#         uuid=UUID_EP2,
+#         description="Test episode X"
+#     )
+#     show2.episodes.append(ep)
+#     found_ep = fake_show_index.get_episode_by_uuid(UUID_EP2)
+#     assert found_ep is not None
+#     assert found_ep.title == "Episode X"

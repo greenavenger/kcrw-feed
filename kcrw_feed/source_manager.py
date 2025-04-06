@@ -73,7 +73,7 @@ class BaseSource(ABC):
     _session = None
 
     @abstractmethod
-    def get_resource(self, resource: str) -> Optional[bytes]:
+    def get_reference(self, resource: str) -> Optional[bytes]:
         """Fetch the resource content as bytes."""
         pass
 
@@ -164,7 +164,7 @@ class HttpsSource(BaseSource):
         )
         logger.info("Cache backend: %s", self.backend)
 
-    def get_resource(self, url: str) -> Optional[bytes]:
+    def get_reference(self, url: str) -> Optional[bytes]:
         logger.debug(f"Fetching via HTTPS: {url}")
 
         # Rewrite URL if necessary
@@ -195,7 +195,7 @@ class CacheSource(BaseSource):
         self.path = self.base_source  # convenience reference
         self.uses_sitemap = True
 
-    def get_resource(self, resource: str) -> Optional[bytes]:
+    def get_reference(self, resource: str) -> Optional[bytes]:
         # Read from the local cache directory.
 
         # Rewrite path if necessary
@@ -220,7 +220,7 @@ class RssFeedSource(BaseSource):
         self.url_or_path = url_or_path
         self.uses_sitemap = False
 
-    def get_resource(self, resource: str) -> Optional[bytes]:
+    def get_reference(self, resource: str) -> Optional[bytes]:
         print(f"Fetching from RSS feed: {self.url_or_path}")
         return None
 
@@ -230,6 +230,6 @@ class AtomFeedSource(BaseSource):
         self.url_or_path = url_or_path
         self.uses_sitemap = False
 
-    def get_resource(self, resource: str) -> Optional[bytes]:
+    def get_reference(self, resource: str) -> Optional[bytes]:
         print(f"Fetching from Atom feed: {self.url_or_path}")
         return None

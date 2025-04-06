@@ -5,9 +5,6 @@ from abc import ABC, abstractmethod
 from kcrw_feed.models import ShowDirectory
 
 
-FEED_DIRECTORY: str = "feeds/"
-
-
 class BasePersister(ABC):
     """Base class for persister implementations."""
     @abstractmethod

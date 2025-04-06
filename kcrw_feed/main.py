@@ -2,18 +2,17 @@
 
 import argparse
 import logging.config
-import logging.handlers
 import os.path
 import pprint
 import time
-from typing import Any, Dict
 
 from kcrw_feed import config
-from kcrw_feed.models import FilterOptions
 from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
 from kcrw_feed import station_catalog
-from kcrw_feed import show_index
+from kcrw_feed import updater
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
+from kcrw_feed.persistence.feeds import FeedPersister
+# from kcrw_feed.models import ShowDirectory
 
 
 CONFIG = config.CONFIG
@@ -109,14 +108,13 @@ def main():
     logger.info("Storage root: %s", storage_root)
     state_file = CONFIG["state_file"]
     feed_directory = CONFIG["feed_directory"]
+    feed_persister = None
+    if not filter_opts.dry_run:
+        feed_persister = FeedPersister(
+            storage_root=storage_root, feed_directory=feed_directory)
 
     local_catalog = station_catalog.LocalStationCatalog(
-        catalog_source=storage_root, state_file=state_file)
-
-    collection = show_index.ShowIndex(
-        source=live_source, storage_root=storage_root, state_file=state_file, feed_directory=feed_directory)
-    # Populate collection.shows
-    # collection.load()
+        catalog_source=storage_root, state_file=state_file, feed_persister=feed_persister)
 
     if args.command == "list":
         if args.mode == "resources":
@@ -164,13 +162,12 @@ def main():
         if args.verbose:
             pprint.pprint(diff)
     elif args.command == "update":
-        updated_shows = collection.update(selection=args.match)
+        live_catalog = station_catalog.LiveStationCatalog(
+            catalog_source=live_source)
+        catalog_updater = updater.CatalogUpdater(
+            local_catalog, live_catalog, filter_opts)
+        updated_shows = catalog_updater.update()
         logger.info("Updated %s", updated_shows)
-        # live_catalog = station_catalog.LiveStationCatalog(
-        #     catalog_source=live_source)
-        # updates = local_catalog.update(live_catalog, filter_opts=filter_opts)
-        # pprint.pprint(updates)
-        # logger.info("Updated %s", len(updateds))
     else:
         logger.error("Unknown command")
 

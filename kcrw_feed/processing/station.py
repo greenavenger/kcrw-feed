@@ -6,20 +6,20 @@ import json
 import logging
 import pprint
 import re
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Set, Union
 from urllib.parse import urljoin, urlparse, urlunparse
 import uuid
 import extruct
 from bs4 import BeautifulSoup
 
-from kcrw_feed.models import Show, Episode, Host, Resource
+from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
 from kcrw_feed.station_catalog import BaseStationCatalog
 from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
-SHOW_FILE = "/index.html"
-EPISODE_FILE = "/player.json"
+SHOW_FILENAME = "index.html"
+EPISODE_FILENAME = "player.json"
 # Match show URLs, paths that end with "/music/shows/<something>" (and an
 # optional trailing slash)
 SHOW_URL_REGEX = re.compile(r"/music/shows/[^/]+/?$")
@@ -31,13 +31,12 @@ logger = logging.getLogger("kcrw_feed")
 
 
 class StationProcessor:
-    """ShowProcessor fetches a show or an episode page and extracts details
+    """StationProcessor fetches a show or an episode page and extracts details
     to enrich a raw URL into a full domain model object."""
 
-    def __init__(self, source: BaseSource):
-        self.source = source
-        # This will hold a dict of Show objects keyed by UUID.
-        self._model_cache: Dict[uuid.UUID, Show | Episode] = {}
+    def __init__(self, catalog: BaseStationCatalog):
+        self.catalog = catalog
+        self.source = catalog.get_source()
 
     def is_episode_resource(self, resource: Resource) -> bool:
         """Determine if the resource URL represents an episode (and not a show).
@@ -50,73 +49,42 @@ class StationProcessor:
         """If it's not an episode, assume it's a show."""
         return not self.is_episode_resource(resource)
 
-    def process_resource(self, resource: Resource, station_catalog: Optional(BaseStationCatalog)) -> Union[Show, Episode]:
+    def process_resource(self, resource: Resource) -> Union[Show, Episode]:
         """Determine the type of the resource (Show or Episode) and fetch and
         enrich it accordingly (treat as Show by default). If it’s an Episode,
         ensure that its parent Show is also processed."""
         if self.is_episode_resource(resource):
-            # Process the episode, and check if its parent show exists in the catalog.
-            episode = self._process_episode(resource)
-            if station_catalog and not station_catalog.has_show(episode.show_uuid):
-                # If the parent show is missing, fetch it.
-                parent_resource = self._derive_parent_resource(resource)
-                parent_show = self._process_show(parent_resource)
-                station_catalog.add_show(parent_show)
-            return episode
+            return self._process_episode(resource)
         return self._process_show(resource)
 
-    # Accessors
+    def _resolve_parent(self, episode: Episode) -> Show:
+        """Process the episode, and check if its parent show exists in the catalog."""
+        if not self.catalog.has_show(episode.show_uuid):
+            # If the parent show is missing, fetch it.
+            parent_resource = self._derive_parent_resource(resource)
+            parent_show = self._process_show(parent_resource)
+            self.catalog.add_show(parent_show)
+        return show
 
-    def get_show_by_url(self, url: str) -> Optional[Show]:
-        """Return a Show from the internal cache matching the given
-        URL, if available."""
-        for entity in self._model_cache.values():
-            if entity.url == url:
-                return entity
-        return None
-
-    def get_show_by_uuid(self, uuid: uuid.UUID) -> Optional[Show]:
-        """Return a Show from the internal cache matching the given
-        uuid, if available."""
-        return self._model_cache.get(uuid, None)
-
-    def get_shows(self) -> List[Show]:
-        """Return a list of all Shows."""
-        shows: List[Show] = []
-        for entity in self._model_cache.values():
-            if isinstance(entity, Show):
-                shows.append(entity)
-        return sorted(shows)
-
-    def get_episodes(self) -> List[Episode]:
-        """Return a list of all Episodes."""
-        episodes: List[Episode] = []
-        for entity in self._model_cache.values():
-            if isinstance(entity, Episode):
-                episodes.append(entity)
-        return episodes
-
-    # Core methods
-
-    def fetch(self, url: str, resource: Optional[Resource]) -> Optional[Show | Episode]:
-        """Dispatch show or episode processing and return the corresponding object."""
-        if self.is_episode_resource(Resource(url=url, source="", last_updated=datetime.now(), metadata={})):
-            logger.debug("Fetching episode: %s", url)
-            return self._fetch_episode(url, resource=resource)
-        logger.debug("Fetching show: %s", url)
-        return self._fetch_show(url, resource=resource)
-
-    def _fetch_show(self, url: str, resource: Optional[Resource]) -> Optional[Show]:
+    def _process_show(self, resource: Resource) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
-        show_file = self.source.relative_path(url + SHOW_FILE)
-        logger.debug("show_file: %s", show_file)
-        html = self.source.get_resource(show_file)
+
+        # Checking by url is the best we can do here
+        for show in self.catalog.list_shows():
+            if resource.url == show.url:
+                return show
+
+        show_reference = self.source.relative_path(
+            resource.url + "/" + SHOW_FILENAME)
+        logger.debug("show_reference: %s", show_reference)
+        html = self.source.get_reference(show_reference)
         if html is None:
-            logger.debug("Failed to retrieve file: %s", show_file)
+            logger.debug("Failed to retrieve file: %s", show_reference)
             return
 
         # Try to extract structured data using extruct (e.g., microdata).
-        data = extruct.extract(html, base_url=url, syntaxes=["microdata"])
+        data = extruct.extract(
+            html, base_url=resource.url, syntaxes=["microdata"])
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Extracted data: %s", pprint.pformat(data))
 
@@ -132,18 +100,23 @@ class StationProcessor:
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("show_data: %s", pprint.pformat(show_data))
 
-        # TODO: Permanently remove Episode population in the Show context
-        # since we don't have a Resource here.
-        # episode_data = None
-        # # Look for an object that indicates it's an episode (or similar).
-        # for item in data.get("microdata", []):
-        #     if isinstance(item, dict) and item.get("id", "").endswith("-episodes"):
-        #         episode_data = item
-        #         break
-        episodes = []
-        # if episode_data:
-        #     episodes.extend(self._parse_episodes(episode_data))
+        episodes: List[Episode] = []
+        episode_data = None
+        # Look for an object that indicates it's an episode (or similar).
+        for item in data.get("microdata", []):
+            if isinstance(item, dict) and item.get("id", "").endswith("-episodes"):
+                episode_data = item
+                break
+        if episode_data:
+            episodes.extend(self._parse_show_episodes(episode_data))
 
+        last_updated = resource.metadata.get("lastmod")
+        logger.trace("last_updated: %s", last_updated)
+        image_loc = resource.metadata.get(
+            "image:image", {}).get("image:loc")
+        logger.trace("image_loc: %s", image_loc)
+
+        # Parse response to fill our our Show object
         if show_data:
             show_html_id: str = show_data.get("id")
             logger.trace("show_html_id: %s", show_html_id)
@@ -151,34 +124,20 @@ class StationProcessor:
             show_uuid = utils.extract_uuid(show_html_id)
             logger.debug("show_uuid: %s", show_uuid)
 
-            if resource:
-                last_updated = resource.metadata.get("lastmod")
-                image = resource.metadata.get(
-                    "image:image", {}).get("image:loc")
-            else:
-                last_updated = datetime.now()
-                image = ""
-            logger.trace("last_updated: %s", last_updated)
-
-            if show_uuid in self._model_cache:
-                # Show has already been fetched, so return cached object
-                show = self._model_cache.get(show_uuid)
-            else:
-                show = Show(
-                    title=show_data.get("name", url.split("/")[-1]),
-                    url=show_data.get("properties", {}).get(
-                        "mainEntityOfPage"),
-                    image=image,
-                    uuid=show_uuid,
-                    description=show_data.get(
-                        "properties", {}).get("description"),
-                    hosts=self._parse_hosts(show_data),
-                    episodes=episodes,      # Episodes can be added later.
-                    type=show_data.get("type"),
-                    resource=resource,
-                    last_updated=last_updated
-                )
-                self._model_cache[show.uuid] = show
+            show = Show(
+                title=show_data.get("name", resource.url.split("/")[-1]),
+                url=show_data.get("properties", {}).get(
+                    "mainEntityOfPage"),
+                image=image_loc,
+                uuid=show_uuid,
+                description=show_data.get(
+                    "properties", {}).get("description"),
+                hosts=self._process_hosts(show_data),
+                episodes=episodes,
+                type=show_data.get("type"),
+                resource=resource,
+                last_updated=last_updated
+            )
         else:
             # Fallback: use BeautifulSoup to get the title.
             soup = BeautifulSoup(html, "html.parser")
@@ -191,54 +150,52 @@ class StationProcessor:
                 last_updated=last_updated,
                 metadata={}
             )
-            self._model_cache[show.url] = show
             raise NotImplementedError
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Final show object: %s", pprint.pformat(show))
         return show
 
-    def _parse_episodes(self, episode_data: dict) -> List[Episode]:
+    def _parse_show_episodes(self, episode_data: dict) -> List[Episode]:
         """Parse episode data extracted from structured data."""
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("episode_data: %s", pprint.pformat(episode_data))
 
-        episodes = []
+        episodes: List[Episode] = []
+        episode_urls: Set[str] = set()
+        # Grab urls for episodes listed on the show page. We do this here
+        # instead of getting the full list of resources from the catalog
+        # to reduce load on kcrw.com. Some shows have 4k or more episodes!
         if episode_data:
-            episodes_list: list = episode_data.get(
+            episodes_list = episode_data.get(
                 "properties", {}).get("itemListElement", [])
             for item in episodes_list:
                 if isinstance(item, dict) and item.get("type") == "http://schema.org/ListItem":
                     url = item.get("properties", {}).get("url")
-                    episode_html_id: str = item.get("id")
-                    assert episode_html_id is not None, "Failed to extract episode UUID!"
-                    logger.trace("episode_html_id: %s", episode_html_id)
-                    episode_uuid = utils.extract_uuid(item.get("id"))
-                    logger.debug("episode_uuid: %s", episode_uuid)
-                    if not url and not episode_uuid:
-                        logger.error("Failed to extract episode URL!")
-                        continue
-                    elif url and episode_uuid:
-                        # Called from _fetch_show, we don't have Episode metadata
-                        episode = self._fetch_episode(
-                            url, resource={}, uuid=episode_uuid)
-                    else:
-                        episode = self._fetch_episode(url, resource={})
+                    if url:
+                        episode_urls.add(url)
+        # Enhance episodes on the show page
+        if episode_urls:
+            for url in episode_urls:
+                resource = self.catalog.get_resource(url)
+                if resource:
+                    episode = self._process_episode(resource)
                     if episode:
                         episodes.append(episode)
-        return utils.uniq_by_uuid(episodes)
+        return sorted(episodes)
 
-    def _fetch_episode(self, url: str, resource: Optional[Resource], uuid: Optional[str] = "") -> Optional[Episode]:
+    def _process_episode(self, resource: Resource) -> Optional[Episode]:
         """Fetch the player for the Episode and extract details."""
 
+        # Checking by url is the best we can do here
+        for episode in self.catalog.list_episodes():
+            if resource.url == episode.url:
+                return episode
+
         episode: Episode
-
-        if uuid and uuid in self._model_cache:
-            # Episode has been fetched, so return cached object
-            return self._model_cache.get(uuid)
-
-        episode_file = self.source.relative_path(url + EPISODE_FILE)
-        logger.debug("episode_file: %s", episode_file)
-        episode_bytes = self.source.get_resource(episode_file)
+        episode_reference = self.source.relative_path(
+            resource.url + "/" + EPISODE_FILENAME)
+        logger.debug("episode_reference: %s", episode_reference)
+        episode_bytes = self.source.get_reference(episode_reference)
         episode_data = None
         if episode_bytes is not None:
             try:
@@ -247,7 +204,7 @@ class StationProcessor:
             except json.JSONDecodeError as e:
                 logger.error("Error decoding JSON: %s", e)
         else:
-            logger.debug("Failed to retrieve file: %s", episode_file)
+            logger.debug("Failed to retrieve file: %s", episode_reference)
             return
         if episode_data:
             episode = Episode(
@@ -270,13 +227,13 @@ class StationProcessor:
                 resource=resource
             )
             if episode.uuid:
-                self._model_cache[episode.uuid] = episode
+                self.catalog.add_episode(episode)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Final episode object: %s",
                          pprint.pformat(episode_data))
         return episode
 
-    def _parse_hosts(self, show_data: dict) -> Optional[List[Host]]:
+    def _process_hosts(self, show_data: dict) -> Optional[List[Host]]:
         """Try to parse a host object from structured data."""
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("show_data for hosts: %s", pprint.pformat(show_data))
@@ -290,18 +247,13 @@ class StationProcessor:
                 logger.debug("hosts: %s", hosts)
                 return []
             author_uuid = utils.extract_uuid(author_data.get("id"))
-            if author_uuid and author_uuid in self._model_cache:
-                hosts = self._model_cache.get(author_uuid)
-            else:
-                hosts.append(Host(
-                    name=author_data.get("properties", {}).get("name"),
-                    uuid=author_uuid,
-                    url=author_data.get("properties", {}).get("url"),
-                    socials=show_data.get("properties", {}).get("sameAs", []),
-                    type=author_data.get("type"),
-                ))
-            if author_uuid:
-                self._model_cache[author_uuid] = hosts
+            hosts.append(Host(
+                name=author_data.get("properties", {}).get("name"),
+                uuid=author_uuid,
+                url=author_data.get("properties", {}).get("url"),
+                socials=show_data.get("properties", {}).get("sameAs", []),
+                type=author_data.get("type"),
+            ))
         hosts = utils.uniq_by_uuid(hosts)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("hosts: %s", pprint.pformat(hosts))

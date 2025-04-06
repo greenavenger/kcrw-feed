@@ -23,22 +23,21 @@ class FeedPersister(BasePersister):
             os.path.join(storage_root, feed_directory))
         logger.debug("RSS output directory: %s", self.feed_directory)
 
-    def save(self, show_directory: ShowDirectory, feed_dir: Optional[str] = None) -> None:
+    def save(self, show_directory: ShowDirectory, feed_directory: Optional[str] = None) -> None:
         """Generate an individual RSS feed XML file for each show in the state.
         Episodes are sorted in reverse chronological order (most recent first).
 
         Parameters:
           state: A ShowDirectory instance containing a list of shows.
           output_dir: The output directory where feed files will be written."""
-        feed_dir = feed_dir or self.feed_directory
-        os.makedirs(feed_dir, exist_ok=True)
+        feed_directory = feed_directory or self.feed_directory
+        os.makedirs(feed_directory, exist_ok=True)
         for show in show_directory.shows:
             # Create an RSS feed using Django's feed generator.
-            # feed_xml = self.generate_rss_feed_django(show)
             feed_xml = self.generate_rss_feed(show)
             # Use the show's title as the filename (or fallback to UUID).
             file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
-            output_path = os.path.join(feed_dir, file_name)
+            output_path = os.path.join(feed_directory, file_name)
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(feed_xml)
 

@@ -5,16 +5,18 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import logging
+import pprint
 from typing import List, Dict, Any, Optional, Iterable, Callable
 import uuid
 
 from deepdiff import DeepDiff
 
 
-from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
+from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import ResourceProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
+from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed.persistence.state import StatePersister
 
 
@@ -60,6 +62,10 @@ class BaseStationCatalog(ABC):
         """Load the catalog."""
         pass
 
+    def get_source(self):
+        """Return the source of this catalog."""
+        return self.catalog_source
+
     def list_resources(self, filter_opts: Optional[FilterOptions] = None) -> List[Resource]:
         """Return a list of resources, filtered if necessary."""
         return _filter_items(
@@ -69,8 +75,61 @@ class BaseStationCatalog(ABC):
             date_key=lambda r: r.metadata.get("lastmod", None)
         )
 
+    def list_shows(self, filter_opts: Optional[FilterOptions] = None) -> List[Show]:
+        """Return a list of shows, filtered if necessary."""
+        shows = _filter_items(
+            self.catalog.shows.values(),
+            filter_opts,
+            key=lambda s: s.url,
+            date_key=lambda s: s.last_updated
+        )
+        return sorted(shows)
+
+    def list_episodes(self, filter_opts: Optional[FilterOptions] = None) -> List[Episode]:
+        """Return a list of episodes, filtered if necessary."""
+        return _filter_items(
+            self.catalog.episodes.values(),
+            filter_opts,
+            key=lambda e: e.url,
+            date_key=lambda e: e.last_updated  # or use e.airdate if that’s more appropriate
+        )
+
+    def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
+        """Return a list of hosts, filtered if necessary."""
+        return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
+
     def has_show(self, show_id: uuid.UUID | str) -> bool:
         return show_id in self.catalog.shows
+
+    def has_episode(self, episode_id: uuid.UUID | str) -> bool:
+        return episode_id in self.catalog.episodes
+
+    def get_resource(self, url: str) -> Optional[Resource]:
+        return self.catalog.resources.get(url, None)
+
+    def add_resource(self, resource: Resource) -> None:
+        """Add a resource to the catalog."""
+        if not resource.url:
+            raise ValueError("Resource must have a url")
+        self.catalog.resources[resource.url] = resource
+
+    def add_show(self, show: Show) -> None:
+        """Add a show to the catalog."""
+        if show.uuid is None:
+            raise ValueError("Show must have a uuid")
+        self.catalog.shows[show.uuid] = show
+
+    def add_episode(self, episode: Episode) -> None:
+        """Add an episode to the catalog."""
+        if episode.uuid is None:
+            raise ValueError("Episode must have a uuid")
+        self.catalog.episodes[episode.uuid] = episode
+
+    def add_host(self, host: Host) -> None:
+        """Add a host to the catalog."""
+        if host.uuid is None:
+            raise ValueError("Host must have a uuid")
+        self.catalog.hosts[host.uuid] = host
 
     def diff(self, other: BaseStationCatalog, filter_opts: Optional[FilterOptions] = None) -> CatalogDiff:
         """
@@ -112,17 +171,20 @@ class LocalStationCatalog(BaseStationCatalog):
     """LocalStationCatalog represents the complete collection of shows,
     episodes, and hosts from the local persisted state."""
 
-    def __init__(self, catalog_source: str, state_file: str) -> None:
+    def __init__(self, catalog_source: str, state_file: str, feed_persister: Optional[FeedPersister]) -> None:
         self.catalog_source = catalog_source
         self.state_file = state_file
+        self.state_persister = None
+        self.feed_persister = feed_persister
         self.catalog = self.load()
 
     def load(self) -> Catalog:
         """Load data from stable storage."""
         logger.info("Loading entities")
 
-        persister = StatePersister(self.catalog_source, self.state_file)
-        directory = persister.load()
+        self.state_persister = StatePersister(
+            self.catalog_source, self.state_file)
+        directory = self.state_persister.load()
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Loaded data: %s", pprint.pformat(directory))
 
@@ -153,56 +215,18 @@ class LocalStationCatalog(BaseStationCatalog):
                         catalog.episodes), len(catalog.hosts))
         return catalog
 
-    def list_shows(self, filter_opts: Optional[FilterOptions] = None) -> List[Show]:
-        """Return a list of shows, filtered if necessary."""
-        return _filter_items(
-            self.catalog.shows.values(),
-            filter_opts,
-            key=lambda s: s.url,
-            date_key=lambda s: s.last_updated
-        )
+    def save_state(self) -> None:
+        """Write data to stable storage."""
+        self.state_persister.save(ShowDirectory(self.list_shows()))
 
-    def list_episodes(self, filter_opts: Optional[FilterOptions] = None) -> List[Episode]:
-        """Return a list of episodes, filtered if necessary."""
-        return _filter_items(
-            self.catalog.episodes.values(),
-            filter_opts,
-            key=lambda e: e.url,
-            date_key=lambda e: e.last_updated  # or use e.airdate if that’s more appropriate
-        )
-
-    def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
-        """Return a list of hosts, filtered if necessary."""
-        return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
-
-    def add_show(self, show: Show) -> None:
-        """Add a show to the catalog."""
-        if show.uuid is None:
-            raise ValueError("Show must have a uuid")
-        self.catalog.shows[show.uuid] = show
-
-    def add_episode(self, episode: Episode) -> None:
-        """Add an episode to the catalog."""
-        if episode.uuid is None:
-            raise ValueError("Episode must have a uuid")
-        self.catalog.episodes[episode.uuid] = episode
-
-    def add_host(self, host: Host) -> None:
-        """Add a host to the catalog."""
-        if host.uuid is None:
-            raise ValueError("Host must have a uuid")
-        self.catalog.hosts[host.uuid] = host
-
-    def add_resource(self, resource: Resource) -> None:
-        """Add a resource to the catalog."""
-        if not resource.url:
-            raise ValueError("Resource must have a url")
-        self.catalog.resources[resource.url] = resource
+    def generate_feeds(self) -> None:
+        """Write feeds to directory."""
+        self.feed_persister.save(ShowDirectory(self.list_shows()))
 
 
 class LiveStationCatalog(BaseStationCatalog):
-    """LiveStationCatalog represents the complete read-only collection of
-    shows, episodes, and hosts from the live state (kcrw.com)."""
+    """LiveStationCatalog represents collection of shows, episodes, and hosts
+    from the live state (kcrw.com)."""
 
     def __init__(self, catalog_source: BaseSource) -> None:
         self.catalog_source = catalog_source

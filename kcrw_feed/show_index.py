@@ -4,17 +4,16 @@ from datetime import datetime
 import logging
 import pprint
 from typing import Any, Dict, List, Optional
-import urllib.robotparser as urobot
 import uuid
 
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Show, Episode, Resource, ShowDirectory
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import ResourceProcessor
-# from kcrw_feed.feed_processor import FeedProcessor
 from kcrw_feed.processing.station import StationProcessor
 from kcrw_feed.persistence.state import StatePersister
 from kcrw_feed.persistence.feeds import FeedPersister
+from kcrw_feed.station_catalog import BaseStationCatalog
 from kcrw_feed import utils
 
 
@@ -22,18 +21,19 @@ logger = logging.getLogger("kcrw_feed")
 
 
 class ShowIndex:
-    def __init__(self, source: BaseSource, storage_root: str, state_file: str, feed_directory: str) -> None:
+    def __init__(self, source: BaseSource, catalog: BaseStationCatalog, storage_root: str, state_file: str, feed_directory: str) -> None:
         """Parameters:
             source: The BaseSource object for the site (http or file).
             storage_root: The directory root for local storage (state, feeds).
         """
         self.source = source
+        self.catalog = catalog
         self.storage_root = storage_root
         self.state_file = state_file
         self.feed_directory = feed_directory
         # Instantiate the helper components.
         self.resource_processor = ResourceProcessor(self.source)
-        self.station_processor = StationProcessor(self.source)
+        self.station_processor = StationProcessor(self.source, self.catalog)
         # This will hold fully enriched Show objects.
         # TODO: Should I split out Shows and Episodes?
         self._entities: Dict[str | uuid.UUID, Show | Episode] = {}

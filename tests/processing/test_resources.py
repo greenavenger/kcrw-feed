@@ -58,7 +58,7 @@ class DummySource:
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url
 
-    def get_resource(self, path: str) -> Optional[bytes]:
+    def get_reference(self, path: str) -> Optional[bytes]:
         return fake_get_file(self.reference(path))
 
     def relative_path(self, url: str) -> str:
@@ -122,12 +122,12 @@ def test_read_sitemap_for_child_sitemaps(dummy_source):
   </sitemap>
 </sitemapindex>"""
 
-    def fake_get_resource(path: str) -> Optional[bytes]:
+    def fake_get_reference(path: str) -> Optional[bytes]:
         if path == "https://www.testsite.com/sitemap-index.xml":
             return sitemap_index_xml.encode("utf-8")
         return None
-    # Override get_resource for this test.
-    dummy_source.get_resource = fake_get_resource
+    # Override get_reference for this test.
+    dummy_source.get_reference = fake_get_reference
     processor = ResourceProcessor(dummy_source)
     child_sitemaps = processor._read_sitemap_for_child_sitemaps(
         "https://www.testsite.com/sitemap-index.xml")

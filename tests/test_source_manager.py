@@ -37,7 +37,7 @@ class DummySource(source_manager.BaseSource):
         self.base_source = base_url
         self.uses_sitemap = True
 
-    def get_resource(self, resource: str) -> Optional[bytes]:
+    def get_reference(self, resource: str) -> Optional[bytes]:
         return fake_get_file(self.reference(resource))
 
     def relative_path(self, entity_reference: str) -> str:

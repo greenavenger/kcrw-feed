@@ -1,13 +1,14 @@
 """Module to test the processing of Shows."""
 
-from datetime import datetime
+import pytest
+import tempfile
 import json
 import uuid
-from typing import Any, Dict
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-import pytest
-from kcrw_feed.processing.station import StationProcessor
 from kcrw_feed.models import Show, Episode, Resource
+from kcrw_feed.processing.station import StationProcessor
 from kcrw_feed import source_manager
 
 # Fake microdata HTML for a Show page.
@@ -42,7 +43,7 @@ FAKE_EPISODE_HTML = f"""
 </html>
 """
 
-# Fake JSON for an episode player, used by _fetch_episode.
+# Fake JSON for an episode player (used by _process_episode)
 FAKE_EPISODE_JSON: Dict[str, Any] = {
     "title": "Test Episode Page",
     "airdate": "2025-04-01T12:00:00",
@@ -69,87 +70,140 @@ FAKE_RESOURCE = Resource(
     }
 )
 
+# A simple fake implementation of a StationCatalog for testing purposes.
+
+
+class FakeCatalog:
+    def __init__(self):
+        self.shows: Dict[str, Show] = {}
+        self.episodes: Dict[str, Episode] = {}
+        self.resources: Dict[str, Resource] = {}
+        self.source = DummySource("https://www.testsite.com/")
+
+    def get_source(self) -> Any:
+        return self.source
+
+    def list_shows(self) -> List[Show]:
+        return list(self.shows.values())
+
+    def add_show(self, show: Show) -> None:
+        if show.uuid is None:
+            raise ValueError("Show must have a uuid")
+        self.shows[show.uuid] = show
+
+    def list_episodes(self) -> List[Episode]:
+        return list(self.episodes.values())
+
+    def add_episode(self, episode: Episode) -> None:
+        key = episode.uuid if episode.uuid is not None else episode.url
+        self.episodes[key] = episode
+
+    def get_resource(self, url: str) -> Optional[Resource]:
+        return self.resources.get(url)
+
+# DummySource from your tests.
+
 
 class DummySource:
-    """Fake for BaseSource"""
-
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url
-        # Not used in ShowProcessor, but provided for completeness.
         self.uses_sitemap = True
 
-    def get_resource(self, path: str) -> Any:
+    def get_reference(self, path: str) -> Any:
         # If path is not an absolute URL, prepend the base URL.
         if not path.startswith("http"):
             path = self.base_url.rstrip("/") + "/" + path.lstrip("/")
         return fake_get_file(path)
 
     def relative_path(self, url: str) -> str:
-        # For testing, return the URL unchanged.
         return url
 
 
 def fake_get_file(url: str) -> Any:
     """Return content based on resource signature."""
-    # If the URL indicates a player JSON file for an episode.
+    # For episode player JSON.
     if url.endswith("player.json"):
         return json.dumps(FAKE_EPISODE_JSON).encode("utf-8")
-    # If the URL indicates an episode page.
-    if "episode" in url:
+    # If URL indicates an episode page.
+    if "test-episode" in url:
         return FAKE_EPISODE_HTML.encode("utf-8")
-    # Otherwise, assume it's a show page.
+    # If URL indicates a show page.
     if "test-show" in url:
         return FAKE_SHOW_HTML.encode("utf-8")
-    # Default fallback.
     return FAKE_SHOW_HTML.encode("utf-8")
-
-# Fixture for ShowProcessor using DummySource
 
 
 @pytest.fixture(name="fake_processor")
-def _fake_processor(monkeypatch: pytest.MonkeyPatch) -> StationProcessor:
-    """Return a ShowProcessor instance with DummySource and a monkeypatched
-    source_manager.BaseSource._get_file() to return predetermined content
-    based on the URL."""
+def fake_processor_fixture(monkeypatch: pytest.MonkeyPatch) -> StationProcessor:
+    """Create a StationProcessor using a FakeCatalog.
+    Monkeypatch the instance of DummySource's _get_file method to return predetermined content.
+    """
+    fake_catalog = FakeCatalog()
+    # Create an instance of DummySource.
     dummy_source = DummySource("https://www.testsite.com/")
-    sp = StationProcessor(dummy_source)
-    monkeypatch.setattr(source_manager.BaseSource, "_get_file", fake_get_file)
+    # Patch the instance's _get_file method.
+    # monkeypatch.setattr(dummy_source, '_get_file', fake_get_file)
+    monkeypatch.setattr(dummy_source, 'get_reference', fake_get_file)
+    # Use this dummy_source in your catalog.
+    fake_catalog.source = dummy_source
+
+    from kcrw_feed.processing import station  # ensure we import the correct module
+    sp = station.StationProcessor(fake_catalog)
     return sp
 
 
-def test_fetch_show(fake_processor: StationProcessor):
-    """Test that fetch() returns a Show object when given a URL that
-    indicates a show."""
+def test_process_show(fake_processor: StationProcessor):
+    """Test that process_resource() returns a Show object when given a
+    show URL."""
     url = "https://www.testsite.com/music/shows/test-show"
-    fake_processor.fetch(url, resource=FAKE_RESOURCE)
-    result = fake_processor.get_show_by_url(url)
+    resource = Resource(
+        url=url,
+        source=url,
+        last_updated=datetime.now(),
+        metadata={"lastmod": datetime.now()}
+    )
+    result = fake_processor.process_resource(resource)
+    print(result)
+    # result = fake_processor.catalog.shows.get(FAKE_SHOW_UUID)
+    assert result is not None
     assert isinstance(result, Show)
-    # In our fake setup, the fallback extracts the title from the URL.
-    assert result.title == "test-show"
+    assert result.title == "test-show"  # "Test Radio Show"
+    # UUID should be extracted correctly.
     assert result.uuid == uuid.UUID(FAKE_SHOW_UUID)
     assert result.description == "A description of the test show."
 
 
-def test_fetch_episode(fake_processor: StationProcessor):
-    """Test that fetch() returns an Episode object when given a URL that
-    indicates an episode."""
+def test_process_episode(fake_processor: StationProcessor):
+    """Test that process_resource() returns an Episode object when given
+    an episode URL."""
     url = "https://www.testsite.com/music/shows/test-show/test-episode"
-    result = fake_processor.fetch(url, resource=FAKE_RESOURCE)
+    resource = Resource(
+        url=url,
+        source=url,
+        last_updated=datetime.now(),
+        metadata={"lastmod": datetime.now()}
+    )
+    result = fake_processor.process_resource(resource)
     assert isinstance(result, Episode)
     assert result.title == "Test Episode Page"
     assert result.uuid == uuid.UUID(FAKE_EPISODE_UUID)
+    # Check that show_uuid is set from the episode data.
     assert result.show_uuid == uuid.UUID(FAKE_SHOW_UUID)
-    # Verify the media URL is correctly set.
     assert result.media_url == "https://www.testsite.com/audio/episode.mp3"
     expected_date = datetime.fromisoformat("2025-04-01T12:00:00")
     assert result.airdate == expected_date
 
 
-def test_fetch_invalid_structure_falls_back_to_show(fake_processor: StationProcessor):
-    """Test that if the URL structure doesn't match the expected pattern,
-    fetch() falls back to treating it as a Show."""
+def test_process_invalid_structure_falls_back_to_show(fake_processor: StationProcessor):
+    """Test that an invalid URL structure falls back to treating it as a Show."""
     url = "https://www.testsite.com/invalid/path"
-    result = fake_processor.fetch(url, resource=FAKE_RESOURCE)
+    resource = Resource(
+        url=url,
+        source=url,
+        last_updated=datetime.now(),
+        metadata={"lastmod": datetime.now()}
+    )
+    result = fake_processor.process_resource(resource)
+    # Since the URL doesn't match our episode pattern, it should be processed as a Show.
     assert isinstance(result, Show)
-    # Fallback should yield a Show object using fake show HTML.
     assert result.description == "A description of the test show."
