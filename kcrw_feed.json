@@ -4,7 +4,7 @@
       "sort_index": "https://www.kcrw.com/music/shows/henry-rollins",
       "title": "henry-rollins",
       "url": "https://www.kcrw.com/music/shows/henry-rollins",
-      "image": null,
+      "image": "https://www.kcrw.com/music/shows/henry-rollins/@@images/square_image/giant-square",
       "uuid": "a73ec36f-655c-9452-cf88-f50e99cba946",
       "description": "Henry Rollins hosts a mix of all kinds, from all over and all time.",
       "hosts": [
@@ -14,7 +14,7 @@
           "uuid": "5883da63-a527-de85-856a-5c05e27331b8",
           "title": null,
           "url": "https://www.kcrw.com/people/henry-rollins",
-          "image_url": null,
+          "image": null,
           "socials": [
             "http://facebook.com/officialhenryrollins",
             "http://twitter.com/henryrollins"
@@ -329,7 +329,7 @@
       "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
       "title": "ro-wyldeflower-contreras",
       "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
-      "image": null,
+      "image": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/@@images/square_image/giant-square",
       "uuid": "9b97069f-e538-46b7-93f6-cbccc058af81",
       "description": "Music to lift your spirits. An expansive sonic journey featuring new and classic rhythms from all over the globe.",
       "hosts": [
@@ -339,7 +339,7 @@
           "uuid": "9df20b60-dfcb-4ab4-9eda-cdd11246e496",
           "title": null,
           "url": "https://www.kcrw.com/people/rocio-contreras",
-          "image_url": null,
+          "image": null,
           "socials": "http://twitter.com/wyldeflower",
           "description": null,
           "type": "http://schema.org/Person",

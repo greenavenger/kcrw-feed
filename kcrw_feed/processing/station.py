@@ -61,14 +61,16 @@ class StationProcessor:
         return self._process_show(resource)
 
     def associate_entity(self, entity: Union[Show, Episode]) -> List[Union[Show, Episode]]:
-        """Make sure each entity is associated with a Show."""
-        associated: Set[Union[Show, Episode]] = set()
-        if isinstance(entity, Show):
-            associated.add(entity)
-        else:
+        """Make sure each entity is associated with a Show. Return a list of
+        entities that have been touched. If it's a Show, return that directly.
+        If it's an Episode, find and associate it with the Show, and add them
+        both to the list."""
+        touched: Set[Union[Show, Episode]] = set()
+        if isinstance(entity, Episode):
             # pprint.pprint(entity)
             assert isinstance(
                 entity, Episode), "We only serve Episodes in this here bar."
+            # print(f"found episode: {entity.url}")
             show_id = entity.show_uuid
             show = self.catalog.get_show(show_id)
             if not show:
@@ -76,13 +78,19 @@ class StationProcessor:
                 show = self.process_resource(show_resource)
                 assert isinstance(
                     show, Show), "We got something other than a Show!?"
+                touched.add(entity)
+            # print(f"=> episode from show: {show.url}")
             episodes = show.episodes
             if entity not in episodes:
+                # print(f"adding episode to episode list")
                 episodes = show.episodes
                 episodes.append(entity)
                 show.episodes = sorted(episodes)
-                associated.add(entity)
-        return list(associated)
+        # List of entities touched
+        touched.add(entity)
+        assert len(touched) == 1 or len(
+            touched) == 2, "Association must touch exactly 1 or 2 entities."
+        return list(touched)
 
     def _resolve_parent(self, resource: Resource) -> Resource:
         """A show is its own parent. An episode has exactly one show as its
@@ -147,6 +155,7 @@ class StationProcessor:
         logger.trace("last_updated: %s", last_updated)
         image_loc = resource.metadata.get(
             "image:image", {}).get("image:loc")
+        assert image_loc != "DEADBEEF"
         logger.trace("image_loc: %s", image_loc)
 
         # Parse response to fill our our Show object

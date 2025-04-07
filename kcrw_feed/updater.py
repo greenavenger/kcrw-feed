@@ -40,6 +40,7 @@ class CatalogUpdater:
         logger.info("Updating entities")
         resources_to_enrich = self.live_catalog.list_resources(
             self.filter_opts)
+        logger.info("Resources to process: %d", len(resources_to_enrich))
         self.live_station_processor = StationProcessor(self.live_catalog)
 
         enriched_entities = self._enrich_resources(resources_to_enrich)
@@ -74,7 +75,6 @@ class CatalogUpdater:
         """Accept resources and return a set of Show and/or Episode objects."""
         logger.info("Enriching resources")
         enriched_entities: Set[Union[Show, Episode]] = set()
-        logger.info("Resources to process: %d", len(resources))
         for resource in resources:
             enriched = self.live_station_processor.process_resource(resource)
             if enriched:
@@ -85,16 +85,16 @@ class CatalogUpdater:
     def _associate_episodes(self, entities: Set[Union[Show, Episode]]) -> Set[Union[Show, Episode]]:
         """Make sure that all Episodes are associated with a Show."""
         logger.info("Associating parents")
-        entities: Set[Union[Show, Episode]] = set()
-        for enriched in entities:
-            associated = self.live_station_processor.associate_entity(enriched)
+        associated_entities: Set[Union[Show, Episode]] = set()
+        for entity in entities:
+            associated = self.live_station_processor.associate_entity(entity)
             if associated:
-                entities.update(associated)
+                associated_entities.update(associated)
         # Refresh shows to pick up new Episodes, if added
-        for entity in copy.copy(entities):
+        for entity in copy.copy(associated_entities):
             if isinstance(entity, Show):
                 show_id = entity.uuid
                 # print(show_id)
-                entities.remove(entity)
-                entities.add(self.live_catalog.get_show(show_id))
-        return entities
+                associated_entities.remove(entity)
+                associated_entities.add(self.live_catalog.get_show(show_id))
+        return associated_entities

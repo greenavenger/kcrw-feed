@@ -89,6 +89,7 @@ def test_show_from_dict(tmp_path):
     show_data = {
         "title": "Show 1",
         "url": show_url,
+        "image": "https://example.com/big-image",
         "uuid": "d4e287b6-2340-41fb-99c3-9bdbac22fd1f",
         "description": "Test show",
         "last_updated": dt_str,
@@ -216,6 +217,7 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
     show = Show(
         title="Show 1",
         url="http://example.com/show1",
+        image="https://example.com/big-image",
         uuid=uuid.UUID("d4e287b6-2340-41fb-99c3-9bdbac22fd1f"),
         description="Test show",
         hosts=[host],

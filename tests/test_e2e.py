@@ -13,14 +13,25 @@ from email.utils import parsedate_to_datetime
 
 
 def test_update_command():
-    # Use an absolute path for the source_root so it's unambiguous.
+    # Use an absolute path for source_root.
     source_root = os.path.abspath("./tests/data/")
-    cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "update"]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    assert result.returncode == 0
-    assert "Updates applied: 14" in result.stdout
-    pprint.pprint(result.stdout)
+    # Use the project root as cwd so Poetry finds pyproject.toml.
+    project_root = os.path.abspath(".")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        # Use an absolute path for the source_root so it's unambiguous.
+        source_root = os.path.abspath("./tests/data/")
+        cmd = ["poetry", "run", "kcrw-feed",
+               f"--source_root={source_root}",
+               f"--storage_root={tmpdirname}",
+               "update"
+               ]
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=project_root, check=True
+        )
+        assert result.returncode == 0
+        assert "Updates applied: 14" in result.stdout
+        pprint.pprint(result.stdout)
 
 
 RESOURCES_PRE_2025 = ["/music/shows/henry-rollins/kcrw-broadcast-820",

@@ -68,7 +68,7 @@ class Host:
     uuid: Optional[uuid.UUID | str] = None
     title: Optional[str] = None  # job title
     url: Optional[str] = None    # host page
-    image_url: Optional[str] = None
+    image: Optional[str] = None
     socials: List[Episode] = field(default_factory=list)
     description: Optional[str] = None
     type: Optional[str] = None
@@ -99,7 +99,7 @@ class Show:
     sort_index: str = field(init=False, repr=False)  # used for ordering
     title: str
     url: str
-    image: Optional[str] = None
+    image: str = "DEADBEEF"  # Optional[str] = None
     uuid: Optional[str] = None
     description: Optional[str] = None
     hosts: List[Host] = field(default_factory=list)

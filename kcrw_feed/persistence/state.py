@@ -36,6 +36,7 @@ class StatePersister(BasePersister):
     def save(self, directory: ShowDirectory, filename: str | None = None) -> None:
         """Save the given ShowDirectory object's state to a JSON file."""
         filename = filename or self.filename
+        logger.info("Writing state file: %s", filename)
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(asdict(directory), f,
                       default=self.default_serializer, indent=2)
@@ -81,7 +82,7 @@ class StatePersister(BasePersister):
             uuid=self._parse_uuid(data.get("uuid")),
             title=data.get("title"),
             url=data.get("url"),
-            image_url=data.get("image_url"),
+            image=data.get("image_url"),
             socials=data.get("socials", []),
             description=data.get("description"),
             type=data.get("type"),
@@ -95,9 +96,11 @@ class StatePersister(BasePersister):
         resource = self.resource_from_dict(data.get("resource", {}))
         last_updated = self._parse_datetime(
             data["last_updated"]) if data.get("last_updated") else None
+        assert data["image"] != "DEADBEEF"
         return Show(
             title=data["title"],
             url=data["url"],
+            image=data["image"],
             uuid=self._parse_uuid(data.get("uuid")),
             description=data.get("description"),
             hosts=hosts,
@@ -133,9 +136,10 @@ class StatePersister(BasePersister):
         filename = filename or self.filename
         assert filename.endswith(
             ".json"), "State file must be JSON: {filename}"
+        logger.info("Reading state file: %s", filename)
         if not os.path.exists(filename):
-            logger.debug(
-                "File %s does not exist. Returning empty ShowDirectory.", filename)
+            logger.info(
+                "State file does not exist. Returning empty ShowDirectory.")
             return ShowDirectory(shows=[])
         with open(filename, "rb") as f:
             raw = f.read()
