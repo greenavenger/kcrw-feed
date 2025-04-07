@@ -6,8 +6,13 @@
     <description>Henry Rollins hosts a mix of all kinds, from all over and all time.</description>
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
+    <image>
+      <url>https://www.kcrw.com/music/shows/henry-rollins/@@images/square_image/giant-square</url>
+      <title>Henry Rollins - KCRW</title>
+      <link>https://www.kcrw.com/music/shows/henry-rollins</link>
+    </image>
     <language>en</language>
-    <lastBuildDate>Mon, 07 Apr 2025 02:08:28 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 07 Apr 2025 03:58:56 +0000</lastBuildDate>
     <pubDate>Fri, 28 Feb 2025 17:40:56 -0800</pubDate>
     <itunes:author>Henry Rollins</itunes:author>
     <itunes:category text="Music"/>

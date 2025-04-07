@@ -238,7 +238,7 @@ class LiveStationCatalog(BaseStationCatalog):
 
     def load(self) -> Catalog:
         """Load data from live site."""
-        logger.info("Fetching live entities")
+        logger.info("Fetching live resources")
 
         # TODO: Should we be working with the full set of dataclasses or just
         # resources?
