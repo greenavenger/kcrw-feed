@@ -3,11 +3,11 @@
 import copy
 import logging
 import pprint
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 
-from kcrw_feed.models import Show, Episode, FilterOptions
+from kcrw_feed.models import Resource, Show, Episode, FilterOptions
 from kcrw_feed.processing.station import StationProcessor
-from kcrw_feed.station_catalog import BaseStationCatalog
+from kcrw_feed.station_catalog import BaseStationCatalog, CatalogDiff
 
 logger = logging.getLogger("kcrw_feed")
 
@@ -25,45 +25,76 @@ class CatalogUpdater:
         if filter_opts:
             self.dry_run = filter_opts.dry_run
 
+    def diff(self) -> CatalogDiff:
+        """Return a diff object that compares the local catalog with the
+        live catalog."""
+        logger.info("Calculating differences")
+        self.diff = self.local_catalog.diff(
+            self.live_catalog, filter_opts=self.filter_opts)
+        # diff = live_catalog.diff(local_catalog, filter_opts=filter_opts)
+        # diff = local_catalog.diff(local_catalog, filter_opts=filter_opts)
+        return self.diff
+
     def update(self) -> List[Union[Show, Episode]]:
         """Update the repository with enriched objects."""
+        logger.info("Updating entities")
         resources_to_enrich = self.live_catalog.list_resources(
             self.filter_opts)
-        live_station_processor = StationProcessor(self.live_catalog)
+        self.live_station_processor = StationProcessor(self.live_catalog)
 
+        enriched_entities = self._enrich_resources(resources_to_enrich)
+
+        diff = self.diff()
+        if self.dry_run:
+            pprint.pprint(diff)
+            return list(enriched_entities)
+
+        # Perform the mutations, write state and regenerate feeds.
+        self._merge(enriched_entities)
+        logger.info("Saving state")
+        self.local_catalog.save_state()
+        logger.info("Writing feeds")
+        self.local_catalog.generate_feeds()
+
+        return list(enriched_entities)
+
+    def _merge(self, entities: Set[Union[Show, Episode]]) -> None:
+        """Merge entities into local catalog."""
+        # TODO: Should we accept a CatalogDiff and apply changes that way?
+        # TODO: How do we detect errors here?
+        logger.info("Merging entities")
+        for enriched in entities:
+            # Update local catalog directly for now.
+            if self.live_station_processor.is_episode_resource(enriched):
+                self.local_catalog.add_episode(enriched)
+            else:
+                self.local_catalog.add_show(enriched)
+
+    def _enrich_resources(self, resources: List[Resource]) -> Set[Union[Show, Episode]]:
+        """Accept resources and return a set of Show and/or Episode objects."""
         logger.info("Enriching resources")
         enriched_entities: Set[Union[Show, Episode]] = set()
-        logger.info("Resources to process: %d", len(resources_to_enrich))
-        for resource in resources_to_enrich:
-            enriched = live_station_processor.process_resource(resource)
+        logger.info("Resources to process: %d", len(resources))
+        for resource in resources:
+            enriched = self.live_station_processor.process_resource(resource)
             if enriched:
                 enriched_entities.add(enriched)
+        enriched_entities = self._associate_episodes(enriched_entities)
+        return enriched_entities
 
+    def _associate_episodes(self, entities: Set[Union[Show, Episode]]) -> Set[Union[Show, Episode]]:
+        """Make sure that all Episodes are associated with a Show."""
         logger.info("Associating parents")
-        for enriched in enriched_entities:
-            associated = live_station_processor.associate_entity(enriched)
+        entities: Set[Union[Show, Episode]] = set()
+        for enriched in entities:
+            associated = self.live_station_processor.associate_entity(enriched)
             if associated:
-                enriched_entities.update(associated)
+                entities.update(associated)
         # Refresh shows to pick up new Episodes, if added
-        for entity in copy.copy(enriched_entities):
+        for entity in copy.copy(entities):
             if isinstance(entity, Show):
                 show_id = entity.uuid
                 # print(show_id)
-                enriched_entities.remove(entity)
-                enriched_entities.add(self.live_catalog.get_show(show_id))
-        # pprint.pprint(enriched_entities)
-
-        if not self.dry_run:
-            logger.info("Updating entities")
-            for enriched in enriched_entities:
-                # Update local catalog directly for now.
-                if live_station_processor.is_episode_resource(enriched):
-                    self.local_catalog.add_episode(enriched)
-                else:
-                    self.local_catalog.add_show(enriched)
-            logger.info("Saving state")
-            self.local_catalog.save_state()
-            logger.info("Writing feeds")
-            self.local_catalog.generate_feeds()
-
-        return list(enriched_entities)
+                entities.remove(entity)
+                entities.add(self.live_catalog.get_show(show_id))
+        return entities

@@ -12,7 +12,6 @@ from kcrw_feed import station_catalog
 from kcrw_feed import updater
 from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 from kcrw_feed.persistence.feeds import FeedPersister
-# from kcrw_feed.models import ShowDirectory
 
 
 CONFIG = config.CONFIG
@@ -107,14 +106,21 @@ def main():
     storage_root = os.path.abspath(storage_root)
     logger.info("Storage root: %s", storage_root)
     state_file = CONFIG["state_file"]
+    # Set us up to write out feeds
     feed_directory = CONFIG["feed_directory"]
-    feed_persister = None
-    if not filter_opts.dry_run:
-        feed_persister = FeedPersister(
-            storage_root=storage_root, feed_directory=feed_directory)
+    feed_persister = feed_persister = FeedPersister(
+        storage_root=storage_root, feed_directory=feed_directory)
 
+    # Pull in local state from the state file (always needed)
     local_catalog = station_catalog.LocalStationCatalog(
         catalog_source=storage_root, state_file=state_file, feed_persister=feed_persister)
+
+    # Pull in live state from kcrw.com only if necessary
+    if args.command in ["diff", "update"]:
+        live_catalog = station_catalog.LiveStationCatalog(
+            catalog_source=live_source)
+        catalog_updater = updater.CatalogUpdater(
+            local_catalog, live_catalog, filter_opts)
 
     if args.command == "list":
         if args.mode == "resources":
@@ -154,18 +160,10 @@ def main():
                     print(host.name)
             logger.info("%s hosts", len(hosts))
     elif args.command == "diff":
-        live_catalog = station_catalog.LiveStationCatalog(
-            catalog_source=live_source)
-        diff = local_catalog.diff(live_catalog, filter_opts=filter_opts)
-        # diff = live_catalog.diff(local_catalog, filter_opts=filter_opts)
-        # diff = local_catalog.diff(local_catalog, filter_opts=filter_opts)
+        diff = catalog_updater.diff()
         if args.verbose:
             pprint.pprint(diff)
     elif args.command == "update":
-        live_catalog = station_catalog.LiveStationCatalog(
-            catalog_source=live_source)
-        catalog_updater = updater.CatalogUpdater(
-            local_catalog, live_catalog, filter_opts)
         enriched_resources = catalog_updater.update()
         if args.verbose:
             pprint.pprint(enriched_resources)
