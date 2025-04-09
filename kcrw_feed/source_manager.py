@@ -113,19 +113,19 @@ class BaseSource(ABC):
         if it ends with '.gz', the content is decompressed.
         For non-HTTP paths, use fsspec."""
         logger.debug("Reading: %s", path)
-        if path.startswith("https://www.kcrw.com/"):
-            random_delay()
-
-        # TODO: Don't actually hit kcrw.com for now!
-        assert not path.startswith("https://www.kcrw.com/")
-
         if path.startswith("http://") or path.startswith("https://"):
-            assert self._session, f"No requests_cache.CachedSession found!"
+            # Ensure a cached session exists.
+            assert self._session, f"No CachedSession available!"
             headers = REQUEST_HEADERS
             try:
+                # Perform the GET request.
                 response = self._session.get(
                     path, timeout=timeout, headers=headers)
                 response.raise_for_status()
+                # To keep load on kcrw.com reasonable, if the response was
+                # not served from cache, add a delay.
+                if not getattr(response, "from_cache", False):
+                    random_delay()
                 content = response.content
                 if path.endswith(".gz"):
                     content = gzip.decompress(content)
