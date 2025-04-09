@@ -18,7 +18,7 @@ from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
-SHOW_FILENAME = "index.html"
+SHOW_FILENAME = ""  # "index.html"
 EPISODE_FILENAME = "player.json"
 # Match show URLs, paths that end with "/music/shows/<something>" (and an
 # optional trailing slash)

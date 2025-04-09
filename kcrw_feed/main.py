@@ -1,6 +1,7 @@
 """Main entry point for the KCRW Feed Generator."""
 
 import argparse
+from dataclasses import asdict
 import logging.config
 import os.path
 import pprint
@@ -163,6 +164,8 @@ def main():
         diff = catalog_updater.diff()
         if args.verbose:
             pprint.pprint(diff)
+        counts = {k: len(v) for k, v in asdict(diff).items()}
+        logger.info("Stats: %s", counts)
     elif args.command == "update":
         enriched_resources = catalog_updater.update()
         if args.verbose:
