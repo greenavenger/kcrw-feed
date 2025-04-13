@@ -1,6 +1,328 @@
 {
   "shows": [
     {
+      "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox",
+      "title": "dan-wilcox",
+      "url": "https://www.kcrw.com/music/shows/dan-wilcox",
+      "image": "https://www.kcrw.com/music/shows/dan-wilcox/@@images/square_image/giant-square",
+      "uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+      "description": "Unearthing new discoveries, remixes and rarities, b-sides and lost classics.",
+      "hosts": [
+        {
+          "sort_index": "https://www.kcrw.com/people/dan-wilcox",
+          "name": "Dan Wilcox",
+          "uuid": "d639c3ab-e14f-ce0c-45cc-edfefc060555",
+          "title": null,
+          "url": "https://www.kcrw.com/people/dan-wilcox",
+          "image": null,
+          "socials": "http://twitter.com/thisisdanwilcox",
+          "description": null,
+          "type": "http://schema.org/Person",
+          "metadata": {}
+        }
+      ],
+      "episodes": [
+        {
+          "sort_index": "2025-02-01T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, February 1, 2025",
+          "airdate": "2025-02-01T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_february_1_2025-250201.mp3",
+          "uuid": "b27fb463-d17a-4155-8116-c2ed1e8e239d",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/02/01?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025/@@images/image",
+          "type": "episode",
+          "duration": 6844.682,
+          "ending": "2025-02-01T20:00:00-08:00",
+          "last_updated": "2025-02-02T18:30:46-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
+            "last_updated": "2025-02-02T18:30:46-08:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
+              "lastmod": "2025-02-02T18:30:46-08:00",
+              "changefreq": "monthly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-02-08T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, February 8, 2025",
+          "airdate": "2025-02-08T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_february_8_2025-250208.mp3",
+          "uuid": "63a6973c-9238-411d-83a1-19def9fe9697",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"content clearfix\" itemprop=\"articleBody\">\r\n<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>\r\n</div>\r\n<p></p>\r\n<section id=\"portlets-below-article\" role=\"complementary\" class=\"row-portlet-manager\"></section>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/02/08?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025/@@images/image",
+          "type": "episode",
+          "duration": 6934.883,
+          "ending": "2025-02-08T20:00:00-08:00",
+          "last_updated": "2025-02-10T13:28:14-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
+            "last_updated": "2025-02-10T13:28:14-08:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
+              "lastmod": "2025-02-10T13:28:14-08:00",
+              "changefreq": "weekly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-02-15T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, February 15, 2025",
+          "airdate": "2025-02-15T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_february_15_2025-250215.mp3",
+          "uuid": "5123478e-f03c-4ee4-87df-3170a9ed3de8",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/02/15?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025/@@images/image",
+          "type": "episode",
+          "duration": 6918.191,
+          "ending": "2025-02-15T20:00:00-08:00",
+          "last_updated": "2025-02-16T20:09:52-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
+            "last_updated": "2025-02-16T20:09:52-08:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
+              "lastmod": "2025-02-16T20:09:52-08:00",
+              "changefreq": "weekly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-03-01T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, March 1, 2025",
+          "airdate": "2025-03-01T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_march_1_2025-250301.mp3",
+          "uuid": "8c996d34-b836-4ea4-8bdf-8494f5af2ee4",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/03/01?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025/@@images/image",
+          "type": "episode",
+          "duration": 6975.66,
+          "ending": "2025-03-01T20:00:00-08:00",
+          "last_updated": "2025-03-02T20:43:31-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
+            "last_updated": "2025-03-02T20:43:31-08:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
+              "lastmod": "2025-03-02T20:43:31-08:00",
+              "changefreq": "weekly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-03-08T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, March 8, 2025",
+          "airdate": "2025-03-08T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_march_8_2025-250308.mp3",
+          "uuid": "35b4947b-555f-44ef-aa0c-af293517fb6f",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"content clearfix\" itemprop=\"articleBody\">\r\n<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>\r\n</div>\r\n<p></p>\r\n<section id=\"portlets-below-article\" role=\"complementary\" class=\"row-portlet-manager\"></section>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/03/08?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025/@@images/image",
+          "type": "episode",
+          "duration": 6937.391,
+          "ending": "2025-03-08T20:00:00-08:00",
+          "last_updated": "2025-03-11T02:08:06+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
+            "last_updated": "2025-03-10T19:08:06-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
+              "lastmod": "2025-03-10T19:08:06-07:00",
+              "changefreq": "weekly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-03-15T18:00:00-07:00",
+          "title": "Dan Wilcox's playlist, March 15, 2025",
+          "airdate": "2025-03-15T18:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_march_15_2025-250315.mp3",
+          "uuid": "0e5cf48a-3a61-4fac-b538-2b2564a428cd",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/03/15?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025/@@images/image",
+          "type": "episode",
+          "duration": 6922.266,
+          "ending": "2025-03-15T20:00:00-07:00",
+          "last_updated": "2025-03-17T03:17:38+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
+            "last_updated": "2025-03-16T20:17:38-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
+              "lastmod": "2025-03-16T20:17:38-07:00",
+              "changefreq": "weekly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-03-29T18:00:00-07:00",
+          "title": "Dan Wilcox's playlist, March 29, 2025",
+          "airdate": "2025-03-29T18:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_march_29_2025-250329.mp3",
+          "uuid": "ca12a70b-2054-4101-8c30-56e1a565f351",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/03/29?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025/@@images/image",
+          "type": "episode",
+          "duration": 6926.288,
+          "ending": "2025-03-29T20:00:00-07:00",
+          "last_updated": "2025-03-30T21:35:47+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
+            "last_updated": "2025-03-30T14:35:47-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
+              "lastmod": "2025-03-30T14:35:47-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-05T18:00:00-07:00",
+          "title": "Dan Wilcox's playlist, April 5, 2025",
+          "airdate": "2025-04-05T18:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_april_5_2025-250405.mp3",
+          "uuid": "1dc02e17-c205-4dde-968b-feb06e92704c",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"content clearfix\" itemprop=\"articleBody\">\r\n<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>\r\n</div>\r\n<p></p>\r\n<section id=\"portlets-below-article\" role=\"complementary\" class=\"row-portlet-manager\"></section>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/05?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025/@@images/image",
+          "type": "episode",
+          "duration": 6902.831,
+          "ending": "2025-04-05T20:00:00-07:00",
+          "last_updated": "2025-04-07T22:50:28+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
+            "last_updated": "2025-04-07T15:50:28-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
+              "lastmod": "2025-04-07T15:50:28-07:00",
+              "changefreq": "hourly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        }
+      ],
+      "type": "http://schema.org/RadioSeries",
+      "last_updated": "2025-04-07T15:50:32-07:00",
+      "resource": {
+        "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox",
+        "url": "https://www.kcrw.com/music/shows/dan-wilcox",
+        "source": "https://www.kcrw.com/music/shows/dan-wilcox",
+        "last_updated": "2025-04-07T15:50:32-07:00",
+        "metadata": {
+          "loc": "https://www.kcrw.com/music/shows/dan-wilcox",
+          "lastmod": "2025-04-07T15:50:32-07:00",
+          "changefreq": "hourly",
+          "priority": "0.9",
+          "image:image": {
+            "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/@@images/square_image/giant-square"
+          }
+        }
+      },
+      "metadata": {}
+    },
+    {
       "sort_index": "https://www.kcrw.com/music/shows/henry-rollins",
       "title": "henry-rollins",
       "url": "https://www.kcrw.com/music/shows/henry-rollins",
