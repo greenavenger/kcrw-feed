@@ -208,8 +208,7 @@ class CacheSource(BaseSource):
     def relative_path(self, path: str) -> str:
         """Regular expression to return the relative part of the entity
         path."""
-        # Also trim trailing slash for consistency
-        return "./" + REWRITE_RE.sub("./", path).rstrip("/")
+        return "./" + os.path.normpath(REWRITE_RE.sub("./", path))
 
     def reference(self, resource: str) -> str:
         relative_path = self.relative_path(resource)

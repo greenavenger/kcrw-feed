@@ -18,7 +18,7 @@ from kcrw_feed.source_manager import BaseSource, strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
-SHOW_FILENAME = ""  # "index.html"
+SHOW_FILENAME = "index.html"  # Used only for CacheSource
 EPISODE_FILENAME = "player.json"
 # Match show URLs, paths that end with "/music/shows/<something>" (and an
 # optional trailing slash)
@@ -115,10 +115,14 @@ class StationProcessor:
             if resource.url == show.url:
                 return show
 
-        show_reference = self.source.relative_path(
-            resource.url + "/" + SHOW_FILENAME)
+        show_reference = self.source.relative_path(resource.url + "/")
         logger.debug("show_reference: %s", show_reference)
         html = self.source.get_reference(show_reference)
+        # Handle file-based fallback here: If the reference isn't being
+        # served over http, manually add index filename and try again.
+        if not html:
+            show_reference = show_reference + "/" + SHOW_FILENAME
+            html = self.source.get_reference(show_reference)
         if html is None:
             logger.debug("Failed to retrieve file: %s", show_reference)
             return
