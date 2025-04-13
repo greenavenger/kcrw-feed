@@ -2,25 +2,33 @@
 
 import os
 import pprint
+import pytest
 import subprocess
 import tempfile
 import json
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
-# Run test_update_command() first to ensure that kcrw_feed.json exists for list commands.
-# TODO: move list commands into a tempdir too!
+
+@pytest.fixture
+def source_root(request) -> str:
+    return os.path.abspath(request.config.getoption("source_root"))
 
 
-def test_update_command():
-    # Use an absolute path for source_root.
-    source_root = os.path.abspath("./tests/data/")
+@pytest.fixture
+def storage_root(tmp_path, request) -> str:
+    # If the user passed --storage-root on the command line, use it; otherwise use tmp_path.
+    opt = request.config.getoption("storage_root")
+    if opt:
+        return os.path.abspath(opt)
+    return str(tmp_path)
+
+
+def test_update_command(source_root: str):
     # Use the project root as cwd so Poetry finds pyproject.toml.
     project_root = os.path.abspath(".")
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        # Use an absolute path for the source_root so it's unambiguous.
-        source_root = os.path.abspath("./tests/data/")
         cmd = ["poetry", "run", "kcrw-feed",
                f"--source_root={source_root}",
                f"--storage_root={tmpdirname}",
@@ -49,23 +57,24 @@ RESOURCES_POST_2025 = ["/music/shows/henry-rollins/kcrw-broadcast-825",
 RESOURCES = RESOURCES_PRE_2025 + RESOURCES_POST_2025
 
 
-def test_list_resources_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_resources_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "list"]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "list"]
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for resource in RESOURCES:
         assert resource in result.stdout
     pprint.pprint(result.stdout)
 
 
-def test_list_resources_until_date_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_resources_until_date_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "--until", "2025-01-01", "list"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "--until", "2025-01-01", "list"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for resource in RESOURCES_PRE_2025:
@@ -73,11 +82,11 @@ def test_list_resources_until_date_command():
     pprint.pprint(result.stdout)
 
 
-def test_list_resources_since_date_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_resources_since_date_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "--since", "2025-01-01", "list"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "--since", "2025-01-01", "list"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for resource in RESOURCES_POST_2025:
@@ -89,11 +98,11 @@ SHOWS = ["https://www.kcrw.com/music/shows/henry-rollins",
          "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras"]
 
 
-def test_list_shows_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_shows_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "list", "shows"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "list", "shows"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for show in SHOWS:
@@ -101,11 +110,11 @@ def test_list_shows_command():
     pprint.pprint(result.stdout)
 
 
-def test_list_shows_match_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_shows_match_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "--match", "wylde", "list", "shows"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "--match", "wylde", "list", "shows"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     assert SHOWS[1] in result.stdout
@@ -128,11 +137,11 @@ EPISODES_POST_2025 = ["https://www.kcrw.com/music/shows/henry-rollins/kcrw-broad
 EPISODES = EPISODES_PRE_2025 + EPISODES_POST_2025
 
 
-def test_list_episodes_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_episodes_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "list", "episodes"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "list", "episodes"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for episode in EPISODES:
@@ -140,11 +149,11 @@ def test_list_episodes_command():
     pprint.pprint(result.stdout)
 
 
-def test_list_episodes_filter_until_date_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_episodes_filter_until_date_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "--until", "2025-01-01", "list", "episodes"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "--until", "2025-01-01", "list", "episodes"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for episode in EPISODES_PRE_2025:
@@ -152,11 +161,11 @@ def test_list_episodes_filter_until_date_command():
     pprint.pprint(result.stdout)
 
 
-def test_list_episodes_filter_since_date_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_episodes_filter_since_date_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "--since", "2025-01-01", "list", "episodes"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "--since", "2025-01-01", "list", "episodes"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for episode in EPISODES_POST_2025:
@@ -170,11 +179,11 @@ HOSTS = [
 ]
 
 
-def test_list_hosts_command():
-    # Use an absolute path for the source_root so it's unambiguous.
-    source_root = os.path.abspath("./tests/data/")
+def test_list_hosts_command(source_root: str, storage_root: str):
     cmd = ["poetry", "run", "kcrw-feed",
-           f"--source_root={source_root}", "list", "hosts"]
+           f"--source_root={source_root}",
+           f"--storage_root={storage_root}",
+           "list", "hosts"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert result.returncode == 0
     for host in HOSTS:
@@ -182,9 +191,7 @@ def test_list_hosts_command():
     pprint.pprint(result.stdout)
 
 
-def test_save_functionality():
-    # Use an absolute path for source_root.
-    source_root = os.path.abspath("./tests/data/")
+def test_save_functionality(source_root: str):
     # Use the project root as cwd so Poetry finds pyproject.toml.
     project_root = os.path.abspath(".")
 

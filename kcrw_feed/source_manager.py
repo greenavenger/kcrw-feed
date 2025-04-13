@@ -114,6 +114,9 @@ class BaseSource(ABC):
         For non-HTTP paths, use fsspec."""
         logger.debug("Reading: %s", path)
         if path.startswith("http://") or path.startswith("https://"):
+            # Disable requests to kcrw.com for now:
+            assert not path.startswith(
+                "https://www.kcrw.com"), "Avoid generating load"
             # Ensure a cached session exists.
             assert self._session, f"No CachedSession available!"
             headers = REQUEST_HEADERS

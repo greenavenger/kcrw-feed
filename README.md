@@ -395,6 +395,30 @@ kcrw_feed/
 
 ---
 
+# Testing
+
+- Project root: `kcrw-feed`
+- Testing root: `kcrw-feed/tests/`
+- Local source: `kcrw-feed/tests/data`
+- Test data store: `kcrw-feed/tests/data/kcrw_feed.json`
+
+Start Nginx in a docker container to serve source `http://localhost:8080`:
+
+```bash
+cd tests/data
+docker compose up -d
+docker compose logs -f
+```
+
+Run against a store that matches the localhost source:
+
+```bash
+cd <project_root>
+poetry run kcrw-feed --storage_root ./tests/data <cmd>
+```
+
+---
+
 # License
 This project is licensed under the GPL-3.0 License.
 
