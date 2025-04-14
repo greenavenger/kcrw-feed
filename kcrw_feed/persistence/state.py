@@ -8,6 +8,8 @@ import os
 from typing import Any, Dict
 import uuid
 
+from atomicwrites import atomic_write
+
 from kcrw_feed.persistence.base import BasePersister
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 from kcrw_feed.models import Host, Show, Episode, Resource, ShowDirectory
@@ -37,7 +39,7 @@ class StatePersister(BasePersister):
         """Save the given ShowDirectory object's state to a JSON file."""
         filename = filename or self.filename
         logger.info("Writing state file: %s", filename)
-        with open(filename, "w", encoding="utf-8") as f:
+        with atomic_write(filename, mode="w", overwrite=True, encoding="utf-8") as f:
             json.dump(asdict(directory), f,
                       default=self.default_serializer, indent=2)
 

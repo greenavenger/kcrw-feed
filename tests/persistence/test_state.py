@@ -5,6 +5,7 @@ import io
 import json
 import os
 from typing import Dict
+import atomicwrites
 import uuid
 
 import pytest
@@ -137,58 +138,9 @@ def test_show_from_dict(tmp_path):
     assert show.episodes[0].title == "Episode A"
 
 
-@pytest.fixture(name="fake_fs")
-def fake_fs_fixture(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
-    """
-    A fake file system that intercepts open calls.
-    Files written in 'w' or 'wb' mode are stored in a dictionary.
-    Reads return a StringIO or BytesIO initialized with the stored content.
-    Also patches os.path.exists to use this fake file system.
-    """
-    files: Dict[str, str] = {}
-
-    def fake_open(filename: str, mode: str = "r", *args, **kwargs):
-        if "w" in mode:
-            if "b" in mode:
-                # Binary write mode: use BytesIO.
-                file_obj = io.BytesIO()
-                orig_close = file_obj.close
-
-                def fake_close():
-                    # Store the written bytes as a UTF-8 string.
-                    files[filename] = file_obj.getvalue().decode("utf-8")
-                    orig_close()
-                file_obj.close = fake_close
-                return file_obj
-            else:
-                # Text write mode: use StringIO.
-                file_obj = io.StringIO()
-                orig_close = file_obj.close
-
-                def fake_close():
-                    files[filename] = file_obj.getvalue()
-                    orig_close()
-                file_obj.close = fake_close
-                return file_obj
-        elif "r" in mode:
-            content = files.get(filename, "")
-            if "b" in mode:
-                return io.BytesIO(content.encode("utf-8"))
-            else:
-                return io.StringIO(content)
-        else:
-            raise ValueError(f"Unsupported file mode: {mode}")
-
-    monkeypatch.setattr("builtins.open", fake_open)
-    # Patch os.path.exists to check our fake_fs dict.
-    monkeypatch.setattr(os.path, "exists", lambda filename: filename in files)
-    return files
-
-
-def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
-    """Create test data: a Host with one Show and one Episode, persist it
-    as a ShowDirectory, then load it back and verify that the state
-    round-trips correctly."""
+def test_save_and_load_state(tmp_path):
+    """Create test data, persist it as a ShowDirectory,
+    then load it back and verify the state round-trips correctly."""
     dt1 = datetime(2025, 1, 1, 12, 30)
     dt2 = datetime(2025, 1, 2, 13, 45)
 
@@ -234,12 +186,15 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
         metadata={"genre": "rock"}
     )
     directory = ShowDirectory(shows=[show])
-    fake_filename = "fake_state.json"
-    persister = StatePersister(storage_root=".", state_file=fake_filename)
+    # Use tmp_path to create an isolated temporary file.
+    fake_filename = tmp_path / TEST_FILE
+    persister = StatePersister(storage_root=str(
+        tmp_path), state_file=str(fake_filename))
 
-    # Save state to the fake file system.
-    persister.save(directory, fake_filename)
-    saved_content = fake_fs[fake_filename]
+    # Save the state to the temporary file.
+    persister.save(directory, str(fake_filename))
+    # Read the JSON content back.
+    saved_content = fake_filename.read_text(encoding="utf-8")
     data = json.loads(saved_content)
     # Check that the top-level key "shows" exists and has one entry.
     assert "shows" in data
@@ -249,14 +204,14 @@ def test_save_and_load_state_in_memory(fake_fs: Dict[str, str]):
     assert len(saved_show["hosts"]) == 1
     assert len(saved_show["episodes"]) == 1
 
-    # Load state from the fake file system.
-    loaded_directory = persister.load(fake_filename)
+    # Load state from the temporary file.
+    loaded_directory = persister.load(str(fake_filename))
     loaded_show = loaded_directory.shows[0]
     assert loaded_show.title == show.title
     assert loaded_show.url == show.url
     assert loaded_show.description == show.description
     assert loaded_show.metadata == show.metadata
-    # Compare datetime fields by ISO string
+    # Compare datetime fields by ISO string.
     assert loaded_show.last_updated.isoformat() == show.last_updated.isoformat()
     assert len(loaded_show.hosts) == len(show.hosts)
     assert len(loaded_show.episodes) == 1
