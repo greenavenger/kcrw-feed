@@ -5,6 +5,7 @@ import logging
 from typing import Optional
 import os
 
+from atomicwrites import atomic_write
 from feedgen.feed import FeedGenerator
 
 from kcrw_feed.persistence.base import BasePersister
@@ -38,7 +39,7 @@ class FeedPersister(BasePersister):
             # Use the show's title as the filename (or fallback to UUID).
             file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
             output_path = os.path.join(feed_directory, file_name)
-            with open(output_path, "w", encoding="utf-8") as f:
+            with atomic_write(output_path, mode="w", overwrite=True, encoding="utf-8") as f:
                 f.write(feed_xml)
 
     def generate_rss_feed(self, show: Show) -> str:
