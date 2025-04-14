@@ -71,14 +71,20 @@ class CatalogUpdater:
             else:
                 self.local_catalog.add_show(enriched)
 
-    def _enrich_resources(self, resources: List[Resource]) -> Set[Union[Show, Episode]]:
-        """Accept resources and return a set of Show and/or Episode objects."""
+    def _enrich_resources(self, resources: List[Resource], checkpoint: int = 6) -> Set[Union[Show, Episode]]:
+        """Accept resources and return a set of Show and/or Episode objects.
+        Checkpoint by writing state after every n items are enriched."""
         logger.info("Enriching resources")
         enriched_entities: Set[Union[Show, Episode]] = set()
+        count = 1
         for resource in resources:
             enriched = self.live_station_processor.process_resource(resource)
             if enriched:
                 enriched_entities.add(enriched)
+                count += 1
+            if count == checkpoint:
+                self.local_catalog.save_state()
+                count = 1
         enriched_entities = self._associate_episodes(enriched_entities)
         return enriched_entities
 
