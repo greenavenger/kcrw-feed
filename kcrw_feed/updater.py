@@ -5,9 +5,9 @@ import logging
 import pprint
 from typing import List, Optional, Set, Union
 
-from kcrw_feed.models import Resource, Show, Episode, FilterOptions
+from kcrw_feed.models import Resource, Show, Episode, FilterOptions, CatalogDiff
 from kcrw_feed.processing.station import StationProcessor
-from kcrw_feed.station_catalog import BaseStationCatalog, CatalogDiff
+from kcrw_feed.station_catalog import BaseStationCatalog
 
 logger = logging.getLogger("kcrw_feed")
 

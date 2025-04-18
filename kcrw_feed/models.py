@@ -9,6 +9,7 @@ import uuid
 
 @dataclass
 class FilterOptions:
+    """Options for filtering objects."""
     # e.g., a regex or substring to filter resource URLs
     match: Optional[str] = None
     compiled_match: Optional[Pattern] = None
@@ -18,16 +19,6 @@ class FilterOptions:
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     dry_run: bool = False
-
-    def __hash__(self) -> int:
-        if self.uuid is None:
-            raise ValueError("Host must have a uuid to be hashable")
-        return hash(self.uuid)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Host):
-            return NotImplemented
-        return self.uuid == other.uuid
 
 
 @dataclass(order=True)
@@ -64,7 +55,7 @@ class Resource:
 class Host:
     sort_index: str = field(init=False, repr=False)  # used for ordering
     name: str
-    # Transition: uuid str -> uuid.UUID
+    # TODO: Transition: uuid str -> uuid.UUID
     uuid: Optional[uuid.UUID | str] = None
     title: Optional[str] = None  # job title
     url: Optional[str] = None    # host page
@@ -100,7 +91,8 @@ class Show:
     title: str
     url: str
     image: str = "DEADBEEF"  # Optional[str] = None
-    uuid: Optional[str] = None
+    # TODO: Transition: uuid str -> uuid.UUID
+    uuid: Optional[uuid.UUID | str] = None
     description: Optional[str] = None
     hosts: List[Host] = field(default_factory=list)
     episodes: List[Episode] = field(default_factory=list)
@@ -131,8 +123,8 @@ class Episode:
     airdate: datetime
     url: str
     media_url: str
-    # Transition: uuid str -> uuid.UUID
-    uuid: Optional[uuid.UUID | str | None] = None
+    # TODO: Transition: uuid str -> uuid.UUID
+    uuid: Optional[uuid.UUID | str] = None
     show_uuid: Optional[str] = None
     hosts: List[Host] = field(default_factory=list)
     description: Optional[str] = None
@@ -158,6 +150,37 @@ class Episode:
         if not isinstance(other, Episode):
             return NotImplemented
         return self.uuid == other.uuid
+
+
+@dataclass
+class Catalog:
+    """Catalog of shows, episodes, hosts, resources"""
+    shows: Dict[uuid.UUID | str, Show] = field(default_factory=dict)
+    episodes: Dict[uuid.UUID | str, Episode] = field(default_factory=dict)
+    hosts: Dict[uuid.UUID | str, Host] = field(default_factory=dict)
+    resources: Dict[str, Resource] = field(default_factory=dict)
+
+
+@dataclass
+class CatalogDiff:
+    """Capture changes between two Catalogs"""
+    added: List[Any] = field(default_factory=list)
+    removed: List[Any] = field(default_factory=list)
+    modified: List[ModifiedEntry] = field(default_factory=list)
+
+
+@dataclass
+class ModifiedEntry:
+    """Capture the diff that we detected"""
+    current: Any
+    new: Any
+    diff: Dict[str, Any]
+
+    # Support asdict()
+    def __post_init__(self):
+        # If diff is a DeepDiff object, convert it to a dictionary
+        if hasattr(self.diff, 'to_dict'):
+            self.diff = self.diff.to_dict()
 
 
 @dataclass
