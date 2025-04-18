@@ -12,7 +12,7 @@ import uuid
 from deepdiff import DeepDiff
 
 
-from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions, ShowDirectory
+from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions, ShowDirectory, Catalog, CatalogDiff, ModifiedEntry
 from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.processing.resources import ResourceProcessor
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
@@ -22,30 +22,7 @@ from kcrw_feed.persistence.state import StatePersister
 
 logger = logging.getLogger("kcrw_feed")
 
-
-@dataclass
-class Catalog:
-    """Catalog of shows, episodes, hosts, resources"""
-    shows: Dict[uuid.UUID | str, Show] = field(default_factory=dict)
-    episodes: Dict[uuid.UUID | str, Episode] = field(default_factory=dict)
-    hosts: Dict[uuid.UUID | str, Host] = field(default_factory=dict)
-    resources: Dict[str, Resource] = field(default_factory=dict)
-
-
-@dataclass
-class CatalogDiff:
-    """Capture changes between two Catalogs"""
-    added: List[Any] = field(default_factory=list)
-    removed: List[Any] = field(default_factory=list)
-    modified: List[ModifiedEntry] = field(default_factory=list)
-
-
-@dataclass
-class ModifiedEntry:
-    """Capture the diff that we detected"""
-    current: Any
-    new: Any
-    diff: Dict[str, Any]
+STATE_CATALOG_FILE = "kcrw_catalog.json"
 
 
 class BaseStationCatalog(ABC):
@@ -91,7 +68,7 @@ class BaseStationCatalog(ABC):
             self.catalog.episodes.values(),
             filter_opts,
             key=lambda e: e.url,
-            date_key=lambda e: e.last_updated  # or use e.airdate if that’s more appropriate
+            date_key=lambda e: e.last_updated  # or use e.airdate if that's more appropriate
         )
 
     def list_hosts(self, filter_opts: Optional[FilterOptions] = None) -> List[Host]:
@@ -185,25 +162,38 @@ class LocalStationCatalog(BaseStationCatalog):
         """Load data from stable storage."""
         logger.info("Loading local state")
 
+        # Ensure catalog_source is a string for the StatePersister
+        storage_root = str(self.catalog_source)
         self.state_persister = StatePersister(
-            self.catalog_source, self.state_file)
-        directory = self.state_persister.load()
+            storage_root, self.state_file)
+
+        state = self.state_persister.load()
+        if isinstance(state, Catalog):
+            logger.info("Loaded state as Catalog")
+            return state
+
+        # Fall back to extracting from ShowDirectory
+        directory = state
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
             logger.trace("Loaded data: %s", pprint.pformat(directory))
 
         catalog = Catalog()
         for show in directory.shows:
             if show.uuid:
+                logger.trace("Adding show to catalog: %s", show.uuid)
                 catalog.shows[show.uuid] = show
             for episode in show.episodes:
                 if episode.uuid:
+                    logger.trace("Adding episode to catalog: %s", episode.uuid)
                     catalog.episodes[episode.uuid] = episode
                 for host in episode.hosts:
                     # TODO: fix that hosts are a list of uuids here!
                     if not isinstance(host, uuid.UUID) and host.uuid:
+                        logger.trace("Adding host to catalog: %s", host.uuid)
                         catalog.hosts[host.uuid] = host
                 if episode.resource:
                     key = episode.resource.url
+                    logger.trace("Adding resource to catalog: %s", key)
                     catalog.resources[key] = episode.resource
             # TODO: remove duplicative host population?
             for host in show.hosts:
@@ -221,6 +211,7 @@ class LocalStationCatalog(BaseStationCatalog):
     def save_state(self) -> None:
         """Write data to stable storage."""
         self.state_persister.save(ShowDirectory(self.list_shows()))
+        self.state_persister.save(self.catalog, filename=STATE_CATALOG_FILE)
 
     def generate_feeds(self) -> None:
         """Write feeds to directory."""
