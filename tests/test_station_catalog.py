@@ -15,6 +15,10 @@ from kcrw_feed.source_manager import BaseSource
 from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed.persistence.state import StatePersister
 
+GOLDEN_FILES_DIR = "tests/data"
+DIRECTORY_FILE = "kcrw_feed.json"
+CATALOG_FILE = "kcrw_catalog.json"
+
 
 class MockSource(BaseSource):
     """Mock source for testing."""
@@ -585,8 +589,8 @@ def test_load_from_golden_files():
     """Test loading a catalog from golden files in tests/data directory."""
     # Create a local catalog pointing to the tests/data directory
     catalog = LocalStationCatalog(
-        catalog_source="tests/data",
-        state_file="kcrw_catalog.json",
+        catalog_source=GOLDEN_FILES_DIR,
+        state_file=CATALOG_FILE,
         feed_persister=None
     )
 
@@ -633,8 +637,8 @@ def test_load_from_golden_files():
 def test_compare_directory_and_catalog_files(tmp_path):
     """Test comparing kcrw_feed.json and kcrw_catalog.json to ensure they're consistent."""
     # Create temporary files for testing
-    feed_file = tmp_path / "kcrw_feed.json"
-    catalog_file = tmp_path / "kcrw_catalog.json"
+    directory_file = tmp_path / DIRECTORY_FILE
+    catalog_file = tmp_path / CATALOG_FILE
 
     # Create a mock show directory
     show = Show(
@@ -659,36 +663,38 @@ def test_compare_directory_and_catalog_files(tmp_path):
     state_persister = StatePersister(str(tmp_path), "test_state.json")
 
     # Save the show directory and catalog
-    state_persister.save(show_directory, str(feed_file))
+    state_persister.save(show_directory, str(directory_file))
     state_persister.save(catalog, str(catalog_file))
 
     # Load the files
-    with open(feed_file, "r") as f:
-        feed_data = json.load(f)
+    with open(directory_file, "r") as f:
+        directory_data = json.load(f)
 
     with open(catalog_file, "r") as f:
         catalog_data = json.load(f)
 
     # Check that the files are consistent
-    assert feed_data["shows"][0]["uuid"] == catalog_data["shows"][str(
+    assert directory_data["shows"][0]["uuid"] == catalog_data["shows"][str(
         show.uuid)]["uuid"]
-    assert feed_data["shows"][0]["title"] == catalog_data["shows"][str(
+    assert directory_data["shows"][0]["title"] == catalog_data["shows"][str(
         show.uuid)]["title"]
-    assert feed_data["shows"][0]["url"] == catalog_data["shows"][str(
+    assert directory_data["shows"][0]["url"] == catalog_data["shows"][str(
         show.uuid)]["url"]
 
 
 def test_compare_real_directory_and_catalog_files():
     """Test comparing real kcrw_feed.json and kcrw_catalog.json files."""
     # Skip this test if the files don't exist
-    if not os.path.exists("kcrw_feed.json") or not os.path.exists("kcrw_catalog.json"):
+    golden_directory_file = os.path.join(GOLDEN_FILES_DIR, DIRECTORY_FILE)
+    golden_catalog_file = os.path.join(GOLDEN_FILES_DIR, CATALOG_FILE)
+    if not os.path.exists(golden_directory_file) or not os.path.exists(golden_catalog_file):
         pytest.skip("kcrw_feed.json or kcrw_catalog.json not found")
 
     # Load the files
-    with open("kcrw_feed.json", "r") as f:
+    with open(golden_directory_file, "r") as f:
         directory_data = json.load(f)
 
-    with open("kcrw_catalog.json", "r") as f:
+    with open(golden_catalog_file, "r") as f:
         catalog_data = json.load(f)
 
     # Check that the files have the expected structure
