@@ -7,6 +7,7 @@ import logging
 import os
 from typing import Any, Dict, Union, cast
 import uuid
+from collections import OrderedDict
 
 from atomicwrites import atomic_write
 
@@ -17,6 +18,34 @@ from kcrw_feed import utils
 
 
 logger = logging.getLogger("kcrw_feed")
+
+
+class SortedJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles datetime and UUID objects."""
+
+    def default(self, obj: Any) -> Any:
+        """Handle custom types like datetime and UUID."""
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+        return super().default(obj)
+
+
+def sort_collection(obj: Any) -> Any:
+    """Recursively sort dictionary keys for stable JSON output."""
+    if isinstance(obj, dict):
+        # Create a new OrderedDict with sorted keys
+        return OrderedDict((k, sort_collection(v)) for k, v in sorted(obj.items()))
+    elif isinstance(obj, list):
+        # Process list items but maintain their order
+        return [sort_collection(item) for item in obj]
+    elif isinstance(obj, tuple):
+        # Process tuple items but maintain their order
+        return tuple(sort_collection(item) for item in obj)
+    else:
+        # Return other types as is
+        return obj
 
 
 class StatePersister(BasePersister):
@@ -55,9 +84,11 @@ class StatePersister(BasePersister):
                 "hosts": {str(k): asdict(v) for k, v in state.hosts.items()},
                 "resources": {k: asdict(v) for k, v in state.resources.items()}
             }
+            # Sort collection keys for stable output
+            data = sort_collection(data)
 
         with atomic_write(filename, mode="w", overwrite=True, encoding="utf-8") as f:
-            json.dump(data, f, default=self.default_serializer, indent=2)
+            json.dump(data, f, cls=SortedJSONEncoder, indent=2)
 
     # Deserialization helpers
     def _parse_datetime(self, date_str: str) -> datetime:

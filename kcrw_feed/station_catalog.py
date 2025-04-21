@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import logging
 import pprint
+import os
 from typing import List, Dict, Any, Optional, Iterable, Callable
 import uuid
 
@@ -211,7 +212,8 @@ class LocalStationCatalog(BaseStationCatalog):
     def save_state(self) -> None:
         """Write data to stable storage."""
         self.state_persister.save(ShowDirectory(self.list_shows()))
-        self.state_persister.save(self.catalog, filename=STATE_CATALOG_FILE)
+        self.state_persister.save(self.catalog, filename=os.path.join(
+            self.catalog_source, STATE_CATALOG_FILE))
 
     def generate_feeds(self) -> None:
         """Write feeds to directory."""
