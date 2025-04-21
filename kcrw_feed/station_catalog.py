@@ -23,6 +23,7 @@ from kcrw_feed.persistence.state import StatePersister
 
 logger = logging.getLogger("kcrw_feed")
 
+STATE_DIRECTORY_FILE = "kcrw_feed.json"
 STATE_CATALOG_FILE = "kcrw_catalog.json"
 
 
@@ -211,9 +212,10 @@ class LocalStationCatalog(BaseStationCatalog):
 
     def save_state(self) -> None:
         """Write data to stable storage."""
-        self.state_persister.save(ShowDirectory(self.list_shows()))
-        self.state_persister.save(self.catalog, filename=os.path.join(
-            self.catalog_source, STATE_CATALOG_FILE))
+        self.state_persister.save(ShowDirectory(self.list_shows()), filename=os.path.join(
+            self.catalog_source, STATE_DIRECTORY_FILE))
+        self.state_persister.save(self.catalog)  # , filename=os.path.join(
+        # self.catalog_source, STATE_CATALOG_FILE))
 
     def generate_feeds(self) -> None:
         """Write feeds to directory."""

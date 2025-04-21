@@ -10,6 +10,10 @@ import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
 
+# STATE_FILE = "kcrw_feed.json"
+STATE_FILE = "kcrw_catalog.json"
+
+
 @pytest.fixture
 def source_root(request) -> str:
     return os.path.abspath(request.config.getoption("source_root"))
@@ -215,7 +219,7 @@ def test_save_functionality(source_root: str):
         assert "Writing feeds" in result.stdout
 
         # Check that the JSON file was written.
-        json_file = os.path.join(tmpdirname, "kcrw_feed.json")
+        json_file = os.path.join(tmpdirname, STATE_FILE)
         assert os.path.exists(json_file), f"JSON file not found at {json_file}"
         with open(json_file, "r", encoding="utf-8") as f:
             state = json.load(f)
