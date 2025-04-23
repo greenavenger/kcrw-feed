@@ -110,9 +110,9 @@ class StationProcessor:
     def _process_show(self, resource: Resource) -> Optional[Show]:
         """Fetch a Show page and extract basic details."""
 
-        # Checking by url is the best we can do here
+        # Check if we have an exact match in cache
         for show in self.catalog.list_shows():
-            if resource.url == show.url:
+            if show.resource and show.resource == resource:
                 return show
 
         show_reference = self.source.relative_path(resource.url + "/")
@@ -234,9 +234,9 @@ class StationProcessor:
     def _process_episode(self, resource: Resource) -> Optional[Episode]:
         """Fetch the player for the Episode and extract details."""
 
-        # Checking by url is the best we can do here
+        # Check if we have an exact match in cache
         for episode in self.catalog.list_episodes():
-            if resource.url == episode.url:
+            if episode.resource and episode.resource == resource:
                 return episode
 
         episode: Episode
