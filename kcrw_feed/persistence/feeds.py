@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 from typing import Optional
 import os
+import copy
 
 from atomicwrites import atomic_write
 from feedgen.feed import FeedGenerator
@@ -27,6 +28,8 @@ class FeedPersister(BasePersister):
     def save(self, show_directory: ShowDirectory, feed_directory: Optional[str] = None) -> None:
         """Generate an individual RSS feed XML file for each show in the state.
         Episodes are sorted in reverse chronological order (most recent first).
+        Only includes shows that have episodes, and episodes that have media
+        files in the feed.
 
         Parameters:
           state: A ShowDirectory instance containing a list of shows.
@@ -34,8 +37,24 @@ class FeedPersister(BasePersister):
         feed_directory = feed_directory or self.feed_directory
         os.makedirs(feed_directory, exist_ok=True)
         for show in show_directory.shows:
+            # Skip shows with no episodes
+            if not show.episodes:
+                logger.debug("Skipping show %s - no episodes", show.title)
+                continue
+
+            # Filter episodes to only those with media files
+            episodes_with_media = [ep for ep in show.episodes if ep.media_url]
+            if not episodes_with_media:
+                logger.debug(
+                    "Skipping show %s - no episodes with media files", show.title)
+                continue
+
+            # Create a copy of the show with only episodes that have media
+            show_with_media = copy.copy(show)
+            show_with_media.episodes = episodes_with_media
+
             # Create an RSS feed using Django's feed generator.
-            feed_xml = self.generate_rss_feed(show)
+            feed_xml = self.generate_rss_feed(show_with_media)
             # Use the show's title as the filename (or fallback to UUID).
             file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
             output_path = os.path.join(feed_directory, file_name)
