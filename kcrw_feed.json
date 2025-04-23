@@ -23,6 +23,111 @@
       ],
       "episodes": [
         {
+          "sort_index": "2025-01-04T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, January 4, 2025",
+          "airdate": "2025-01-04T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_january_4_2025-250104.mp3",
+          "uuid": "5ace59cb-08f3-47a9-8163-dbb6a806ab44",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/04?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025/@@images/image",
+          "type": "episode",
+          "duration": 6958.21,
+          "ending": "2025-01-04T20:00:00-08:00",
+          "last_updated": "2025-01-05T23:49:07-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025",
+            "last_updated": "2025-01-05T23:49:07-08:00",
+            "metadata": {
+              "changefreq": "monthly",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025/@@images/image/page-header"
+              },
+              "lastmod": "2025-01-05T23:49:07-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-4-2025",
+              "priority": "0.8"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-01-18T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, January 18, 2025",
+          "airdate": "2025-01-18T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_january_18_2025-250118.mp3",
+          "uuid": "4dc6aec4-5617-41fd-9c4a-363fa4ed5204",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/18?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025/@@images/image",
+          "type": "episode",
+          "duration": 6969.756,
+          "ending": "2025-01-18T20:00:00-08:00",
+          "last_updated": "2025-01-19T20:18:47-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025",
+            "last_updated": "2025-01-19T20:18:47-08:00",
+            "metadata": {
+              "changefreq": "monthly",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025/@@images/image/page-header"
+              },
+              "lastmod": "2025-01-19T20:18:47-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-18-2025",
+              "priority": "0.8"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-01-25T18:00:00-08:00",
+          "title": "Dan Wilcox's playlist, January 25, 2025",
+          "airdate": "2025-01-25T18:00:00-08:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_january_25_2025-250125.mp3",
+          "uuid": "77a5b3d5-07f8-488d-8975-3521288c0527",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"content clearfix\" itemprop=\"articleBody\">\r\n<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>\r\n</div>\r\n<p></p>\r\n<section id=\"portlets-below-article\" role=\"complementary\" class=\"row-portlet-manager\"></section>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/01/25?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025/@@images/image",
+          "type": "episode",
+          "duration": 6879.085,
+          "ending": "2025-01-25T20:00:00-08:00",
+          "last_updated": "2025-01-27T16:53:38-08:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025",
+            "last_updated": "2025-01-27T16:53:38-08:00",
+            "metadata": {
+              "changefreq": "monthly",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025/@@images/image/page-header"
+              },
+              "lastmod": "2025-01-27T16:53:38-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-january-25-2025",
+              "priority": "0.8"
+            }
+          },
+          "metadata": {}
+        },
+        {
           "sort_index": "2025-02-01T18:00:00-08:00",
           "title": "Dan Wilcox's playlist, February 1, 2025",
           "airdate": "2025-02-01T18:00:00-08:00",
@@ -46,13 +151,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
             "last_updated": "2025-02-02T18:30:46-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
-              "lastmod": "2025-02-02T18:30:46-08:00",
               "changefreq": "monthly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-02-02T18:30:46-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-1-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -81,13 +186,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
             "last_updated": "2025-02-10T13:28:14-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
-              "lastmod": "2025-02-10T13:28:14-08:00",
-              "changefreq": "weekly",
-              "priority": "0.8",
+              "changefreq": "monthly",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-02-10T13:28:14-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-8-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -116,13 +221,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
             "last_updated": "2025-02-16T20:09:52-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
-              "lastmod": "2025-02-16T20:09:52-08:00",
-              "changefreq": "weekly",
-              "priority": "0.8",
+              "changefreq": "monthly",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-02-16T20:09:52-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-february-15-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -151,13 +256,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
             "last_updated": "2025-03-02T20:43:31-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
-              "lastmod": "2025-03-02T20:43:31-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-03-02T20:43:31-08:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-1-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -186,13 +291,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
             "last_updated": "2025-03-10T19:08:06-07:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
-              "lastmod": "2025-03-10T19:08:06-07:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-03-10T19:08:06-07:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-8-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -221,13 +326,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
             "last_updated": "2025-03-16T20:17:38-07:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
-              "lastmod": "2025-03-16T20:17:38-07:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-03-16T20:17:38-07:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-15-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -256,13 +361,13 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
             "last_updated": "2025-03-30T14:35:47-07:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
-              "lastmod": "2025-03-30T14:35:47-07:00",
-              "changefreq": "daily",
-              "priority": "0.8",
+              "changefreq": "weekly",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-03-30T14:35:47-07:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-march-29-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -291,33 +396,103 @@
             "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
             "last_updated": "2025-04-07T15:50:28-07:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
-              "lastmod": "2025-04-07T15:50:28-07:00",
-              "changefreq": "hourly",
-              "priority": "0.8",
+              "changefreq": "daily",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-04-07T15:50:28-07:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-5-2025",
+              "priority": "0.8"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-12T18:00:00-07:00",
+          "title": "Dan Wilcox's playlist, April 12, 2025",
+          "airdate": "2025-04-12T18:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_april_12_2025-250412.mp3",
+          "uuid": "ed1b56d5-3292-41da-af78-b9baf648c796",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/12?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025/@@images/image",
+          "type": "episode",
+          "duration": 6936.111,
+          "ending": "2025-04-12T20:00:00-07:00",
+          "last_updated": "2025-04-14T01:20:33+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025",
+            "last_updated": "2025-04-13T18:20:33-07:00",
+            "metadata": {
+              "changefreq": "daily",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025/@@images/image/page-header"
+              },
+              "lastmod": "2025-04-13T18:20:33-07:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-12-2025",
+              "priority": "0.8"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-19T18:00:00-07:00",
+          "title": "Dan Wilcox's playlist, April 19, 2025",
+          "airdate": "2025-04-19T18:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/df/KCRW-dan_wilcox-dan_wilcoxs_playlist_april_19_2025-250419.mp3",
+          "uuid": "26d22397-5eab-4994-badc-a5c8a65e5990",
+          "show_uuid": "8224b1c6-3928-0bd0-6260-650f3f0c3131",
+          "hosts": [
+            "d639c3ab-e14f-ce0c-45cc-edfefc060555"
+          ],
+          "description": "<div class=\"content clearfix\" itemprop=\"articleBody\">\r\n<div class=\"description\" itemprop=\"description\">\r\n<p>Unearthing new discoveries, remixes and rarities, b-sides and lost classics.</p>\r\n</div>\r\n</div>\r\n<p></p>\r\n<section id=\"portlets-below-article\" role=\"complementary\" class=\"row-portlet-manager\"></section>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/19?time=18:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025/@@images/image",
+          "type": "episode",
+          "duration": 6954.501,
+          "ending": "2025-04-19T20:00:00-07:00",
+          "last_updated": "2025-04-21T08:48:44+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025",
+            "url": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025",
+            "source": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025",
+            "last_updated": "2025-04-21T01:48:44-07:00",
+            "metadata": {
+              "changefreq": "hourly",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025/@@images/image/page-header"
+              },
+              "lastmod": "2025-04-21T01:48:44-07:00",
+              "loc": "https://www.kcrw.com/music/shows/dan-wilcox/dan-wilcoxs-playlist-april-19-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
         }
       ],
       "type": "http://schema.org/RadioSeries",
-      "last_updated": "2025-04-07T15:50:32-07:00",
+      "last_updated": "2025-04-21T01:48:43-07:00",
       "resource": {
         "sort_index": "https://www.kcrw.com/music/shows/dan-wilcox",
         "url": "https://www.kcrw.com/music/shows/dan-wilcox",
         "source": "https://www.kcrw.com/music/shows/dan-wilcox",
-        "last_updated": "2025-04-07T15:50:32-07:00",
+        "last_updated": "2025-04-21T01:48:43-07:00",
         "metadata": {
-          "loc": "https://www.kcrw.com/music/shows/dan-wilcox",
-          "lastmod": "2025-04-07T15:50:32-07:00",
           "changefreq": "hourly",
-          "priority": "0.9",
           "image:image": {
             "image:loc": "https://www.kcrw.com/music/shows/dan-wilcox/@@images/square_image/giant-square"
-          }
+          },
+          "lastmod": "2025-04-21T01:48:43-07:00",
+          "loc": "https://www.kcrw.com/music/shows/dan-wilcox",
+          "priority": "0.9"
         }
       },
       "metadata": {}
@@ -368,16 +543,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-817",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-817",
             "last_updated": "2024-12-02T18:25:37-07:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
-              "lastmod": "2024-12-02T18:25:37-07:00",
               "changefreq": "monthly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2024-12-02T18:25:37-07:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -403,16 +578,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-818",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-818",
             "last_updated": "2024-12-08T18:10:35-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
-              "lastmod": "2024-12-08T18:10:35-08:00",
               "changefreq": "monthly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2024-12-08T18:10:35-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -438,16 +613,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-819",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-819",
             "last_updated": "2024-12-16T16:22:30-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
-              "lastmod": "2024-12-16T16:22:30-08:00",
               "changefreq": "monthly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2024-12-16T16:22:30-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -473,16 +648,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-820",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-820",
             "last_updated": "2024-12-22T21:36:26-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
-              "lastmod": "2024-12-22T21:36:26-08:00",
               "changefreq": "monthly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2024-12-22T21:36:26-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -508,16 +683,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
             "last_updated": "2025-01-05T23:49:10-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
-              "lastmod": "2025-01-05T23:49:10-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-05T23:49:10-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -543,16 +718,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-822",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-822",
             "last_updated": "2025-01-13T16:55:41-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
-              "lastmod": "2025-01-13T16:55:41-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-13T16:55:41-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -578,16 +753,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-824",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-824",
             "last_updated": "2025-01-19T20:19:33-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
-              "lastmod": "2025-01-19T20:19:33-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-19T20:19:33-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -613,16 +788,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
-            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-825",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-825",
             "last_updated": "2025-01-27T17:32:39-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
-              "lastmod": "2025-01-27T17:32:39-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-27T17:32:39-08:00",
+              "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -633,15 +808,324 @@
       "resource": {
         "sort_index": "https://www.kcrw.com/music/shows/henry-rollins",
         "url": "https://www.kcrw.com/music/shows/henry-rollins",
-        "source": "http://localhost:8888/music/shows/henry-rollins",
+        "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins",
         "last_updated": "2025-02-28T17:40:56-08:00",
         "metadata": {
-          "loc": "https://www.kcrw.com/music/shows/henry-rollins",
+          "changefreq": "hourly",
+          "image:image": {
+            "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/@@images/square_image/giant-square"
+          },
           "lastmod": "2025-02-28T17:40:56-08:00",
+          "loc": "https://www.kcrw.com/music/shows/henry-rollins",
+          "priority": "0.9"
+        }
+      },
+      "metadata": {}
+    },
+    {
+      "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic",
+      "title": "morning-becomes-eclectic",
+      "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic",
+      "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/@@images/square_image/giant-square",
+      "uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+      "description": "KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.",
+      "hosts": [],
+      "episodes": [
+        {
+          "sort_index": "2025-04-14T09:00:00-07:00",
+          "title": "Morning Becomes Eclectic playlist: Apr. 14, 2025",
+          "airdate": "2025-04-14T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_14_2025-250414.mp3",
+          "uuid": "67522e15-cd36-4e23-a218-823f2755e283",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/14?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025/@@images/image",
+          "type": "episode",
+          "duration": 10157.453,
+          "ending": "2025-04-14T12:00:00-07:00",
+          "last_updated": "2025-04-14T21:12:24+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025",
+            "last_updated": "2025-04-14T14:12:24-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025",
+              "lastmod": "2025-04-14T14:12:24-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-14-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-15T09:00:00-07:00",
+          "title": "Morning Becomes Eclectic playlist: Apr. 15, 2025",
+          "airdate": "2025-04-15T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_15_2025-250415.mp3",
+          "uuid": "92210812-4b4a-4ab2-b401-c5616f310394",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/15?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025/@@images/image",
+          "type": "episode",
+          "duration": 10158.942,
+          "ending": "2025-04-15T12:00:00-07:00",
+          "last_updated": "2025-04-15T19:26:57+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025",
+            "last_updated": "2025-04-15T12:26:57-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025",
+              "lastmod": "2025-04-15T12:26:57-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-15-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-16T09:00:00-07:00",
+          "title": "Morning Becomes Eclectic playlist: Apr. 16, 2025",
+          "airdate": "2025-04-16T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_16_2025-250416.mp3",
+          "uuid": "c861c544-a372-4db5-84de-a4e53287fbb6",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/16?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025/@@images/image",
+          "type": "episode",
+          "duration": 10157.897,
+          "ending": "2025-04-16T12:00:00-07:00",
+          "last_updated": "2025-04-16T19:30:15+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025",
+            "last_updated": "2025-04-16T12:30:15-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025",
+              "lastmod": "2025-04-16T12:30:15-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-16-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-16T09:00:00-07:00",
+          "title": "Seun Kuti: KCRW Guest Selector Set",
+          "airdate": "2025-04-16T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-seun_kuti_1-250416.mp3",
+          "uuid": "482a3cff-5149-4568-83ec-e0fdcc64677e",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>Afrobeat mainstay Seun Kuti (son of Fela) shares songs that inspired him through the recording process for his new LP with Egypt 80 \u2014 \u201cHeavier Yet.\u201d</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/16?time=09:00&guest=1&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1/@@images/image",
+          "type": "episode",
+          "duration": 3018.266,
+          "ending": "2025-04-16T12:00:00-07:00",
+          "last_updated": "2025-04-17T18:34:18+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1",
+            "last_updated": "2025-04-17T11:34:18-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1",
+              "lastmod": "2025-04-17T11:34:18-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/seun-kuti-1/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-17T09:00:00-07:00",
+          "title": "Morning Becomes Eclectic playlist: Apr. 17, 2025",
+          "airdate": "2025-04-17T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_17_2025-250417.mp3",
+          "uuid": "f1a27f8c-14d7-4776-b8a7-e5d8a10bfa90",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/17?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025/@@images/image",
+          "type": "episode",
+          "duration": 10158.706,
+          "ending": "2025-04-17T12:00:00-07:00",
+          "last_updated": "2025-04-17T19:27:14+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025",
+            "last_updated": "2025-04-17T12:27:14-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025",
+              "lastmod": "2025-04-17T12:27:14-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-17-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-18T09:00:00-07:00",
+          "title": "MBE playlist: Japanese Breakfast rocks HQ en route to Coachella",
+          "airdate": "2025-04-18T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_18_2025-250418.mp3",
+          "uuid": "89069c20-956a-4735-9dd9-92aa22d1b5e0",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>Initially conceived as a side project/songwriting challenge for frontwoman Michelle Zauner (while she was part of the Philly indie rock band Little Big League), Japanese Breakfast has steadily expanded its scope and style over the past decade: from spare and confessional bedroom-pop beginnings, to the glossier space it occupies now. Since forming the project in 2013, Zauner has navigated major life changes: cross country moves, intensive caretaking, the loss of her mother, and processing the loss of her mother through her\u00a0<i>New York Times</i>\u00a0bestselling memoir,\u00a0<i>Crying in H Mart</i>.\u00a0</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/18?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025/@@images/image",
+          "type": "episode",
+          "duration": 10158.915,
+          "ending": "2025-04-18T12:00:00-07:00",
+          "last_updated": "2025-04-18T22:23:38+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025",
+            "last_updated": "2025-04-18T15:23:38-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025",
+              "lastmod": "2025-04-18T15:23:38-07:00",
+              "changefreq": "daily",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-18-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-21T09:00:00-07:00",
+          "title": "Morning Becomes Eclectic playlist: Apr. 21, 2025",
+          "airdate": "2025-04-21T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_21_2025-250421.mp3",
+          "uuid": "6e7ddd43-d483-4440-9cb0-50f6728b89cd",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<div class=\"description\" itemprop=\"description\">\r\n<p>KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.</p>\r\n</div>\r\n<div class=\"buttons-wrap scroll\"></div>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/21?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025/@@images/image",
+          "type": "episode",
+          "duration": 10161.423,
+          "ending": "2025-04-21T12:00:00-07:00",
+          "last_updated": "2025-04-21T20:04:16+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025",
+            "last_updated": "2025-04-21T13:04:16-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025",
+              "lastmod": "2025-04-21T13:04:16-07:00",
+              "changefreq": "hourly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-21-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "sort_index": "2025-04-22T09:00:00-07:00",
+          "title": "Morning Becomes Eclectic playlist: Apr. 22, 2025",
+          "airdate": "2025-04-22T09:00:00-07:00",
+          "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025",
+          "media_url": "https://ondemand-media.kcrw.com/fdd/audio/download/kcrw/music/mb/KCRW-morning_becomes_eclectic-morning_becomes_eclectic_playlist_apr_22_2025-250422.mp3",
+          "uuid": "b43e6d72-f3d3-4775-ad4a-9a856e650707",
+          "show_uuid": "05e40269-c6c2-5575-39ca-7c44cd227bf6",
+          "hosts": [
+            "ce92c160-60b4-4083-b8c4-243dfa92e11b"
+          ],
+          "description": "<p>KCRW's signature music program features new releases, live performances, and artist interviews hosted by Novena Carmel.</p>",
+          "songlist": "https://tracklist-api.kcrw.com/Simulcast/date/2025/04/22?time=09:00&on_demand=1",
+          "image": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025/@@images/image",
+          "type": "episode",
+          "duration": 10141.753,
+          "ending": "2025-04-22T12:00:00-07:00",
+          "last_updated": "2025-04-22T20:10:19+00:00",
+          "resource": {
+            "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025",
+            "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025",
+            "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025",
+            "last_updated": "2025-04-22T13:10:19-07:00",
+            "metadata": {
+              "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025",
+              "lastmod": "2025-04-22T13:10:19-07:00",
+              "changefreq": "hourly",
+              "priority": "0.8",
+              "image:image": {
+                "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/morning-becomes-eclectic-playlist-apr-22-2025/@@images/image/page-header"
+              }
+            }
+          },
+          "metadata": {}
+        }
+      ],
+      "type": "http://schema.org/RadioSeries",
+      "last_updated": "2025-04-22T13:10:23-07:00",
+      "resource": {
+        "sort_index": "https://www.kcrw.com/music/shows/morning-becomes-eclectic",
+        "url": "https://www.kcrw.com/music/shows/morning-becomes-eclectic",
+        "source": "https://www.kcrw.com/music/shows/morning-becomes-eclectic",
+        "last_updated": "2025-04-22T13:10:23-07:00",
+        "metadata": {
+          "loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic",
+          "lastmod": "2025-04-22T13:10:23-07:00",
           "changefreq": "hourly",
           "priority": "0.9",
           "image:image": {
-            "image:loc": "https://www.kcrw.com/music/shows/henry-rollins/@@images/square_image/giant-square"
+            "image:loc": "https://www.kcrw.com/music/shows/morning-becomes-eclectic/@@images/square_image/giant-square"
           }
         }
       },
@@ -690,16 +1174,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
-            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
             "last_updated": "2024-12-19T13:17:52-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
-              "lastmod": "2024-12-19T13:17:52-08:00",
               "changefreq": "monthly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2024-12-19T13:17:52-08:00",
+              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -725,16 +1209,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
-            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
             "last_updated": "2025-01-16T02:20:39-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
-              "lastmod": "2025-01-16T02:20:39-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-16T02:20:39-08:00",
+              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -760,16 +1244,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
-            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
             "last_updated": "2025-01-23T11:11:00-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
-              "lastmod": "2025-01-23T11:11:00-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-23T11:11:00-08:00",
+              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -795,16 +1279,16 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
-            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
+            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
             "last_updated": "2025-01-27T16:16:08-08:00",
             "metadata": {
-              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
-              "lastmod": "2025-01-27T16:16:08-08:00",
               "changefreq": "weekly",
-              "priority": "0.8",
               "image:image": {
                 "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025/@@images/image/page-header"
-              }
+              },
+              "lastmod": "2025-01-27T16:16:08-08:00",
+              "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
+              "priority": "0.8"
             }
           },
           "metadata": {}
@@ -815,16 +1299,16 @@
       "resource": {
         "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
         "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
-        "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras",
+        "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras",
         "last_updated": "2025-02-27T10:46:02-08:00",
         "metadata": {
-          "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
-          "lastmod": "2025-02-27T10:46:02-08:00",
           "changefreq": "daily",
-          "priority": "0.9",
           "image:image": {
             "image:loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/@@images/square_image/giant-square"
-          }
+          },
+          "lastmod": "2025-02-27T10:46:02-08:00",
+          "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
+          "priority": "0.9"
         }
       },
       "metadata": {}
