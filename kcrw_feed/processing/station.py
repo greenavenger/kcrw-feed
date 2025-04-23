@@ -54,7 +54,7 @@ class StationProcessor:
 
     def process_resource(self, resource: Resource) -> Union[Show, Episode]:
         """Determine the type of the resource (Show or Episode) and fetch and
-        enrich it accordingly (treat as Show by default). If it’s an Episode,
+        enrich it accordingly (treat as Show by default). If it's an Episode,
         ensure that its parent Show is also processed."""
         if self.is_episode_resource(resource):
             return self._process_episode(resource)
@@ -250,17 +250,41 @@ class StationProcessor:
                 episode_str = episode_bytes.decode("utf-8")
                 episode_data = json.loads(episode_str)
             except json.JSONDecodeError as e:
-                logger.error("Error decoding JSON: %s", e)
+                logger.error(
+                    "Error decoding JSON for episode %s: %s", resource.url, e)
+                return None
         else:
             logger.debug("Failed to retrieve file: %s", episode_reference)
-            return
-        if episode_data:
+            return None
+
+        if not episode_data:
+            logger.error("No episode data found for %s", resource.url)
+            return None
+
+        # Extract media URL with proper error handling
+        media_url = None
+        try:
+            media_list = episode_data.get("media", [])
+            if not media_list:
+                logger.error(
+                    "No media entries found for episode %s", resource.url)
+                return None
+            media_url = strip_query_params(media_list[0].get("url"))
+            if not media_url:
+                logger.error(
+                    "Empty media URL found for episode %s", resource.url)
+                return None
+        except (IndexError, AttributeError) as e:
+            logger.error(
+                "Error extracting media URL for episode %s: %s", resource.url, e)
+            return None
+
+        try:
             episode = Episode(
                 title=episode_data.get("title", ""),
                 airdate=utils.parse_date(episode_data.get("airdate")),
                 url=episode_data.get("url"),
-                media_url=strip_query_params(
-                    episode_data.get("media", "")[0].get("url")),
+                media_url=media_url,
                 uuid=utils.extract_uuid(episode_data.get("uuid")),
                 show_uuid=utils.extract_uuid(episode_data.get("show_uuid")),
                 hosts=[utils.extract_uuid(item.get("uuid"))
@@ -276,12 +300,14 @@ class StationProcessor:
             )
             if episode.uuid:
                 self.catalog.add_episode(episode)
-        if episode:
-            self.catalog.add_episode(episode)
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("Final episode object: %s",
-                         pprint.pformat(episode_data))
-        return episode
+            if logger.isEnabledFor(TRACE_LEVEL_NUM):
+                logger.trace("Final episode object: %s",
+                             pprint.pformat(episode_data))
+            return episode
+        except Exception as e:
+            logger.error(
+                "Error creating episode object for %s: %s", resource.url, e)
+            return None
 
     def _process_hosts(self, show_data: dict) -> Optional[List[Host]]:
         """Try to parse a host object from structured data."""
@@ -289,14 +315,16 @@ class StationProcessor:
             logger.trace("show_data for hosts: %s", pprint.pformat(show_data))
         hosts = []
         if show_data:
-            author_data = show_data.get("properties", {}).get("author", {})
+            show_url = show_data.get("properties", {}).get(
+                    "mainEntityOfPage"
+            author_data=show_data.get("properties", {}).get("author", {})
             if logger.isEnabledFor(TRACE_LEVEL_NUM):
                 logger.trace("author_data: %s", pprint.pformat(author_data))
             if not author_data:
-                logger.info("No hosts data found!")
+                logger.info("No hosts data found for show %s!", show_url)
                 logger.debug("hosts: %s", hosts)
                 return []
-            author_uuid = utils.extract_uuid(author_data.get("id"))
+            author_uuid=utils.extract_uuid(author_data.get("id"))
             hosts.append(Host(
                 name=author_data.get("properties", {}).get("name"),
                 uuid=author_uuid,
@@ -304,7 +332,7 @@ class StationProcessor:
                 socials=show_data.get("properties", {}).get("sameAs", []),
                 type=author_data.get("type"),
             ))
-        hosts = utils.uniq_by_uuid(hosts)
+        hosts=utils.uniq_by_uuid(hosts)
         for host in hosts:
             if host not in self.catalog.list_hosts():
                 self.catalog.add_host(host)
