@@ -316,15 +316,15 @@ class StationProcessor:
         hosts = []
         if show_data:
             show_url = show_data.get("properties", {}).get(
-                    "mainEntityOfPage"
-            author_data=show_data.get("properties", {}).get("author", {})
+                "mainEntityOfPage")
+            author_data = show_data.get("properties", {}).get("author", {})
             if logger.isEnabledFor(TRACE_LEVEL_NUM):
                 logger.trace("author_data: %s", pprint.pformat(author_data))
             if not author_data:
                 logger.info("No hosts data found for show %s!", show_url)
                 logger.debug("hosts: %s", hosts)
                 return []
-            author_uuid=utils.extract_uuid(author_data.get("id"))
+            author_uuid = utils.extract_uuid(author_data.get("id"))
             hosts.append(Host(
                 name=author_data.get("properties", {}).get("name"),
                 uuid=author_uuid,
@@ -332,7 +332,7 @@ class StationProcessor:
                 socials=show_data.get("properties", {}).get("sameAs", []),
                 type=author_data.get("type"),
             ))
-        hosts=utils.uniq_by_uuid(hosts)
+        hosts = utils.uniq_by_uuid(hosts)
         for host in hosts:
             if host not in self.catalog.list_hosts():
                 self.catalog.add_host(host)
