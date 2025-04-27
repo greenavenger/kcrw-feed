@@ -11,7 +11,7 @@ import pytest
 
 from kcrw_feed.models import Show, Episode, Host, Resource, ShowDirectory, Catalog
 from kcrw_feed.station_catalog import BaseStationCatalog, LocalStationCatalog, LiveStationCatalog, STATE_CATALOG_FILE
-from kcrw_feed.source_manager import BaseSource
+from kcrw_feed.source_manager import BaseSource, CacheSource
 from kcrw_feed.persistence.feeds import FeedPersister
 from kcrw_feed.persistence.state import StatePersister
 
@@ -487,15 +487,18 @@ class TestLocalStationCatalog:
         # Create a mock feed persister
         feed_persister = MockFeedPersister()
 
+        # Create a CacheSource for local storage
+        local_source = CacheSource(storage_root)
+
         # Create a local catalog
         catalog = LocalStationCatalog(
-            catalog_source=storage_root,
+            catalog_source=local_source,
             state_file=state_file,
             feed_persister=feed_persister
         )
 
         # Check that the catalog was initialized correctly
-        assert catalog.catalog_source == storage_root
+        assert catalog.catalog_source == local_source
         assert catalog.state_file == state_file
         assert catalog.feed_persister == feed_persister
         assert catalog.catalog is not None
@@ -509,9 +512,12 @@ class TestLocalStationCatalog:
         # Create a mock feed persister
         feed_persister = MockFeedPersister()
 
+        # Create a CacheSource for local storage
+        local_source = CacheSource(storage_root)
+
         # Create a local catalog
         catalog = LocalStationCatalog(
-            catalog_source=storage_root,
+            catalog_source=local_source,
             state_file=state_file,
             feed_persister=feed_persister
         )
@@ -587,9 +593,12 @@ class TestLocalStationCatalog:
 
 def test_load_from_golden_files():
     """Test loading a catalog from golden files in tests/data directory."""
+    # Create a CacheSource for the golden files directory
+    local_source = CacheSource(GOLDEN_FILES_DIR)
+
     # Create a local catalog pointing to the tests/data directory
     catalog = LocalStationCatalog(
-        catalog_source=GOLDEN_FILES_DIR,
+        catalog_source=local_source,
         state_file=CATALOG_FILE,
         feed_persister=None
     )

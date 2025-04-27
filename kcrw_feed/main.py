@@ -30,9 +30,9 @@ def main():
     parser.add_argument("-m", "--match", type=str,
                         help='A regex or substring to filter resource URLs (ex. "valida", "shows/valida", "valida.*-2023")')
     parser.add_argument("-s", "--since", type=str,
-                        help='Reprocess since provided ISO 8601 timestamp (“YYYY-MM-DDTHH:MM:SS”)')
+                        help='Reprocess since provided ISO 8601 timestamp ("YYYY-MM-DDTHH:MM:SS")')
     parser.add_argument("-u", "--until", type=str,
-                        help='Reprocess until provided ISO 8601 timestamp (“YYYY-MM-DDTHH:MM:SS”)')
+                        help='Reprocess until provided ISO 8601 timestamp ("YYYY-MM-DDTHH:MM:SS")')
     parser.add_argument("--loglevel", type=str,
                         choices=["trace", "debug", "info",
                                  "warning", "error", "critical"],
@@ -112,9 +112,12 @@ def main():
     feed_persister = feed_persister = FeedPersister(
         storage_root=storage_root, feed_directory=feed_directory)
 
+    # Create a CacheSource for local storage
+    local_source = CacheSource(storage_root)
+
     # Pull in local state from the state file (always needed)
     local_catalog = station_catalog.LocalStationCatalog(
-        catalog_source=storage_root, state_file=state_file, feed_persister=feed_persister)
+        catalog_source=local_source, state_file=state_file, feed_persister=feed_persister)
 
     # Pull in live state from kcrw.com only if necessary
     if args.command in ["diff", "update"]:

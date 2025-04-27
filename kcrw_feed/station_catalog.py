@@ -33,7 +33,7 @@ class BaseStationCatalog(ABC):
     for listing and comparing (diffing) the current state with an updated
     state.
     """
-    catalog_source: str | BaseSource
+    catalog_source: BaseSource
     catalog: Catalog
 
     @abstractmethod
@@ -44,6 +44,10 @@ class BaseStationCatalog(ABC):
     def get_source(self):
         """Return the source of this catalog."""
         return self.catalog_source
+
+    def get_source_string(self) -> str:
+        """Return the string representation of the catalog source."""
+        return self.catalog_source.base_source
 
     def list_resources(self, filter_opts: Optional[FilterOptions] = None) -> List[Resource]:
         """Return a list of resources, filtered if necessary."""
@@ -153,7 +157,7 @@ class LocalStationCatalog(BaseStationCatalog):
     """LocalStationCatalog represents the complete collection of shows,
     episodes, and hosts from the local persisted state."""
 
-    def __init__(self, catalog_source: str, state_file: str, feed_persister: Optional[FeedPersister]) -> None:
+    def __init__(self, catalog_source: BaseSource, state_file: str, feed_persister: Optional[FeedPersister]) -> None:
         self.catalog_source = catalog_source
         self.state_file = state_file
         self.state_persister = None
@@ -162,10 +166,10 @@ class LocalStationCatalog(BaseStationCatalog):
 
     def load(self) -> Catalog:
         """Load data from stable storage."""
-        logger.info("Loading local state")
+        logger.info("Loading local state [%s]", self.get_source_string())
 
-        # Ensure catalog_source is a string for the StatePersister
-        storage_root = str(self.catalog_source)
+        # Use the base_source attribute for storage operations
+        storage_root = self.catalog_source.base_source
         self.state_persister = StatePersister(
             storage_root, self.state_file)
 
@@ -213,9 +217,9 @@ class LocalStationCatalog(BaseStationCatalog):
     def save_state(self) -> None:
         """Write data to stable storage."""
         self.state_persister.save(ShowDirectory(self.list_shows()), filename=os.path.join(
-            self.catalog_source, STATE_DIRECTORY_FILE))
+            self.catalog_source.base_source, STATE_DIRECTORY_FILE))
         self.state_persister.save(self.catalog)  # , filename=os.path.join(
-        # self.catalog_source, STATE_CATALOG_FILE))
+        # self.catalog_source.base_source, STATE_CATALOG_FILE))
 
     def generate_feeds(self) -> None:
         """Write feeds to directory."""
@@ -233,7 +237,8 @@ class LiveStationCatalog(BaseStationCatalog):
 
     def load(self) -> Catalog:
         """Load data from live site."""
-        logger.info("Fetching live resources")
+        logger.info("Fetching live resources [%s]",
+                    self.get_source_string())
 
         # TODO: Should we be working with the full set of dataclasses or just
         # resources?
