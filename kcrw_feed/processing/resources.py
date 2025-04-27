@@ -58,7 +58,8 @@ class ResourceProcessor:
             List[str]: The list of sitemap URLs found in robots.txt."""
         robots_bytes = self.source.get_reference(ROBOTS_FILE)
         if not robots_bytes:
-            raise FileNotFoundError(f"robots.txt not found at {self.source}")
+            raise FileNotFoundError(
+                "robots.txt not found at " + self.source.base_source)
         robots_txt = robots_bytes.decode("utf-8")
         rp = urobot.RobotFileParser()
         rp.parse(robots_txt.splitlines())

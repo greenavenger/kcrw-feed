@@ -96,6 +96,8 @@ def main():
     source_root = args.source_root or CONFIG["source_root"]
     if source_root.startswith("http"):
         live_source = HttpsSource(source_root)
+        logger.debug("URLs in cache: %s", pprint.pformat(
+            live_source._session.cache.urls()))
     else:
         # Use an absolute path for the source_root so it's unambiguous.
         source_root = os.path.abspath(source_root)
@@ -179,6 +181,17 @@ def main():
         logger.info("Updates applied: %d", applied)
     else:
         logger.error("Unknown command")
+
+    if source_root.startswith("http"):
+        logger.debug("Cache URLs: %s", pprint.pformat(
+            live_source._session.cache.urls()))
+        # Report cache stats if we access a live source.
+        if args.command == "diff" or args.command == "update":
+            total_requests = live_source.cache_stats["hits"] + \
+                live_source.cache_stats["misses"]
+            live_source.cache_stats["hit_rate"] = live_source.cache_stats["hits"] / \
+                total_requests if total_requests > 0 else 0.0
+            logger.info("Cache stats: %s", live_source.cache_stats)
 
     logger.info("Elapsed time: %fs", time.time() - t0)
 

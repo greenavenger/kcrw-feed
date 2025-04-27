@@ -115,7 +115,7 @@ class StationProcessor:
             if show.resource and show.resource == resource:
                 return show
 
-        show_reference = self.source.relative_path(resource.url + "/")
+        show_reference = self.source.relative_path(resource.url)
         logger.debug("show_reference: %s", show_reference)
         html = self.source.get_reference(show_reference)
         # Handle file-based fallback here: If the reference isn't being

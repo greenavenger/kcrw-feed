@@ -69,7 +69,6 @@ def strip_query_params(url: str) -> str:
 class BaseSource(ABC):
     """Abstract base class for sources."""
     base_source: str
-    uses_sitemap: bool
     _session = None
 
     @abstractmethod
@@ -115,20 +114,39 @@ class BaseSource(ABC):
         logger.debug("Reading: %s", path)
         if path.startswith("http://") or path.startswith("https://"):
             # Disable requests to kcrw.com for now:
-            assert not path.startswith(
-                "https://www.kcrw.com"), "Avoid generating load"
+            # assert not path.startswith(
+            #     "https://www.kcrw.com"), "Avoid generating load"
             # Ensure a cached session exists.
             assert self._session, f"No CachedSession available!"
             headers = REQUEST_HEADERS
             try:
+                if self._session.cache.contains(url=path):
+                    logger.debug("Cache hit for %s", path)
+                    self.cache_stats["hits"] += 1
+                    cached = True
+                else:
+                    logger.debug("Cache miss for %s", path)
+                    self.cache_stats["misses"] += 1
+                    cached = False
+                    # To keep load on kcrw.com reasonable, if the response was
+                    # not served from cache, add a delay.
+                    if path.startswith("https://www.kcrw.com"):
+                        random_delay()
                 # Perform the GET request.
                 response = self._session.get(
                     path, timeout=timeout, headers=headers)
-                response.raise_for_status()
-                # To keep load on kcrw.com reasonable, if the response was
-                # not served from cache, add a delay.
-                if not getattr(response, "from_cache", False):
-                    random_delay()
+                # Only raise for status codes other than 404
+                if response.status_code != 404:
+                    response.raise_for_status()
+                # Log response details for debugging
+                logger.debug("Response status: %d, from_cache: %s, url: %s",
+                             response.status_code,
+                             getattr(response, "from_cache", False),
+                             path)
+                if response.status_code == 404:
+                    return None
+                assert cached == response.from_cache, \
+                    f"Cache hit mismatch for {path}: {cached} != {response.from_cache}"
                 content = response.content
                 if path.endswith(".gz"):
                     content = gzip.decompress(content)
@@ -149,10 +167,9 @@ class BaseSource(ABC):
 class HttpsSource(BaseSource):
     def __init__(self, url: str, rewrite_rule: Optional[str] = None):
         self.validate_source_root(url)
+        # Store the original URL as the base source
         self.base_source = url
         self.url = self.base_source  # convenience reference
-        self.rewrite_rule = rewrite_rule
-        self.uses_sitemap = True
         # Create a single cached session that will be reused for all HTTP requests.
         self.backend = 'sqlite'        # stores data in kcrw_cache.sqlite
         # self.backend = 'filesystem'  # stores data in "./kcrw_cache"
@@ -162,13 +179,20 @@ class HttpsSource(BaseSource):
             cache_control=True,
             # Otherwise expire responses after one day
             expire_after=timedelta(days=1),
-            # Cache 404 responses as a solemn reminder of your failures
+            # Cache 404 responses as a solemn reminder of our failures
             allowable_codes=[200, 404],
+            stale_if_error=True,
         )
         logger.info("Cache backend: %s", self.backend)
+        # Cache stats
+        self.cache_stats = {
+            "hits": 0,
+            "misses": 0,
+            "hit_rate": 0.0,
+        }
 
     def get_reference(self, url: str) -> Optional[bytes]:
-        logger.debug(f"Fetching via HTTPS: {url}")
+        logger.debug(f"Fetching HTTP/S: {url}")
 
         # Rewrite URL if necessary
         full_normalized_url = self.reference(url)
@@ -177,18 +201,15 @@ class HttpsSource(BaseSource):
     def relative_path(self, url: str) -> str:
         """Regular expression to return the relative part of the entity
         path."""
-        # Also trim trailing slash for consistency
-        updated_path = REWRITE_RE.sub("/", url).rstrip("/")
-        if logger.isEnabledFor(TRACE_LEVEL_NUM):
-            logger.trace("relative_path input url: %s", url)
-            logger.trace("relative_path output url: %s", updated_path)
-        return updated_path
+        # Use REWRITE_RE to extract the path portion
+        return REWRITE_RE.sub("/", url)
 
     def reference(self, url: str) -> str:
         relative_path = self.relative_path(url)
-        full_normalized_url = normalize_location(
-            self.base_source, relative_path)
-        return full_normalized_url
+        # For HTTP URLs, use urljoin to properly handle the base URL
+        if self.base_source.startswith(("http://", "https://")):
+            return urljoin(self.base_source, relative_path)
+        return normalize_location(self.base_source, relative_path)
 
 
 class CacheSource(BaseSource):
@@ -200,6 +221,7 @@ class CacheSource(BaseSource):
 
     def get_reference(self, resource: str) -> Optional[bytes]:
         # Read from the local cache directory.
+        logger.debug(f"Fetching file: {resource}")
 
         # Rewrite path if necessary
         full_normalized_path = self.reference(resource)
