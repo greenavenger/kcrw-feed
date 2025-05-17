@@ -6,6 +6,7 @@ import logging.config
 import os.path
 import pprint
 import time
+import sys
 
 from kcrw_feed import config
 from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
@@ -73,6 +74,16 @@ def main():
     storage_root = args.storage_root or CONFIG["storage_root"]
     # Use an absolute path for the storage_root so it's unambiguous.
     storage_root = os.path.abspath(storage_root)
+
+    # Check if state file exists for commands that require it
+    state_file = CONFIG["state_file"]
+    state_file_path = os.path.join(storage_root, state_file)
+    if args.command in ["list", "diff"] and not os.path.exists(state_file_path):
+        print(
+            f"Error: State file not found at {state_file_path}", file=sys.stderr)
+        print("Please run this command from a directory containing the state file, or specify the correct path with --storage_root", file=sys.stderr)
+        return 1
+
     logger.info("Storage root: %s", storage_root)
 
     # Update cache filename to be relative to storage_root
