@@ -12,11 +12,67 @@ from importlib import resources
 from kcrw_feed.models import FilterOptions
 
 
-def get_default_config_path() -> str:
-    """Get the path to the default config file in the package."""
-    # For Python 3.9+, we can use files() which returns a Traversable
-    with resources.files('kcrw_feed').joinpath('data/default_config.yaml').open('r') as f:
-        return f.name
+class Config:
+    """Manages configuration for the KCRW Feed Generator."""
+
+    def __init__(self, custom_config_path: Optional[str] = None):
+        """
+        Initialize configuration from default and optional custom config.
+
+        Args:
+            custom_config_path: Optional path to a custom YAML config file.
+        """
+        self._config = self._load_config(custom_config_path)
+        self._validate_config()
+
+    @staticmethod
+    def _get_default_config_path() -> str:
+        """Get the path to the default config file in the package."""
+        with resources.files('kcrw_feed').joinpath('data/default_config.yaml').open('r') as f:
+            return f.name
+
+    def _load_config(self, custom_config_path: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Load configuration from default and optional custom config file.
+
+        Args:
+            custom_config_path: Optional path to a custom YAML config file.
+
+        Returns:
+            Dict containing merged configuration.
+        """
+        # Always load the default config first
+        default_path = self._get_default_config_path()
+        with open(default_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+
+        # If a custom config is specified, override top-level values
+        if custom_config_path:
+            with open(custom_config_path, 'r', encoding='utf-8') as f:
+                custom_config = yaml.safe_load(f)
+                # Simple top-level override
+                config.update(custom_config)
+
+        return config
+
+    def _validate_config(self) -> None:
+        """Validate the configuration dictionary."""
+        if not self._config.get("source_root"):
+            print(f"Config file missing required entry: 'source_root'",
+                  file=sys.stderr)
+            sys.exit(1)
+
+    def __getitem__(self, key: str) -> Any:
+        """Allow dictionary-like access to config values."""
+        return self._config[key]
+
+    def __contains__(self, key: str) -> bool:
+        """Support 'in' operator for checking key existence."""
+        return key in self._config
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get config value with optional default."""
+        return self._config.get(key, default)
 
 
 def read_config(filename: Optional[str] = None) -> Dict[str, Any]:
@@ -32,31 +88,8 @@ def read_config(filename: Optional[str] = None) -> Dict[str, Any]:
     Returns:
         dict: The configuration data with custom overrides.
     """
-    # Always load the default config first
-    default_path = get_default_config_path()
-    with open(default_path, 'r', encoding='utf-8') as f:
-        config = yaml.safe_load(f)
-
-    # If a custom config is specified, override top-level values
-    if filename:
-        with open(filename, 'r', encoding='utf-8') as f:
-            custom_config = yaml.safe_load(f)
-            # Simple top-level override
-            config.update(custom_config)
-
-    validate_config(config)
-    return config
-
-
-def validate_config(config: Dict[str, Any]) -> None:
-    """Validate the configuration dictionary."""
-    if not config.get("source_root"):
-        print(f"Config file missing required entry: 'source_root'")
-        sys.exit(1)
-
-
-# Initialize configuration with package defaults
-# CONFIG = read_config()
+    config = Config(filename)
+    return config._config
 
 
 def get_local_timezone() -> timezone:
