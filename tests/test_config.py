@@ -1,4 +1,4 @@
-"""Tests for simple configuration reader and filter option parser"""
+"""Tests for configuration management and filter option parser"""
 
 import argparse
 import os
@@ -9,16 +9,16 @@ import pytest
 from datetime import datetime
 from typing import Dict, Any
 
-from kcrw_feed.config import read_config, validate_config, get_filter_options, get_local_timezone
+from kcrw_feed.config import Config, read_config, get_filter_options, get_local_timezone
 from kcrw_feed.models import FilterOptions
 
-# --- Tests for read_config and validate_config ---
+# --- Tests for Config class and read_config ---
 
 
-def test_read_config_valid(tmp_path: os.PathLike) -> None:
+def test_config_valid(tmp_path: os.PathLike) -> None:
     """
     Create a temporary YAML config file with a valid 'source_root'
-    and verify that read_config returns the expected dictionary.
+    and verify that Config loads it correctly.
     """
     config_data: Dict[str, Any] = {
         "source_root": "https://www.example.com/",
@@ -30,18 +30,17 @@ def test_read_config_valid(tmp_path: os.PathLike) -> None:
     with open(config_file, "w", encoding="utf-8") as f:
         yaml.dump(config_data, f)
 
-    result = read_config(config_file)
-    assert isinstance(result, dict)
-    assert result["source_root"] == "https://www.example.com/"
-    assert result["storage_root"] == "."
-    assert result["state_file"] == "catalog/state.xml"
-    assert result["feed_directory"] == "catalog/feeds"
+    config = Config(config_file)
+    assert config["source_root"] == "https://www.example.com/"
+    assert config["storage_root"] == "."
+    assert config["state_file"] == "catalog/state.xml"
+    assert config["feed_directory"] == "catalog/feeds"
 
 
-def test_read_config_override_defaults(tmp_path: os.PathLike) -> None:
+def test_config_override_defaults(tmp_path: os.PathLike) -> None:
     """
     Create a YAML config file that overrides some default values and verify
-    that read_config merges them correctly.
+    that Config merges them correctly.
     """
     config_data: Dict[str, Any] = {
         "source_root": "https://custom.example.com/",
@@ -55,18 +54,43 @@ def test_read_config_override_defaults(tmp_path: os.PathLike) -> None:
     with open(config_file, "w", encoding="utf-8") as f:
         yaml.dump(config_data, f)
 
+    config = Config(config_file)
+    # Verify overridden values
+    assert config["source_root"] == "https://custom.example.com/"
+    assert config["http_timeout"] == 30
+    assert config["request_delay"]["mean"] == 10.0
+    assert config["request_delay"]["stddev"] == 3.0
+    # Verify default values are still present
+    assert "storage_root" in config
+    assert "state_file" in config
+    assert "feed_directory" in config
+    assert "request_headers" in config
+
+
+def test_config_get_with_default() -> None:
+    """Test Config.get() method with default value."""
+    config = Config()
+    assert config.get("nonexistent_key", "default") == "default"
+    # Should return actual value
+    assert config.get("source_root", "default") != "default"
+
+
+def test_read_config_legacy(tmp_path: os.PathLike) -> None:
+    """
+    Test the legacy read_config function for backward compatibility.
+    """
+    config_data: Dict[str, Any] = {
+        "source_root": "https://www.example.com/",
+        "storage_root": "."
+    }
+    config_file = os.path.join(tmp_path, "test_config.yaml")
+    with open(config_file, "w", encoding="utf-8") as f:
+        yaml.dump(config_data, f)
+
     result = read_config(config_file)
     assert isinstance(result, dict)
-    # Verify overridden values
-    assert result["source_root"] == "https://custom.example.com/"
-    assert result["http_timeout"] == 30
-    assert result["request_delay"]["mean"] == 10.0
-    assert result["request_delay"]["stddev"] == 3.0
-    # Verify default values are still present
-    assert "storage_root" in result
-    assert "state_file" in result
-    assert "feed_directory" in result
-    assert "request_headers" in result
+    assert result["source_root"] == "https://www.example.com/"
+    assert result["storage_root"] == "."
 
 # --- Tests for get_filter_options ---
 
