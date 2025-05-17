@@ -75,23 +75,6 @@ class Config:
         return self._config.get(key, default)
 
 
-def read_config(filename: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Reads configuration files and returns their contents as a dictionary.
-    If a custom config file is specified, its top-level values override the defaults.
-    Note: For nested structures like logging, the entire structure must be provided
-    in the custom config to override the default.
-
-    Parameters:
-        filename (str): The path to a custom YAML configuration file. If None, uses only package default.
-
-    Returns:
-        dict: The configuration data with custom overrides.
-    """
-    config = Config(filename)
-    return config._config
-
-
 def get_local_timezone() -> timezone:
     """Use local timezone for command line arguments."""
     if time.daylight and time.localtime().tm_isdst:

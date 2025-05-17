@@ -67,7 +67,7 @@ def main():
     args = parser.parse_args()
 
     # Load configuration
-    CONFIG = config.read_config(args.config)
+    CONFIG = config.Config(args.config)
     logger = logging.getLogger("kcrw_feed")
 
     # Determine storage root
@@ -80,8 +80,7 @@ def main():
     state_file_path = os.path.join(storage_root, state_file)
     if args.command in ["list", "diff"] and not os.path.exists(state_file_path):
         print(
-            f"Error: State file not found at {state_file_path}", file=sys.stderr)
-        print("Please run this command from a directory containing the state file, or specify the correct path with --storage_root", file=sys.stderr)
+            f"Error: Cannot '{args.command}' without a state file: '{state_file_path}' not found.", file=sys.stderr)
         return 1
 
     logger.info("Storage root: %s", storage_root)
