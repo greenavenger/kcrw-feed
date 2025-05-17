@@ -9,10 +9,10 @@ import pytest
 from datetime import datetime
 from typing import Dict, Any
 
-from kcrw_feed.config import Config, read_config, get_filter_options, get_local_timezone
+from kcrw_feed.config import Config, get_filter_options, get_local_timezone
 from kcrw_feed.models import FilterOptions
 
-# --- Tests for Config class and read_config ---
+# --- Tests for Config class ---
 
 
 def test_config_valid(tmp_path: os.PathLike) -> None:
@@ -73,24 +73,6 @@ def test_config_get_with_default() -> None:
     assert config.get("nonexistent_key", "default") == "default"
     # Should return actual value
     assert config.get("source_root", "default") != "default"
-
-
-def test_read_config_legacy(tmp_path: os.PathLike) -> None:
-    """
-    Test the legacy read_config function for backward compatibility.
-    """
-    config_data: Dict[str, Any] = {
-        "source_root": "https://www.example.com/",
-        "storage_root": "."
-    }
-    config_file = os.path.join(tmp_path, "test_config.yaml")
-    with open(config_file, "w", encoding="utf-8") as f:
-        yaml.dump(config_data, f)
-
-    result = read_config(config_file)
-    assert isinstance(result, dict)
-    assert result["source_root"] == "https://www.example.com/"
-    assert result["storage_root"] == "."
 
 # --- Tests for get_filter_options ---
 
