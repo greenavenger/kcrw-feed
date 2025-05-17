@@ -1,0 +1,87 @@
+# KCRW Feed Generator Configuration
+# ================================
+#
+# This is the default configuration file. You can override any of these settings
+# by creating your own config.yaml file and specifying its path with the --config
+# command line option.
+
+# The root URL of the KCRW website
+source_root: "https://www.kcrw.com/"
+# source_root: "./tests/data/"
+# source_root: "http://localhost:8888/"
+
+
+# The root data directory for persisting state and feeds
+# This can be overridden with --storage_root
+# Default is current working directory (.)
+storage_root: "." # "catalog"
+
+# The state file to use for storing catalog data
+# This will be created in the storage_root directory
+state_file: "kcrw_catalog.json"
+
+# Directory for storing generated feeds
+# This will be created relative to storage_root
+feed_directory: "feeds"
+
+# HTTP cache configuration
+# The cache will be created in the storage_root directory
+http_cache:
+  directory: ".cache"  # Directory under storage_root for cache files
+  backend: "sqlite"   # Use "sqlite" or "filesystem"
+  expire_after: 86400  # 24 hours in seconds
+
+# The default HTTP timeout in seconds for requests
+http_timeout: 25
+
+# Request delay configuration
+request_delay:
+  mean: 5.0  # Mean delay between requests in seconds
+  stddev: 2.0  # Standard deviation of delay in seconds
+
+# Request headers configuration
+request_headers:
+  User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+
+# Logging configuration: Instantiate custom logger to use in code.
+# Configure handlers/filters/formatters/etc. at the root level. Depend
+# on default propagation to process the log messages centrally at the
+# rootlogger (messages from our customer logger and from 3rd party libs).
+logging:
+  version: 1
+  disable_existing_loggers: False
+  formatters:
+    simple:
+      format: "[%(asctime)s.%(msecs)03d] %(levelname)s [%(name)s.%(module)s.%(funcName)s:%(lineno)d] %(message)s"
+      datefmt: "%Y-%m-%dT%H:%M:%S%z"
+    json:
+      "()": "kcrw_feed.persistence.logger.JSONFormatter"
+      fmt_keys:
+        level: "levelname"
+        timestamp: "timestamp"
+        message: "message"
+        logger: "name"
+        module: "module"
+        function: "funcName"
+        filename: "filename"
+        line: "lineno"
+        thread_name: "threadName"
+  handlers:
+    stdout:
+      class: "logging.StreamHandler"
+      level: "INFO"
+      formatter: "simple"
+      stream: "ext://sys.stdout"
+    file:
+      class: "logging.handlers.RotatingFileHandler"
+      level: "DEBUG"
+      formatter: "json"
+      # Logs will be written to the storage_root/logs directory
+      filename: "logs/kcrw_feed.jsonl"
+      maxBytes: 104857600
+      backupCount: 10
+  loggers:
+    root:
+      level: "DEBUG"
+      handlers: ["stdout", "file"]
+      propagate: true

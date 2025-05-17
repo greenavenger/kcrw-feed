@@ -46,7 +46,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-817",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-817",
             "last_updated": "2024-12-02T18:25:37-07:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-817",
@@ -81,7 +81,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-818",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-818",
             "last_updated": "2024-12-08T18:10:35-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-818",
@@ -116,7 +116,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-819",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-819",
             "last_updated": "2024-12-16T16:22:30-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-819",
@@ -151,7 +151,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-820",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-820",
             "last_updated": "2024-12-22T21:36:26-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-820",
@@ -186,7 +186,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
             "last_updated": "2025-01-05T23:49:10-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-821-2025-01-04",
@@ -221,7 +221,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-822",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-822",
             "last_updated": "2025-01-13T16:55:41-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-822",
@@ -256,7 +256,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-824",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-824",
             "last_updated": "2025-01-19T20:19:33-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-824",
@@ -291,7 +291,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
             "url": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins/kcrw-broadcast-825",
+            "source": "http://localhost:8888/music/shows/henry-rollins/kcrw-broadcast-825",
             "last_updated": "2025-01-27T17:32:39-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/henry-rollins/kcrw-broadcast-825",
@@ -311,7 +311,7 @@
       "resource": {
         "sort_index": "https://www.kcrw.com/music/shows/henry-rollins",
         "url": "https://www.kcrw.com/music/shows/henry-rollins",
-        "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/henry-rollins",
+        "source": "http://localhost:8888/music/shows/henry-rollins",
         "last_updated": "2025-02-28T17:40:56-08:00",
         "metadata": {
           "loc": "https://www.kcrw.com/music/shows/henry-rollins",
@@ -368,7 +368,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
+            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
             "last_updated": "2024-12-19T13:17:52-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-december-18-2024",
@@ -403,7 +403,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
+            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
             "last_updated": "2025-01-16T02:20:39-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-15-2025",
@@ -438,7 +438,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
+            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
             "last_updated": "2025-01-23T11:11:00-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-22-2025",
@@ -473,7 +473,7 @@
           "resource": {
             "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
             "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
-            "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
+            "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
             "last_updated": "2025-01-27T16:16:08-08:00",
             "metadata": {
               "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras/ro-wyldeflower-contreras-playlist-january-25-2025",
@@ -493,7 +493,7 @@
       "resource": {
         "sort_index": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
         "url": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",
-        "source": "/Users/cram/src/kcrw-feed/tests/data/music/shows/ro-wyldeflower-contreras",
+        "source": "http://localhost:8888/music/shows/ro-wyldeflower-contreras",
         "last_updated": "2025-02-27T10:46:02-08:00",
         "metadata": {
           "loc": "https://www.kcrw.com/music/shows/ro-wyldeflower-contreras",

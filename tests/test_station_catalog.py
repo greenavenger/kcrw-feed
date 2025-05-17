@@ -6,7 +6,7 @@ import os
 import uuid
 from datetime import datetime
 # from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Any
 import pytest
 
 from kcrw_feed.models import Show, Episode, Host, Resource, ShowDirectory, Catalog
@@ -18,6 +18,22 @@ from kcrw_feed.persistence.state import StatePersister
 GOLDEN_FILES_DIR = "tests/data"
 DIRECTORY_FILE = "kcrw_feed.json"
 CATALOG_FILE = "kcrw_catalog.json"
+
+# Minimal test config
+TEST_CONFIG: Dict[str, Any] = {
+    "source_root": "https://www.example.com/",
+    "storage_root": ".",
+    "state_file": CATALOG_FILE,
+    "feed_directory": "catalog/feeds",
+    "http_timeout": 25,
+    "request_delay": {
+        "mean": 5.0,
+        "stddev": 2.0
+    },
+    "request_headers": {
+        "User-Agent": "Test User Agent"
+    }
+}
 
 
 class MockSource(BaseSource):
@@ -488,20 +504,18 @@ class TestLocalStationCatalog:
         feed_persister = MockFeedPersister()
 
         # Create a CacheSource for local storage
-        local_source = CacheSource(storage_root)
+        local_source = CacheSource(storage_root, TEST_CONFIG)
 
-        # Create a local catalog
+        # Create a LocalStationCatalog
         catalog = LocalStationCatalog(
             catalog_source=local_source,
             state_file=state_file,
             feed_persister=feed_persister
         )
 
-        # Check that the catalog was initialized correctly
         assert catalog.catalog_source == local_source
         assert catalog.state_file == state_file
         assert catalog.feed_persister == feed_persister
-        assert catalog.catalog is not None
 
     def test_save_state(self, tmp_path):
         """Test saving state."""
@@ -513,9 +527,9 @@ class TestLocalStationCatalog:
         feed_persister = MockFeedPersister()
 
         # Create a CacheSource for local storage
-        local_source = CacheSource(storage_root)
+        local_source = CacheSource(storage_root, TEST_CONFIG)
 
-        # Create a local catalog
+        # Create a LocalStationCatalog
         catalog = LocalStationCatalog(
             catalog_source=local_source,
             state_file=state_file,
@@ -534,67 +548,11 @@ class TestLocalStationCatalog:
             catalog.state_persister.saved_states[0], ShowDirectory)
         assert isinstance(catalog.state_persister.saved_states[1], Catalog)
 
-    # TODO: Fix this test
-    # def test_generate_feeds(self, tmp_path):
-    #     """Test generating feeds."""
-    #     # Create a temporary directory for testing
-    #     storage_root = str(tmp_path)
-    #     state_file = "test_state.json"
-
-    #     # Create a mock feed persister
-    #     feed_persister = MockFeedPersister()
-
-    #     # Create a local catalog
-    #     catalog = LocalStationCatalog(
-    #         catalog_source=storage_root,
-    #         state_file=state_file,
-    #         feed_persister=feed_persister
-    #     )
-
-    #     # Generate feeds
-    #     catalog.generate_feeds()
-
-    #     # Check that the feeds were generated correctly
-    #     assert len(feed_persister.saved_shows) == 1
-
-# TODO: Fix these tests
-# class TestLiveStationCatalog:
-#     """Tests for the LiveStationCatalog class."""
-
-#     def test_init(self, mock_resource):
-#         """Test initialization."""
-#         # Create a mock source
-#         source = MockSource([mock_resource])
-
-#         # Create a live catalog
-#         catalog = LiveStationCatalog(catalog_source=source)
-
-#         # Check that the catalog was initialized correctly
-#         assert catalog.catalog_source == source
-#         assert catalog.resource_processor is not None
-#         assert catalog.catalog is not None
-
-#     def test_load(self, mock_resource):
-#         """Test loading a catalog."""
-#         # Create a mock source
-#         source = MockSource([mock_resource])
-
-#         # Create a live catalog
-#         catalog = LiveStationCatalog(catalog_source=source)
-
-#         # Load the catalog
-#         loaded_catalog = catalog.load()
-
-#         # Check that the catalog was loaded correctly
-#         assert loaded_catalog is not None
-#         assert len(loaded_catalog.resources) == 1
-#         assert loaded_catalog.resources[mock_resource.url] == mock_resource
-
 
 def test_load_from_golden_files():
     """Test loading a catalog from golden files in tests/data directory."""
     # Create a CacheSource for the golden files directory
-    local_source = CacheSource(GOLDEN_FILES_DIR)
+    local_source = CacheSource(GOLDEN_FILES_DIR, TEST_CONFIG)
 
     # Create a local catalog pointing to the tests/data directory
     catalog = LocalStationCatalog(

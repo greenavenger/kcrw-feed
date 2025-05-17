@@ -15,10 +15,6 @@ from kcrw_feed.source_manager import BaseSource, HttpsSource, CacheSource
 from kcrw_feed.persistence.feeds import FeedPersister
 
 
-CONFIG = config.CONFIG
-logger = logging.getLogger("kcrw_feed")
-
-
 def main():
     t0 = time.time()
     parser = argparse.ArgumentParser(description="KCRW Feed Generator")
@@ -41,6 +37,8 @@ def main():
                         help="Specify the root data directory for state and feed files")
     parser.add_argument("-r", "--source_root", type=str,
                         help='Specify the source root (ex. "https://www.kcrw.com/", "./tests/data/")')
+    parser.add_argument("-c", "--config", type=str,
+                        help="Path to a custom config file")
     # Subcommands
     subparsers = parser.add_subparsers(dest="command", required=True,
                                        help="Sub-commands: list, diff, update")
@@ -66,6 +64,31 @@ def main():
                           help="Update local show data from live site (kcrw.com)")
 
     args = parser.parse_args()
+
+    # Load configuration
+    CONFIG = config.read_config(args.config)
+    logger = logging.getLogger("kcrw_feed")
+
+    # Determine storage root
+    storage_root = args.storage_root or CONFIG["storage_root"]
+    # Use an absolute path for the storage_root so it's unambiguous.
+    storage_root = os.path.abspath(storage_root)
+    logger.info("Storage root: %s", storage_root)
+
+    # Update cache filename to be relative to storage_root
+    if "http_cache" in CONFIG:
+        CONFIG["http_cache"]["directory"] = os.path.join(
+            storage_root, CONFIG["http_cache"]["directory"])
+
+    # Adjust logging configuration to use storage_root
+    if "file" in CONFIG["logging"]["handlers"]:
+        log_file = CONFIG["logging"]["handlers"]["file"]["filename"]
+        # Make log file path relative to storage_root
+        CONFIG["logging"]["handlers"]["file"]["filename"] = os.path.join(
+            storage_root, log_file)
+        # Ensure log directory exists
+        os.makedirs(os.path.dirname(
+            CONFIG["logging"]["handlers"]["file"]["filename"]), exist_ok=True)
 
     # If --loglevel is provided, update the stdout handler level. Leave the
     # file handler log level unchanged.
@@ -95,13 +118,13 @@ def main():
     live_source: BaseSource
     source_root = args.source_root or CONFIG["source_root"]
     if source_root.startswith("http"):
-        live_source = HttpsSource(source_root)
+        live_source = HttpsSource(source_root, CONFIG)
         logger.debug("URLs in cache: %s", pprint.pformat(
             live_source._session.cache.urls()))
     else:
         # Use an absolute path for the source_root so it's unambiguous.
         source_root = os.path.abspath(source_root)
-        live_source = CacheSource(source_root)
+        live_source = CacheSource(source_root, CONFIG)
     logger.info("Source root: %s", source_root)
 
     storage_root = args.storage_root or CONFIG["storage_root"]
@@ -115,7 +138,7 @@ def main():
         storage_root=storage_root, feed_directory=feed_directory)
 
     # Create a CacheSource for local storage
-    local_source = CacheSource(storage_root)
+    local_source = CacheSource(storage_root, CONFIG)
 
     # Pull in local state from the state file (always needed)
     local_catalog = station_catalog.LocalStationCatalog(

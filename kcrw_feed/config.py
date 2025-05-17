@@ -7,36 +7,56 @@ import sys
 import time
 from typing import Any, Dict, Optional, Pattern
 import yaml
+from importlib import resources
 
 from kcrw_feed.models import FilterOptions
 
-CONFIG_FILE = "config.yaml"
+
+def get_default_config_path() -> str:
+    """Get the path to the default config file in the package."""
+    # For Python 3.9+, we can use files() which returns a Traversable
+    with resources.files('kcrw_feed').joinpath('data/default_config.yaml').open('r') as f:
+        return f.name
 
 
-def read_config(filename: str) -> Dict[str, Any]:
+def read_config(filename: Optional[str] = None) -> Dict[str, Any]:
     """
-    Reads a YAML configuration file and returns its contents as a dictionary.
+    Reads configuration files and returns their contents as a dictionary.
+    If a custom config file is specified, its top-level values override the defaults.
+    Note: For nested structures like logging, the entire structure must be provided
+    in the custom config to override the default.
 
     Parameters:
-        filename (str): The path to the YAML configuration file.
+        filename (str): The path to a custom YAML configuration file. If None, uses only package default.
 
     Returns:
-        dict: The configuration data.
+        dict: The configuration data with custom overrides.
     """
-    with open(filename, 'r', encoding='utf-8') as f:
+    # Always load the default config first
+    default_path = get_default_config_path()
+    with open(default_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
+
+    # If a custom config is specified, override top-level values
+    if filename:
+        with open(filename, 'r', encoding='utf-8') as f:
+            custom_config = yaml.safe_load(f)
+            # Simple top-level override
+            config.update(custom_config)
+
     validate_config(config)
     return config
 
 
 def validate_config(config: Dict[str, Any]) -> None:
+    """Validate the configuration dictionary."""
     if not config.get("source_root"):
-        print(
-            f"Config file {CONFIG_FILE} missing required entry: 'source_root'")
+        print(f"Config file missing required entry: 'source_root'")
         sys.exit(1)
 
 
-CONFIG = read_config(CONFIG_FILE)
+# Initialize configuration with package defaults
+# CONFIG = read_config()
 
 
 def get_local_timezone() -> timezone:
@@ -70,7 +90,7 @@ def get_filter_options(args: argparse.Namespace) -> FilterOptions:
       FilterOptions: populated instance.
     """
     # Validate and compile the match pattern if provided.
-    compiled_match: Optional[Pattern] = None
+    compiled_match: Optional[Pattern[str]] = None
     if getattr(args, "match", None):
         pattern_str = args.match
         if not any(ch in pattern_str for ch in "[]()?*+|^$\\"):

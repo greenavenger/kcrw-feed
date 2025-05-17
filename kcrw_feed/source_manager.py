@@ -10,11 +10,12 @@ from urllib.parse import urljoin, urlparse, urlunparse
 import random
 import requests_cache
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 import fsspec
 
 
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
+from kcrw_feed import config
 
 # Regex pattern to match the prefix of KCRW URLs (or a test URL)
 REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
@@ -22,19 +23,14 @@ REWRITE_RE = re.compile(r'^(https://www\.kcrw\.com/|http://localhost:8888/)')
 # REWRITE_RE = re.compile(r'^(https?://)(?:www\.)?[\w.-]+(?::\d+)?/$')
 # REPLACE_TEXT = ""  # ./tests/data/"
 
-REQUEST_DELAY_MEAN: float = 5
-REQUEST_DELAY_STDDEV: float = 2
-REQUEST_HEADERS: Dict[str, str] = {
-    "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/133.0.0.0 Safari/537.36")
-}
-REQUEST_TIMEOUT: int = 10
-
 logger = logging.getLogger("kcrw_feed")
 
 
-def random_delay(mean: float = REQUEST_DELAY_MEAN, stddev: float = REQUEST_DELAY_STDDEV) -> None:
+def random_delay(config: Dict[str, Any]) -> None:
+    """Add a random delay between requests based on config settings."""
+    delay_config = config.get("request_delay", {})
+    mean = delay_config.get("mean", 5.0)
+    stddev = delay_config.get("stddev", 2.0)
     delay = random.gauss(mean, stddev)
     delay = max(0, delay)
     logger.debug("Sleeping for %.2f seconds", delay)
@@ -71,6 +67,13 @@ class BaseSource(ABC):
     base_source: str
     _session = None
 
+    def __init__(self, config: Dict[str, Any]):
+        # Store config for use with random_delay
+        self.config = config
+        # Set default if not specified
+        self.timeout = config.get("http_timeout", 25)
+        self.request_headers = config.get("request_headers", {})
+
     @abstractmethod
     def get_reference(self, resource: str) -> Optional[bytes]:
         """Fetch the resource content as bytes."""
@@ -105,7 +108,7 @@ class BaseSource(ABC):
             )
         return False
 
-    def _get_file(self, path: str, timeout: int = REQUEST_TIMEOUT) -> Optional[bytes]:
+    def _get_file(self, path: str, timeout: Optional[int] = None) -> Optional[bytes]:
         """Retrieve a file as bytes.
 
         If the path is an HTTP URL, it is fetched using the cached session;
@@ -118,11 +121,10 @@ class BaseSource(ABC):
             #     "https://www.kcrw.com"), "Avoid generating load"
             # Ensure a cached session exists.
             assert self._session, f"No CachedSession available!"
-            headers = REQUEST_HEADERS
             try:
                 # Perform the GET request.
                 response = self._session.get(
-                    path, timeout=timeout, headers=headers)
+                    path, timeout=timeout or self.timeout, headers=self.request_headers)
                 # Only raise for status codes other than 404 and 304
                 if response.status_code not in (404, 304):
                     response.raise_for_status()
@@ -158,7 +160,7 @@ class BaseSource(ABC):
                     # To keep load on kcrw.com reasonable, if the response was
                     # not served from cache, add a delay.
                     if path.startswith("https://www.kcrw.com"):
-                        random_delay()
+                        random_delay(self.config)
 
                 if response.status_code == 404:
                     return None
@@ -183,7 +185,7 @@ class BaseSource(ABC):
                 return None
         else:
             try:
-                with fsspec.open(path, "rb", timeout=timeout, compression="infer") as f:
+                with fsspec.open(path, "rb", timeout=timeout or self.timeout, compression="infer") as f:
                     data = f.read()
                 return data
             except Exception as e:
@@ -192,40 +194,30 @@ class BaseSource(ABC):
 
 
 class HttpsSource(BaseSource):
-    def __init__(self, url: str, rewrite_rule: Optional[str] = None):
+    def __init__(self, url: str, config: Dict[str, Any], rewrite_rule: Optional[str] = None):
+        super().__init__(config)
         self.validate_source_root(url)
         # Store the original URL as the base source
         self.base_source = url
         self.url = self.base_source  # convenience reference
+
+        # Get cache configuration from provided config
+        cache_config = config.get("http_cache", {})
+        cache_dir = cache_config.get("directory", ".cache")
+        backend = cache_config.get("backend", "sqlite")
+        expire_after = cache_config.get(
+            "expire_after", 86400)  # Default to 24 hours
+
         # Create a single cached session that will be reused for all HTTP requests.
-        self.backend = 'sqlite'        # stores data in kcrw_cache.sqlite
-        # self.backend = 'filesystem'  # stores data in "./kcrw_cache"
-
-        # def custom_expire_after(response):
-        #     """Add 1 hour to the server's max-age value."""
-        #     if response.status_code == 200:
-        #         # Get the max-age from Cache-Control header
-        #         cache_control = response.headers.get('Cache-Control', '')
-        #         if 'max-age=' in cache_control:
-        #             try:
-        #                 max_age = int(cache_control.split(
-        #                     'max-age=')[1].split(',')[0])
-        #                 # Add 1 hour (3600 seconds) to max-age
-        #                 return timedelta(seconds=max_age + 3600)
-        #             except (ValueError, IndexError):
-        #                 pass
-        #     # Default to 1 hour if no max-age or not a 200 response
-        #     return timedelta(hours=1)
-
         self._session = requests_cache.CachedSession(
-            'kcrw_cache',  backend=self.backend,
-            # Use a fixed 1 hour expiration for now
-            expire_after=timedelta(hours=24),
+            cache_dir,  # requests_cache will handle the storage layout
+            backend=backend,
+            expire_after=timedelta(seconds=expire_after),
             # Cache 404 responses as a solemn reminder of our failures
             allowable_codes=[200, 404],
             stale_if_error=True,
         )
-        logger.info("Cache backend: %s", self.backend)
+        logger.info("Cache backend: %s", backend)
         # Cache stats
         self.cache_stats = {
             "hits": 0,
@@ -255,7 +247,8 @@ class HttpsSource(BaseSource):
 
 
 class CacheSource(BaseSource):
-    def __init__(self, path: str):
+    def __init__(self, path: str, config: Dict[str, Any]):
+        super().__init__(config)
         self.validate_source_root(path)
         self.base_source = path
         self.path = self.base_source  # convenience reference
