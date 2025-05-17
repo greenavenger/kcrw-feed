@@ -9,7 +9,7 @@ import pytest
 from datetime import datetime
 from typing import Dict, Any
 
-from kcrw_feed.config import read_config, validate_config, get_filter_options, CONFIG_FILE, get_local_timezone
+from kcrw_feed.config import read_config, validate_config, get_filter_options, get_local_timezone
 from kcrw_feed.models import FilterOptions
 
 # --- Tests for read_config and validate_config ---
@@ -22,7 +22,9 @@ def test_read_config_valid(tmp_path: os.PathLike) -> None:
     """
     config_data: Dict[str, Any] = {
         "source_root": "https://www.example.com/",
-        "other_setting": 123
+        "storage_root": ".",
+        "state_file": "catalog/state.xml",
+        "feed_directory": "catalog/feeds"
     }
     config_file = os.path.join(tmp_path, "test_config.yaml")
     with open(config_file, "w", encoding="utf-8") as f:
@@ -31,25 +33,40 @@ def test_read_config_valid(tmp_path: os.PathLike) -> None:
     result = read_config(config_file)
     assert isinstance(result, dict)
     assert result["source_root"] == "https://www.example.com/"
-    assert result["other_setting"] == 123
+    assert result["storage_root"] == "."
+    assert result["state_file"] == "catalog/state.xml"
+    assert result["feed_directory"] == "catalog/feeds"
 
 
-def test_read_config_missing_source_root(tmp_path: os.PathLike, capsys) -> None:
+def test_read_config_override_defaults(tmp_path: os.PathLike) -> None:
     """
-    Create a YAML file missing 'source_root' and verify that validate_config
-    causes a sys.exit (i.e. raises SystemExit).
+    Create a YAML config file that overrides some default values and verify
+    that read_config merges them correctly.
     """
     config_data: Dict[str, Any] = {
-        "other_setting": 123
+        "source_root": "https://custom.example.com/",
+        "http_timeout": 30,
+        "request_delay": {
+            "mean": 10.0,
+            "stddev": 3.0
+        }
     }
     config_file = os.path.join(tmp_path, "test_config.yaml")
     with open(config_file, "w", encoding="utf-8") as f:
         yaml.dump(config_data, f)
 
-    with pytest.raises(SystemExit):
-        read_config(config_file)
-    captured = capsys.readouterr().out
-    assert "missing required entry: 'source_root'" in captured
+    result = read_config(config_file)
+    assert isinstance(result, dict)
+    # Verify overridden values
+    assert result["source_root"] == "https://custom.example.com/"
+    assert result["http_timeout"] == 30
+    assert result["request_delay"]["mean"] == 10.0
+    assert result["request_delay"]["stddev"] == 3.0
+    # Verify default values are still present
+    assert "storage_root" in result
+    assert "state_file" in result
+    assert "feed_directory" in result
+    assert "request_headers" in result
 
 # --- Tests for get_filter_options ---
 

@@ -1,0 +1,5 @@
+# KCRW Feed Generator Test Configuration
+# ======================================
+
+# The root URL of the KCRW website
+source_root: "."
