@@ -210,7 +210,8 @@ class HttpsSource(BaseSource):
 
         # Create a single cached session that will be reused for all HTTP requests.
         self._session = requests_cache.CachedSession(
-            cache_dir,  # requests_cache will handle the storage layout
+            # Use the existing cache file
+            os.path.join(cache_dir, "http_cache.sqlite"),
             backend=backend,
             expire_after=timedelta(seconds=expire_after),
             # Cache 404 responses as a solemn reminder of our failures
