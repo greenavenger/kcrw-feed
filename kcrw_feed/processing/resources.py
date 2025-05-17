@@ -56,6 +56,7 @@ class ResourceProcessor:
 
         Returns:
             List[str]: The list of sitemap URLs found in robots.txt."""
+        logger.info("reading robots file: %s", ROBOTS_FILE)
         robots_bytes = self.source.get_reference(ROBOTS_FILE)
         if not robots_bytes:
             raise FileNotFoundError(
@@ -97,6 +98,7 @@ class ResourceProcessor:
         """Reads a sitemap XML and returns any child sitemap URLs (if this is an index file).
         Returns:
             List[str]: Child sitemap URLs, or an empty list if none are found."""
+        logger.info("reading sitemap: %s", sitemap)
         sitemap_bytes = self.source.get_reference(sitemap)
         if not sitemap_bytes:
             logger.warning("Sitemap %s could not be retrieved", sitemap)

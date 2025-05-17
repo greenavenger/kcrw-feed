@@ -279,11 +279,28 @@ class StationProcessor:
                 "Error extracting media URL for episode %s: %s", resource.url, e)
             return None
 
+        # Validate required fields before creating Episode
+        airdate = utils.parse_date(episode_data.get("airdate"))
+        if not airdate:
+            logger.error(
+                "Missing or invalid airdate for episode %s", resource.url)
+            return None
+
+        title = episode_data.get("title")
+        if not title:
+            logger.error("Missing title for episode %s", resource.url)
+            return None
+
+        url = episode_data.get("url")
+        if not url:
+            logger.error("Missing URL for episode %s", resource.url)
+            return None
+
         try:
             episode = Episode(
-                title=episode_data.get("title", ""),
-                airdate=utils.parse_date(episode_data.get("airdate")),
-                url=episode_data.get("url"),
+                title=title,
+                airdate=airdate,
+                url=url,
                 media_url=media_url,
                 uuid=utils.extract_uuid(episode_data.get("uuid")),
                 show_uuid=utils.extract_uuid(episode_data.get("show_uuid")),

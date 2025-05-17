@@ -83,7 +83,8 @@ class CatalogUpdater:
                 enriched_entities.add(enriched)
                 count += 1
             if count == checkpoint:
-                self.local_catalog.save_state()
+                if not self.dry_run:
+                    self.local_catalog.save_state()
                 count = 1
         enriched_entities = self._associate_episodes(enriched_entities)
         return enriched_entities

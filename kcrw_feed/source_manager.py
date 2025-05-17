@@ -120,34 +120,61 @@ class BaseSource(ABC):
             assert self._session, f"No CachedSession available!"
             headers = REQUEST_HEADERS
             try:
-                if self._session.cache.contains(url=path):
-                    logger.debug("Cache hit for %s", path)
-                    self.cache_stats["hits"] += 1
-                    cached = True
-                else:
-                    logger.debug("Cache miss for %s", path)
-                    self.cache_stats["misses"] += 1
-                    cached = False
-                    # To keep load on kcrw.com reasonable, if the response was
-                    # not served from cache, add a delay.
-                    if path.startswith("https://www.kcrw.com"):
-                        random_delay()
                 # Perform the GET request.
                 response = self._session.get(
                     path, timeout=timeout, headers=headers)
-                # Only raise for status codes other than 404
-                if response.status_code != 404:
+                # Only raise for status codes other than 404 and 304
+                if response.status_code not in (404, 304):
                     response.raise_for_status()
+
                 # Log response details for debugging
                 logger.debug("Response status: %d, from_cache: %s, url: %s",
                              response.status_code,
                              getattr(response, "from_cache", False),
                              path)
+
+                # Update cache stats based on response.from_cache or 304 status
+                if response.from_cache or response.status_code == 304:
+                    logger.info("Cache hit for %s", path)
+                    self.cache_stats["hits"] += 1
+                else:
+                    logger.debug("Cache miss for %s", path)
+                    self.cache_stats["misses"] += 1
+                    # Add detailed cache debugging for misses
+                    logger.info("Cache miss details for %s:", path)
+                    logger.info("  Status: %d", response.status_code)
+                    logger.info(
+                        "  Cache-Control: %s", response.headers.get('Cache-Control', 'Not specified'))
+                    logger.info("  Expires: %s", response.headers.get(
+                        'Expires', 'Not specified'))
+                    logger.info("  ETag: %s", response.headers.get(
+                        'ETag', 'Not specified'))
+                    logger.info(
+                        "  Last-Modified: %s", response.headers.get('Last-Modified', 'Not specified'))
+                    logger.info("  Age: %s", response.headers.get(
+                        'Age', 'Not specified'))
+                    logger.info("  Date: %s", response.headers.get(
+                        'Date', 'Not specified'))
+                    # To keep load on kcrw.com reasonable, if the response was
+                    # not served from cache, add a delay.
+                    if path.startswith("https://www.kcrw.com"):
+                        random_delay()
+
                 if response.status_code == 404:
                     return None
-                assert cached == response.from_cache, \
-                    f"Cache hit mismatch for {path}: {cached} != {response.from_cache}"
-                content = response.content
+
+                # For 304 responses, we need to get the content from the cache
+                if response.status_code == 304:
+                    cached_response = self._session.cache.get_response(path)
+                    if cached_response:
+                        content = cached_response.content
+                    else:
+                        logger.warning(
+                            "Got 304 but no cached response found for %s", path)
+                        return None
+                else:
+                    content = response.content
+
                 if path.endswith(".gz"):
                     content = gzip.decompress(content)
                 return content
@@ -173,12 +200,27 @@ class HttpsSource(BaseSource):
         # Create a single cached session that will be reused for all HTTP requests.
         self.backend = 'sqlite'        # stores data in kcrw_cache.sqlite
         # self.backend = 'filesystem'  # stores data in "./kcrw_cache"
+
+        # def custom_expire_after(response):
+        #     """Add 1 hour to the server's max-age value."""
+        #     if response.status_code == 200:
+        #         # Get the max-age from Cache-Control header
+        #         cache_control = response.headers.get('Cache-Control', '')
+        #         if 'max-age=' in cache_control:
+        #             try:
+        #                 max_age = int(cache_control.split(
+        #                     'max-age=')[1].split(',')[0])
+        #                 # Add 1 hour (3600 seconds) to max-age
+        #                 return timedelta(seconds=max_age + 3600)
+        #             except (ValueError, IndexError):
+        #                 pass
+        #     # Default to 1 hour if no max-age or not a 200 response
+        #     return timedelta(hours=1)
+
         self._session = requests_cache.CachedSession(
             'kcrw_cache',  backend=self.backend,
-            # Use Cache-Control response headers for expiration, if available
-            cache_control=True,
-            # Otherwise expire responses after one day
-            expire_after=timedelta(days=1),
+            # Use a fixed 1 hour expiration for now
+            expire_after=timedelta(hours=24),
             # Cache 404 responses as a solemn reminder of our failures
             allowable_codes=[200, 404],
             stale_if_error=True,
