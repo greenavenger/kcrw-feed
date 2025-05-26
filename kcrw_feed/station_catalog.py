@@ -81,6 +81,42 @@ class BaseStationCatalog(ABC):
         """Return a list of hosts, filtered if necessary."""
         return _filter_items(self.catalog.hosts.values(), filter_opts, key=lambda h: h.name)
 
+    def list_errors(self, filter_opts: Optional[FilterOptions] = None) -> List[dict[str, Any]]:
+        """Return a list of errors from resources, filtered if necessary."""
+        errors: List[dict[str, Any]] = []
+        for resource in self.list_resources(filter_opts):
+            if resource.metadata:
+                if "fetch_error" in resource.metadata:
+                    errors.append({
+                        "type": "fetch",
+                        "url": resource.url,
+                        "error": resource.metadata["fetch_error"]
+                    })
+                if "parse_error" in resource.metadata:
+                    errors.append({
+                        "type": "parse",
+                        "url": resource.url,
+                        "error": resource.metadata["parse_error"]
+                    })
+        return errors
+
+    def error_stats(self) -> dict[str, int]:
+        """Return statistics about errors in the catalog."""
+        stats: dict[str, int] = {
+            "total": 0,
+            "fetch_errors": 0,
+            "parse_errors": 0
+        }
+        for resource in self.list_resources():
+            if resource.metadata:
+                if "fetch_error" in resource.metadata:
+                    stats["fetch_errors"] += 1
+                    stats["total"] += 1
+                if "parse_error" in resource.metadata:
+                    stats["parse_errors"] += 1
+                    stats["total"] += 1
+        return stats
+
     def has_show(self, show_id: uuid.UUID | str) -> bool:
         return show_id in self.catalog.shows
 

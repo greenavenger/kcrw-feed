@@ -42,7 +42,7 @@ def main():
                         help="Path to a custom config file")
     # Subcommands
     subparsers = parser.add_subparsers(dest="command", required=True,
-                                       help="Sub-commands: list, diff, update")
+                                       help="Sub-commands: list, diff, update, errors")
 
     list_parser = subparsers.add_parser(
         "list", help="List resources, shows, episodes, or hosts in feeds (local state)")
@@ -64,6 +64,21 @@ def main():
     subparsers.add_parser("update",
                           help="Update local show data from live site (kcrw.com)")
 
+    errors_parser = subparsers.add_parser("errors",
+                                          help="List resources with processing errors")
+    errors_parser.add_argument(
+        "mode",
+        nargs="?",
+        choices=["list", "stats"],
+        default="list",
+        help="List resources with errors or show error statistics"
+    )
+    errors_parser.add_argument(
+        "--type",
+        choices=["fetch", "parse"],
+        help="Filter errors by type (fetch or parse)"
+    )
+
     args = parser.parse_args()
 
     # Load configuration
@@ -78,7 +93,7 @@ def main():
     # Check if state file exists for commands that require it
     state_file = CONFIG["state_file"]
     state_file_path = os.path.join(storage_root, state_file)
-    if args.command in ["list", "diff"] and not os.path.exists(state_file_path):
+    if args.command in ["list", "diff", "errors"] and not os.path.exists(state_file_path):
         print(
             f"Error: Cannot '{args.command}' without a state file: '{state_file_path}' not found.", file=sys.stderr)
         return 1
@@ -212,6 +227,43 @@ def main():
         if not filter_opts.dry_run:
             applied += len(enriched_resources)
         logger.info("Updates applied: %d", applied)
+    elif args.command == "errors":
+        if args.mode == "list":
+            resources = local_catalog.list_resources(filter_opts=filter_opts)
+            error_resources = [r for r in resources if r.metadata and (
+                "fetch_error" in r.metadata or "parse_error" in r.metadata or "association_error" in r.metadata)]
+            if args.verbose:
+                pprint.pprint(list(error_resources))
+            else:
+                for resource in sorted([e.url for e in error_resources]):
+                    print(resource)
+            logger.info("%s resources with errors", len(error_resources))
+        elif args.mode == "stats":
+            resources = local_catalog.list_resources(filter_opts=filter_opts)
+            stats = {
+                "total": 0,
+                "fetch_errors": 0,
+                "parse_errors": 0,
+                "association_errors": 0
+            }
+            for resource in resources:
+                if resource.metadata:
+                    if "fetch_error" in resource.metadata:
+                        stats["fetch_errors"] += 1
+                        stats["total"] += 1
+                    if "parse_error" in resource.metadata:
+                        stats["parse_errors"] += 1
+                        stats["total"] += 1
+                    if "association_error" in resource.metadata:
+                        stats["association_errors"] += 1
+                        stats["total"] += 1
+            if args.verbose:
+                pprint.pprint(stats)
+            else:
+                print(f"Total errors: {stats['total']}")
+                print(f"Fetch errors: {stats['fetch_errors']}")
+                print(f"Parse errors: {stats['parse_errors']}")
+                print(f"Association errors: {stats['association_errors']}")
     else:
         logger.error("Unknown command")
 

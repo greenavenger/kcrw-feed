@@ -6,15 +6,14 @@ import json
 import logging
 import pprint
 import re
-from typing import List, Dict, Optional, Set, Union
-from urllib.parse import urljoin, urlparse, urlunparse
+from typing import List, Optional, Set, Union, Any
+from urllib.parse import urlparse
 import uuid
 import extruct
-from bs4 import BeautifulSoup
 
-from kcrw_feed.models import Show, Episode, Host, Resource, FilterOptions
+from kcrw_feed.models import Show, Episode, Host, Resource
 from kcrw_feed.station_catalog import BaseStationCatalog
-from kcrw_feed.source_manager import BaseSource, strip_query_params
+from kcrw_feed.source_manager import strip_query_params
 from kcrw_feed import utils
 from kcrw_feed.persistence.logger import TRACE_LEVEL_NUM
 
@@ -66,31 +65,38 @@ class StationProcessor:
         If it's an Episode, find and associate it with the Show, and add them
         both to the list."""
         touched: Set[Union[Show, Episode]] = set()
-        if isinstance(entity, Episode):
-            # pprint.pprint(entity)
-            assert isinstance(
-                entity, Episode), "We only serve Episodes in this here bar."
-            # print(f"found episode: {entity.url}")
-            show_id = entity.show_uuid
-            show = self.catalog.get_show(show_id)
-            if not show:
-                show_resource = self._resolve_parent(entity.resource)
-                show = self.process_resource(show_resource)
+        try:
+            if isinstance(entity, Episode):
+                # pprint.pprint(entity)
                 assert isinstance(
-                    show, Show), "We got something other than a Show!?"
-                touched.add(entity)
-            # print(f"=> episode from show: {show.url}")
-            episodes = show.episodes
-            if entity not in episodes:
-                # print(f"adding episode to episode list")
+                    entity, Episode), "We only serve Episodes in this here bar."
+                # print(f"found episode: {entity.url}")
+                show_id = entity.show_uuid
+                show = self.catalog.get_show(show_id)
+                if not show:
+                    show_resource = self._resolve_parent(entity.resource)
+                    show = self.process_resource(show_resource)
+                    assert isinstance(
+                        show, Show), "We got something other than a Show!?"
+                    touched.add(entity)
+                # print(f"=> episode from show: {show.url}")
                 episodes = show.episodes
-                episodes.append(entity)
-                show.episodes = sorted(episodes)
-        # List of entities touched
-        touched.add(entity)
-        assert len(touched) == 1 or len(
-            touched) == 2, "Association must touch exactly 1 or 2 entities."
-        return list(touched)
+                if entity not in episodes:
+                    # print(f"adding episode to episode list")
+                    episodes = show.episodes
+                    episodes.append(entity)
+                    show.episodes = sorted(episodes)
+            # List of entities touched
+            touched.add(entity)
+            assert len(touched) == 1 or len(
+                touched) == 2, "Association must touch exactly 1 or 2 entities."
+            return list(touched)
+        except AssertionError as e:
+            logger.warning("Failed to associate entity: %s", str(e))
+            if entity.resource:
+                self._record_error(
+                    entity.resource, "association_error", str(e))
+            return []
 
     def _resolve_parent(self, resource: Resource) -> Resource:
         """A show is its own parent. An episode has exactly one show as its
@@ -107,14 +113,32 @@ class StationProcessor:
             return self.catalog.get_resource(match.group(1))
         return None
 
-    def _process_show(self, resource: Resource) -> Optional[Show]:
-        """Fetch a Show page and extract basic details."""
+    def _record_error(self, resource: Resource, error_type: str, error_msg: str, **kwargs: Any) -> None:
+        """Record an error in the resource's metadata.
 
+        Args:
+            resource: The resource to record the error for
+            error_type: Type of error (e.g. 'fetch_error', 'parse_error')
+            error_msg: Description of the error
+            **kwargs: Additional error data to record
+        """
+        if not resource.metadata:
+            resource.metadata = {}
+        resource.metadata[error_type] = {
+            "timestamp": datetime.now().isoformat(),
+            "error": error_msg,
+            "url": resource.url,
+            **kwargs
+        }
+
+    def _process_show(self, resource: Resource) -> Optional[Show]:
+        """Fetch the show page and extract details."""
         # Check if we have an exact match in cache
         for show in self.catalog.list_shows():
             if show.resource and show.resource == resource:
                 return show
 
+        # Get the show page
         show_reference = self.source.relative_path(resource.url)
         logger.debug("show_reference: %s", show_reference)
         html = self.source.get_reference(show_reference)
@@ -123,9 +147,11 @@ class StationProcessor:
         if not html:
             show_reference = show_reference + "/" + SHOW_FILENAME
             html = self.source.get_reference(show_reference)
-        if html is None:
-            logger.debug("Failed to retrieve file: %s", show_reference)
-            return
+        if not html:
+            logger.error("Failed to retrieve show page: %s", resource.url)
+            self._record_error(resource, "fetch_error",
+                               "Failed to retrieve show page")
+            return None
 
         # Try to extract structured data using extruct (e.g., microdata).
         data = extruct.extract(
@@ -136,7 +162,7 @@ class StationProcessor:
         show: Show
         show_uuid: uuid.UUID
 
-        show_data = None
+        show_data: Optional[dict[str, Any]] = None
         # Look for an object that indicates it's a radio series.
         for item in data.get("microdata", []):
             if isinstance(item, dict) and item.get("type") == "http://schema.org/RadioSeries":
@@ -185,18 +211,12 @@ class StationProcessor:
                 last_updated=last_updated
             )
         else:
-            # Fallback: use BeautifulSoup to get the title.
-            soup = BeautifulSoup(html, "html.parser")
-            title_tag = soup.find("title")
-            title = title_tag.text.strip(
-            ) if title_tag else url.split("/")[-1]
-            show = Show(
-                title=title,
-                url=url,
-                last_updated=last_updated,
-                metadata={}
-            )
-            raise NotImplementedError
+            # If we can't parse the show data, store the error in metadata
+            logger.warning("Could not parse show data from %s", resource.url)
+            self._record_error(resource, "parse_error",
+                               "Could not parse show data", extracted_data=data)
+            return None
+
         if show:
             self.catalog.add_show(show)
         if logger.isEnabledFor(TRACE_LEVEL_NUM):
