@@ -11,6 +11,6 @@ def pytest_addoption(parser):
     parser.addoption(
         "--storage-root",
         action="store",
-        default="./tests/data",
-        help="The storage directory for test state files (default: tmp_path)"
+        default=None,
+        help="The storage directory for test state files (default: auto-populated temp dir)"
     )
