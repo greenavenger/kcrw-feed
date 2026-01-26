@@ -41,14 +41,14 @@ class CatalogUpdater:
         resources_to_enrich = self.live_catalog.list_resources(
             self.filter_opts)
         logger.info("Resources to process: %d", len(resources_to_enrich))
-        self.live_station_processor = StationProcessor(self.live_catalog)
 
-        enriched_entities = self._enrich_resources(resources_to_enrich)
-
-        diff = self.diff()
         if self.dry_run:
+            diff = self.diff()
             pprint.pprint(diff)
-            return list(enriched_entities)
+            return []
+
+        self.live_station_processor = StationProcessor(self.live_catalog)
+        enriched_entities = self._enrich_resources(resources_to_enrich)
 
         # Perform the mutations, write state and regenerate feeds.
         self._merge(enriched_entities)
