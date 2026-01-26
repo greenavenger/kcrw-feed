@@ -3,7 +3,7 @@
 import pytest
 from datetime import datetime
 from typing import Optional
-from kcrw_feed.processing.resources import ResourceProcessor, ROBOTS_FILE, MUSIC_FILTER_RE, SITEMAP_RE
+from kcrw_feed.processing.resources import ResourceProcessor, ROBOTS_FILE, SITEMAP_FILTER_RE, SITEMAP_RE, SHOW_URL_RE
 from kcrw_feed import source_manager
 
 
@@ -131,9 +131,9 @@ def test_read_sitemap_for_child_sitemaps(dummy_source):
     processor = ResourceProcessor(dummy_source)
     child_sitemaps = processor._read_sitemap_for_child_sitemaps(
         "https://www.testsite.com/sitemap-index.xml")
-    # Additionally, the processor filters child sitemaps with MUSIC_FILTER_RE.
-    # For testing, if MUSIC_FILTER_RE does not match these URLs, child_sitemaps might be empty.
-    # Let's assume that for the test, MUSIC_FILTER_RE is not filtering these.
+    # Additionally, the processor filters child sitemaps with SITEMAP_FILTER_RE.
+    # For testing, if SITEMAP_FILTER_RE does not match these URLs, child_sitemaps might be empty.
+    # Let's assume that for the test, SITEMAP_FILTER_RE is not filtering these.
     expected = {"https://www.testsite.com/music/shows/sitemap-child1.xml",
                 "https://www.testsite.com/music/shows/sitemap-child2.xml"}
     # We compare as sets.

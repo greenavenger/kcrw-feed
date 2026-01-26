@@ -93,7 +93,7 @@ class FeedPersister(BasePersister):
 
         for episode in sorted(show.episodes):
             pub_date: datetime = episode.airdate or episode.last_updated or datetime.now()
-            length = int(episode.duration)
+            length = int(episode.duration) if episode.duration else 0
 
             # RSS item info
             # github.com/python-feedgen/feedgen/entry.py

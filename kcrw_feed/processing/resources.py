@@ -14,9 +14,11 @@ from kcrw_feed import utils
 
 # Regular expression to match sitemap XML filenames.
 SITEMAP_RE = re.compile(r"sitemap.*\.xml", re.IGNORECASE)
-# Filter for URLs that pertain to music shows.
-MUSIC_FILTER_RE = re.compile(
-    r"(/sitemap-shows/music/|/music/shows/)", re.IGNORECASE)
+# Filter for sitemaps that contain show/episode data
+SITEMAP_FILTER_RE = re.compile(
+    r"(/shows/sitemap|/stories/sitemap/)", re.IGNORECASE)
+# Filter for URLs that pertain to shows and episodes
+SHOW_URL_RE = re.compile(r"/shows/[^/]+", re.IGNORECASE)
 ROBOTS_FILE = "robots.txt"
 
 logger = logging.getLogger("kcrw_feed")
@@ -136,7 +138,7 @@ class ResourceProcessor:
         child_sitemaps = [
             self.source.relative_path(url)
             for url in child_sitemaps
-            if MUSIC_FILTER_RE.search(url)
+            if SITEMAP_FILTER_RE.search(url)
         ]
         logger.debug("Child sitemaps to read: %s", child_sitemaps)
         return child_sitemaps
@@ -174,8 +176,8 @@ class ResourceProcessor:
 
         for entry in urls:
             url = entry.get("loc").strip()
-            # Keep only music shows
-            if url and MUSIC_FILTER_RE.search(url):
+            # Keep only show/episode URLs
+            if url and SHOW_URL_RE.search(url):
                 dt = None
                 if entry.get("lastmod", None):
                     dt = utils.parse_date(entry["lastmod"])

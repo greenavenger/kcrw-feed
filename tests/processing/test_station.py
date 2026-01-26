@@ -1,74 +1,47 @@
 """Module to test the processing of Shows."""
 
 import pytest
-import tempfile
-import json
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from kcrw_feed.models import Show, Episode, Resource
 from kcrw_feed.processing.station import StationProcessor
-from kcrw_feed import source_manager
 
-# Fake microdata HTML for a Show page.
-FAKE_SHOW_UUID = "c5bb1ae9-fd3a-4995-9e78-33e377cc8e78"
-FAKE_SHOW_HTML = f"""
+# Fake HTML for a Show page (new format with meta tags)
+FAKE_SHOW_HTML = """
+<!DOCTYPE html>
 <html>
   <head>
-    <title>Test Show Page</title>
+    <title>Test Radio Show | KCRW</title>
+    <meta property="og:title" content="Test Radio Show | KCRW" />
+    <meta property="og:description" content="A description of the test show." />
+    <meta property="og:url" content="https://www.testsite.com/shows/test-show" />
+    <meta property="og:image" content="https://www.testsite.com/image.jpg" />
   </head>
-  <body itemscope itemtype="http://schema.org/RadioSeries" itemid="{FAKE_SHOW_UUID}">
-    <span itemprop="name">Test Radio Show</span>
-    <meta itemprop="description" content="A description of the test show." />
-    <meta itemprop="mainEntityOfPage" content="https://www.testsite.com/music/shows/test-show" />
+  <body>
+    <h1>Test Radio Show</h1>
   </body>
 </html>
 """
 
-# Fake microdata HTML for an Episode page.
-FAKE_EPISODE_UUID = "131dc7f8-4da9-4c31-9a12-ae8de925d309"
-FAKE_EPISODE_HTML = f"""
+# Fake HTML for an Episode page (new format with meta tags and audio URL)
+FAKE_EPISODE_HTML = """
+<!DOCTYPE html>
 <html>
   <head>
-    <title>Test Episode Page</title>
+    <title>Test Episode | KCRW</title>
+    <meta property="og:title" content="Test Episode | KCRW" />
+    <meta property="og:description" content="A description of the test episode." />
+    <meta property="og:url" content="https://www.testsite.com/shows/test-show/stories/test-episode" />
+    <meta property="og:image" content="https://www.testsite.com/image.jpg" />
+    <meta property="article:published_time" content="2025-04-01T12:00:00" />
   </head>
-  <body itemscope itemtype="http://schema.org/NewsArticle" itemid="{FAKE_EPISODE_UUID}">
-    <span itemprop="name">Test Episode</span>
-    <meta itemprop="identifier" content="{FAKE_EPISODE_UUID}" />
-    <meta itemprop="description" content="A description of the test episode." />
-    <link itemprop="contentUrl" href="https://www.testsite.com/audio/episode.mp3" />
-    <meta itemprop="datePublished" content="2025-04-01T12:00:00" />
+  <body>
+    <audio src="https://www.testsite.com/audio/episode.mp3"></audio>
   </body>
 </html>
 """
-
-# Fake JSON for an episode player (used by _process_episode)
-FAKE_EPISODE_JSON: Dict[str, Any] = {
-    "title": "Test Episode Page",
-    "airdate": "2025-04-01T12:00:00",
-    "url": "https://www.testsite.com/music/shows/test-show/test-episode",
-    "media": [{"url": "https://www.testsite.com/audio/episode.mp3"}],
-    "uuid": FAKE_EPISODE_UUID,
-    "show_uuid": FAKE_SHOW_UUID,
-    "hosts": [{"uuid": "host-uuid-111"}],
-    "html_description": "A description of the test episode.",
-    "songlist": "Song A, Song B",
-    "image": "https://www.testsite.com/image.jpg",
-    "content_type": "audio/mpeg",
-    "duration": 3600,
-    "ending": "2025-04-01T13:00:00",
-    "modified": "2025-04-01T12:05:00"
-}
-
-FAKE_RESOURCE = Resource(
-    url="https://www.testsite.com/music/shows/test-show/foo",
-    source="https://www.testsite.com/music/shows/test-show/foo",
-    last_updated=datetime.now(),
-    metadata={
-        "lastmod": datetime.now()
-    }
-)
 
 # A simple fake implementation of a StationCatalog for testing purposes.
 
@@ -89,19 +62,17 @@ class FakeCatalog:
     def add_show(self, show: Show) -> None:
         if show.uuid is None:
             raise ValueError("Show must have a uuid")
-        self.shows[show.uuid] = show
+        self.shows[str(show.uuid)] = show
 
     def list_episodes(self) -> List[Episode]:
         return list(self.episodes.values())
 
     def add_episode(self, episode: Episode) -> None:
-        key = episode.uuid if episode.uuid is not None else episode.url
+        key = str(episode.uuid) if episode.uuid is not None else episode.url
         self.episodes[key] = episode
 
     def get_resource(self, url: str) -> Optional[Resource]:
         return self.resources.get(url)
-
-# DummySource from your tests.
 
 
 class DummySource:
@@ -121,11 +92,8 @@ class DummySource:
 
 def fake_get_file(url: str) -> Any:
     """Return content based on resource signature."""
-    # For episode player JSON.
-    if url.endswith("player.json"):
-        return json.dumps(FAKE_EPISODE_JSON).encode("utf-8")
     # If URL indicates an episode page.
-    if "test-episode" in url:
+    if "stories" in url and "test-episode" in url:
         return FAKE_EPISODE_HTML.encode("utf-8")
     # If URL indicates a show page.
     if "test-show" in url:
@@ -135,19 +103,13 @@ def fake_get_file(url: str) -> Any:
 
 @pytest.fixture(name="fake_processor")
 def fake_processor_fixture(monkeypatch: pytest.MonkeyPatch) -> StationProcessor:
-    """Create a StationProcessor using a FakeCatalog.
-    Monkeypatch the instance of DummySource's _get_file method to return predetermined content.
-    """
+    """Create a StationProcessor using a FakeCatalog."""
     fake_catalog = FakeCatalog()
-    # Create an instance of DummySource.
     dummy_source = DummySource("https://www.testsite.com/")
-    # Patch the instance's _get_file method.
-    # monkeypatch.setattr(dummy_source, '_get_file', fake_get_file)
     monkeypatch.setattr(dummy_source, 'get_reference', fake_get_file)
-    # Use this dummy_source in your catalog.
     fake_catalog.source = dummy_source
 
-    from kcrw_feed.processing import station  # ensure we import the correct module
+    from kcrw_feed.processing import station
     sp = station.StationProcessor(fake_catalog)
     return sp
 
@@ -155,7 +117,7 @@ def fake_processor_fixture(monkeypatch: pytest.MonkeyPatch) -> StationProcessor:
 def test_process_show(fake_processor: StationProcessor):
     """Test that process_resource() returns a Show object when given a
     show URL."""
-    url = "https://www.testsite.com/music/shows/test-show"
+    url = "https://www.testsite.com/shows/test-show"
     resource = Resource(
         url=url,
         source=url,
@@ -163,20 +125,19 @@ def test_process_show(fake_processor: StationProcessor):
         metadata={"lastmod": datetime.now()}
     )
     result = fake_processor.process_resource(resource)
-    print(result)
-    # result = fake_processor.catalog.shows.get(FAKE_SHOW_UUID)
     assert result is not None
     assert isinstance(result, Show)
-    assert result.title == "test-show"  # "Test Radio Show"
-    # UUID should be extracted correctly.
-    assert result.uuid == uuid.UUID(FAKE_SHOW_UUID)
+    assert result.title == "Test Radio Show"
+    # UUID should be deterministically generated from URL
+    expected_uuid = uuid.uuid5(uuid.NAMESPACE_URL, url)
+    assert result.uuid == expected_uuid
     assert result.description == "A description of the test show."
 
 
 def test_process_episode(fake_processor: StationProcessor):
     """Test that process_resource() returns an Episode object when given
     an episode URL."""
-    url = "https://www.testsite.com/music/shows/test-show/test-episode"
+    url = "https://www.testsite.com/shows/test-show/stories/test-episode"
     resource = Resource(
         url=url,
         source=url,
@@ -185,10 +146,14 @@ def test_process_episode(fake_processor: StationProcessor):
     )
     result = fake_processor.process_resource(resource)
     assert isinstance(result, Episode)
-    assert result.title == "Test Episode Page"
-    assert result.uuid == uuid.UUID(FAKE_EPISODE_UUID)
-    # Check that show_uuid is set from the episode data.
-    assert result.show_uuid == uuid.UUID(FAKE_SHOW_UUID)
+    assert result.title == "Test Episode"
+    # UUID should be deterministically generated from URL
+    expected_uuid = uuid.uuid5(uuid.NAMESPACE_URL, url)
+    assert result.uuid == expected_uuid
+    # Check that show_uuid is derived from the show URL
+    show_url = "https://www.testsite.com/shows/test-show"
+    expected_show_uuid = uuid.uuid5(uuid.NAMESPACE_URL, show_url)
+    assert result.show_uuid == expected_show_uuid
     assert result.media_url == "https://www.testsite.com/audio/episode.mp3"
     expected_date = datetime.fromisoformat("2025-04-01T12:00:00")
     assert result.airdate == expected_date

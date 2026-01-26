@@ -66,9 +66,9 @@ class CatalogUpdater:
         logger.info("Merging entities")
         for enriched in entities:
             # Update local catalog directly for now.
-            if self.live_station_processor.is_episode_resource(enriched):
+            if isinstance(enriched, Episode):
                 self.local_catalog.add_episode(enriched)
-            else:
+            elif isinstance(enriched, Show):
                 self.local_catalog.add_show(enriched)
 
     def _enrich_resources(self, resources: List[Resource], checkpoint: int = 6) -> Set[Union[Show, Episode]]:
