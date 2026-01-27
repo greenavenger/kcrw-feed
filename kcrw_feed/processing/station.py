@@ -180,10 +180,14 @@ class StationProcessor:
                 return episode
 
         # Fetch the episode page HTML
-        episode_reference = self.source.relative_path(
-            resource.url + "/" + EPISODE_FILENAME)
+        episode_reference = self.source.relative_path(resource.url)
         logger.debug("episode_reference: %s", episode_reference)
         html = self.source.get_reference(episode_reference)
+        # Handle file-based fallback: if not served over http, try index filename
+        if not html:
+            episode_reference = self.source.relative_path(
+                resource.url + "/" + EPISODE_FILENAME)
+            html = self.source.get_reference(episode_reference)
         if html is None:
             logger.debug("Failed to retrieve file: %s", episode_reference)
             return None

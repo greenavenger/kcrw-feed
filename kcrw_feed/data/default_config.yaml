@@ -13,8 +13,7 @@ source_root: "https://www.kcrw.com/"
 
 # The root data directory for persisting state and feeds
 # This can be overridden with --storage_root
-# Default is current working directory (.)
-storage_root: "." # "catalog"
+storage_root: "catalog"
 
 # The state file to use for storing catalog data
 # This will be created in the storage_root directory
