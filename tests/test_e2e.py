@@ -127,6 +127,15 @@ def test_update_generates_rss_feeds(source_root: str):
         feed_files = os.listdir(feeds_dir)
         assert len(feed_files) >= 2, f"Expected at least 2 feed files, got {len(feed_files)}"
 
+        # Verify feed filenames are URL slugs (no spaces or special characters)
+        for feed_file in feed_files:
+            assert " " not in feed_file, f"Feed filename contains spaces: {feed_file}"
+            assert "|" not in feed_file, f"Feed filename contains pipe: {feed_file}"
+            # Should be lowercase slug with .xml extension
+            name = feed_file.removesuffix(".xml")
+            assert name.replace("-", "").replace("_", "").isalnum(), \
+                f"Feed filename is not a valid slug: {feed_file}"
+
         # Validate RSS structure of first feed
         feed_file = os.path.join(feeds_dir, feed_files[0])
         tree = ET.parse(feed_file)

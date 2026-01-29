@@ -55,8 +55,9 @@ class FeedPersister(BasePersister):
 
             # Create an RSS feed using Django's feed generator.
             feed_xml = self.generate_rss_feed(show_with_media)
-            # Use the show's title as the filename (or fallback to UUID).
-            file_name = f"{show.title}.xml" if show.title else f"{show.uuid}.xml"
+            # Use the URL slug as the filename for consistency.
+            slug = show.url.rstrip("/").split("/")[-1]
+            file_name = f"{slug}.xml" if slug else f"{show.uuid}.xml"
             output_path = os.path.join(feed_directory, file_name)
             with atomic_write(output_path, mode="w", overwrite=True, encoding="utf-8") as f:
                 f.write(feed_xml)
