@@ -163,3 +163,20 @@ class PageDataParser:
             "media_url": self.get_audio_url(),
             "author": self.get_author(),
         }
+
+    def get_music_show_slugs(self) -> list[str]:
+        """Extract music show slugs from a shows-and-djs listing page.
+
+        Parses links to /shows/{slug} and returns the unique slugs.
+
+        Returns:
+            List of show slugs (e.g., ['henry-rollins', 'morning-becomes-eclectic']).
+        """
+        slugs = set()
+        for link in self.soup.find_all("a", href=True):
+            href = link["href"]
+            # Match /shows/{slug} pattern (not /shows/{slug}/something)
+            match = re.match(r"^/shows/([a-z0-9-]+)/?$", href)
+            if match:
+                slugs.add(match.group(1))
+        return sorted(slugs)

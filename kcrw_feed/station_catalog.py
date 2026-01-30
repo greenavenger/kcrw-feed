@@ -221,9 +221,9 @@ class LocalStationCatalog(BaseStationCatalog):
         self.state_persister.save(self.catalog)  # , filename=os.path.join(
         # self.catalog_source.base_source, STATE_CATALOG_FILE))
 
-    def generate_feeds(self) -> None:
+    def generate_feeds(self, filter_opts: Optional[FilterOptions] = None) -> None:
         """Write feeds to directory."""
-        self.feed_persister.save(ShowDirectory(self.list_shows()))
+        self.feed_persister.save(ShowDirectory(self.list_shows(filter_opts)))
 
 
 class LiveStationCatalog(BaseStationCatalog):

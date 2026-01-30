@@ -9,6 +9,7 @@ import time
 import sys
 
 from kcrw_feed import config
+from kcrw_feed import music_shows
 from kcrw_feed.persistence.logger import LOGGING_LEVEL_MAP
 from kcrw_feed import station_catalog
 from kcrw_feed import updater
@@ -40,6 +41,8 @@ def main():
                         help='Specify the source root (ex. "https://www.kcrw.com/", "./tests/data/")')
     parser.add_argument("-c", "--config", type=str,
                         help="Path to a custom config file")
+    parser.add_argument("--music-only", action="store_true",
+                        help="Only process music shows (from /music/shows-and-djs)")
     # Subcommands
     subparsers = parser.add_subparsers(dest="command", required=True,
                                        help="Sub-commands: list, diff, update")
@@ -153,6 +156,19 @@ def main():
     # Pull in local state from the state file (always needed)
     local_catalog = station_catalog.LocalStationCatalog(
         catalog_source=local_source, state_file=state_file, feed_persister=feed_persister)
+
+    # If --music-only, sync the music shows list and apply as filter
+    if args.music_only:
+        slugs = music_shows.sync_music_shows(
+            storage_root, live_source)
+        if not slugs:
+            slugs = music_shows.load_music_shows(storage_root)
+        if slugs:
+            pattern = music_shows.build_music_shows_pattern(slugs)
+            filter_opts = config.apply_music_filter(filter_opts, pattern)
+            logger.info("Music-only: filtering to %d shows", len(slugs))
+        else:
+            logger.warning("No music shows found; --music-only has no effect")
 
     # Pull in live state from kcrw.com only if necessary
     if args.command in ["diff", "update"]:

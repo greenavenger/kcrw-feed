@@ -55,7 +55,7 @@ class CatalogUpdater:
         logger.info("Saving state")
         self.local_catalog.save_state()
         logger.info("Writing feeds")
-        self.local_catalog.generate_feeds()
+        self.local_catalog.generate_feeds(self.filter_opts)
 
         return list(enriched_entities)
 

@@ -148,3 +148,21 @@ def get_filter_options(args: argparse.Namespace) -> FilterOptions:
         end_date=end_date,
         dry_run=args.dry_run,
     )
+
+
+def apply_music_filter(
+    filter_opts: FilterOptions, pattern: str
+) -> FilterOptions:
+    """Return a new FilterOptions with the music shows pattern applied.
+
+    If a match pattern already exists, the music pattern is combined with AND
+    logic (both must match).
+    """
+    compiled = re.compile(pattern, re.IGNORECASE)
+    return FilterOptions(
+        match=filter_opts.match,
+        compiled_match=compiled,
+        start_date=filter_opts.start_date,
+        end_date=filter_opts.end_date,
+        dry_run=filter_opts.dry_run,
+    )

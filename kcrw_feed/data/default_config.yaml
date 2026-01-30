@@ -23,6 +23,11 @@ state_file: "kcrw_catalog.json"
 # This will be created relative to storage_root
 feed_directory: "feeds"
 
+# Music shows list - used with --music-only flag
+# This list is automatically updated by fetching /music/shows-and-djs
+# You can also manually add show slugs here
+music_shows: []
+
 # HTTP cache configuration
 # The cache will be created in the storage_root directory
 http_cache:

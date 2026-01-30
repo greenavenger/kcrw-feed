@@ -208,30 +208,11 @@ class StatePersister(BasePersister):
         """Convert dictionary to Catalog object."""
         catalog = Catalog()
 
-        # Process shows
+        # Process shows first
         for show_id, show_data in data.get("shows", {}).items():
             show = self.show_from_dict(show_data)
             assert show.uuid is not None, "Failed to parse UUID for Show"
             catalog.shows[show.uuid] = show
-
-            # Process episodes
-            for episode in show.episodes:
-                assert episode.uuid is not None, "Failed to parse UUID for Episode"
-                catalog.episodes[episode.uuid] = episode
-
-                # TODO: Should we store full Host entries?
-                # Process hosts
-                # for host in episode.hosts:
-                #     if isinstance(host, uuid.UUID) and host not in catalog.hosts:
-                #         # We need to find the host object
-                #         for show_host in show.hosts:
-                #             if show_host.uuid == host:
-                #                 catalog.hosts[host] = show_host
-                #                 break
-
-                # Process resource
-                if episode.resource:
-                    catalog.resources[episode.resource.url] = episode.resource
 
             # Process show hosts
             for host in show.hosts:
@@ -241,6 +222,22 @@ class StatePersister(BasePersister):
             # Process show resource
             if show.resource:
                 catalog.resources[show.resource.url] = show.resource
+
+        # Process top-level episodes and associate with shows
+        for episode_id, episode_data in data.get("episodes", {}).items():
+            episode = self.episode_from_dict(episode_data)
+            assert episode.uuid is not None, "Failed to parse UUID for Episode"
+            catalog.episodes[episode.uuid] = episode
+
+            # Associate episode with its show
+            if episode.show_uuid and episode.show_uuid in catalog.shows:
+                show = catalog.shows[episode.show_uuid]
+                if episode not in show.episodes:
+                    show.episodes.append(episode)
+
+            # Process episode resource
+            if episode.resource:
+                catalog.resources[episode.resource.url] = episode.resource
 
         return catalog
 
